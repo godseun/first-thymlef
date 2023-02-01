@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.shop.dao.ShopLogDao">
+    <!-- 로그내역 처리-->
+    <insert id="setLog">
+    	/*ShopLogDao.setLog*/
+		INSERT 
+		INTO SHOP_LOGIN_LOG
+			(
+				IP_ADDRESS
+			    , RESULT
+			    , EMAIL
+			    , JOIN_USR_ID
+				, DEVICE
+				, CREATE_DATE
+			) VALUES (
+				#ip#
+			    , #isLogin#
+			    , #email#
+			    , #joinUsrId#
+				, #device#
+				, NOW()
+			)    	
+    </insert>    
+	<insert id="setKeyWord">
+    	/*ShopLogDao.setKeyWord*/
+		  INSERT
+		  INTO   SHOP_SEARCH_LOG
+		         (
+					IP_ADDRESS
+					,USR_ID
+					,M_VALUE
+					,M_NAME
+					,M_BRAND
+					,M_STNDRD
+					,M_MODEL
+					,M_CODE
+					,M_STORE
+					,CREATE_DATE
+		         )
+		         VALUES
+		         (	
+					#ip#
+					,#usrId#
+					,IF(#mValue# = '', NULL, #mValue#)
+					,IF(#mName# = '', NULL, #mName#)
+					,IF(#mBrand# = '', NULL, #mBrand#)
+					,IF(#mStndrd# = '', NULL, #mStndrd#)
+					,IF(#mModel# = '', NULL, #mModel#)
+					,IF(#mCode# = '', NULL, #mCode#)
+					,IF(#mStore# = '', NULL, #mStore#)
+					, NOW()
+		         )	
+	</insert>
+	<insert id="setViewCount">
+    	/* ShopLogDao.setViewCount */
+		  INSERT
+		  INTO   SHOP_VIEW_LOG
+		         (
+					IP_ADDRESS
+					,USR_ID
+					,PRDT_CD
+					,CREATE_DATE
+		         )
+		         VALUES
+		         (	
+					#ip#
+					,#usrId#
+					,#prdtCd#
+					, NOW()
+		         )	
+	</insert>
+</mapper>

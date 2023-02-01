@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.shop.dao.ShopDao">
+
+	<!-- 랜덤한 숫자 생성-->
+    <select id="getRandNo" parameterClass="map" resultClass="string">
+    	/* ShopDao.getRandNo */
+ 		SELECT LEFT((ROUND(RAND()*1000000000000)),#cnt#) AS RANDNO  FROM DUAL
+    </select>   
+    
+    <!-- 휴대폰 번호 검사-->
+    <select id="checkMobileNo" parameterClass="map" resultClass="string">
+    	/* ShopDao.checkMobileNo */
+    	SELECT 
+			COUNT(1) AS CNT
+		FROM USER_INFO
+		WHERE MOBILE = #authMobileNum#		
+    </select>   
+    
+    <!-- 휴대폰 번호 검사2-->
+    <select id="checkMobileNo2" parameterClass="map" resultClass="string">
+    	/* ShopDao.checkMobileNo2 */
+    	SELECT 
+			COUNT(1) AS CNT
+		FROM USER_INFO
+		WHERE MOBILE = #authMobileNum#		
+			AND USE_YN = 'Y'
+			AND USR_LV NOT IN ( '8' )
+    </select>   
+    
+    <!-- 이메일주소 검사-->
+    <select id="checkEmail" parameterClass="map" resultClass="string">
+    	/* ShopDao.checkEmail */
+    	SELECT 
+			COUNT(1) AS CNT
+		FROM USER_INFO
+		WHERE EMAIL = #authEmailAddr#		
+			AND USE_YN = 'Y'
+			AND USR_LV NOT IN ( '8' )
+			AND LENGTH(IFNULL(JOIN_USR_ID,'')) = 0
+    </select>   
+ 
+    <select id="checkUri" parameterClass="map" resultClass="string">
+		SELECT 
+			COUNT(1) AS CNT
+		FROM USER_INFO U, AUTH_INFO A
+		WHERE U.EMAIL = FN_DECRYPT(#id#)
+		AND U.USE_YN = 'Y'
+		AND U.USR_LV NOT IN ( '8' )
+		AND LENGTH(IFNULL(U.JOIN_USR_ID,'')) = 0
+		AND U.EMAIL = A.EMAIL
+		AND A.AUTH_NO = FN_DECRYPT(#ck#)
+		AND A.VALIDITY_DATE <![CDATA[>=]]> NOW()
+    </select>   
+    
+    <!-- 인증번호 검사-->
+    <select id="checkAuthNo" parameterClass="map" resultClass="string">
+    	/* ShopDao.checkAuthNo */
+    	SELECT 
+			COUNT(1) AS CNT
+		FROM AUTH_INFO
+		WHERE MOBILE = #authMobileNum#
+		AND AUTH_NO = #authNum#
+		AND USED_YN ='N'
+		AND VALIDITY_DATE > NOW()
+    </select>   
+    
+    <!-- 기존 인증번호 사용불능 처리-->
+    <update id="updateAuthNo">
+    	UPDATE AUTH_INFO SET
+    		USED_YN = 'Y'
+    	WHERE USED_YN ='N'
+   		<isNotEmpty property="authMobileNum">
+   			AND MOBILE = #authMobileNum#
+   		</isNotEmpty>
+   		<isNotEmpty property="authEmailAddr">
+   			AND EMAIL = #authEmailAddr#
+   		</isNotEmpty>
+    </update>
+    
+    <!-- 인증번호 입력-->
+    <insert id="insertAuthNo">
+    	<selectKey keyProperty="authNo" resultClass="String">
+ 			SELECT LEFT((ROUND(RAND()*1000000000000)), #cnt#) AS RANDNO  FROM DUAL
+    	</selectKey>
+		/* ShopDao.insertAuthNo */
+		INSERT INTO AUTH_INFO(
+			MOBILE
+			,EMAIL
+			,AUTH_NO 
+			,VALIDITY_DATE
+			,CREATE_DATE
+		) VALUES (
+			 #authMobileNum#
+			, #authEmailAddr#
+			, #authNo#	
+			<isNotNull property="authMobileNum">
+			, (NOW() + INTERVAL 10 MINUTE)		
+			</isNotNull>
+			<isNotNull property="authEmailAddr">
+			, (NOW() + INTERVAL 1 HOUR)		
+			</isNotNull>
+			, NOW()
+		)
+	</insert>
+
+</mapper>
