@@ -1,0 +1,119 @@
+@charset "utf-8";
+
+
+
+.con_title01 span.block_img_480 {
+	display:block;
+	margin-top:10px;
+}
+.con_txt_Type01 {
+	font-size:12px;
+	margin-bottom:30px;
+}
+.info_con01 p.txt02 {/*media_480*/
+	font-size:14px;
+}
+.info_con01 p.txt03 {/*media_480*/
+	font-size:14px;
+}
+.m_main_icon_639 li a {/*media_480*/
+	font-size:11px;
+}
+.m_footer p {
+	font-size:10px;
+}
+
+.m_top span.top_search {
+	position: absolute;
+	right: 50px;
+	top:12px;
+	width:75%;	
+	height:43px;	
+}
+
+
+.m_menu_slide a {	
+	margin-left:2%;
+	margin-right:2%;
+}
+
+
+.m_c01_01_01_input_01 {
+	width: 50px;
+}
+
+/*c10_02_01*/
+.pass_set_input {   
+    width: 70%;
+}
+.pass_set_btn {
+	width: 80px;
+}
+.pass_set_input01 {
+	width: 20%;
+}
+
+
+
+/*c10_03_01*/
+.join_content02 p {	
+	padding-top: 20px;
+}
+
+/*c11_06_02*/
+
+.etc_content textarea {
+	width: 95%;
+	margin: 0 auto;
+}
+
+.return_select select {
+    width: 95%;
+	margin: 0 auto;
+}
+
+
+.list_location01 {
+	display: none;
+}
+
+
+/*c12_03*/
+.faq_sbox_01, .faq_sbox_02, .faq_sbox_03, .faq_sbox_04 {
+	background-size: 90%;
+}
+
+/*c12_04*/
+.return_select3 select {
+	display: block;
+	width: 100%;
+	margin: 5px 0 5px 0;
+}
+.return_select4 select {
+	display: block;
+	width: 100%;
+	margin: 5px 0 5px 0;
+}
+.question_box_01 textarea {
+	width: 100%;
+}
+.question_box_01 .cart_btn2 a.btn_1 {
+	color: #ffffff;
+    background: #3f51b5 url(../../img/icon_cart01.png) no-repeat 35px center;
+    padding: 16px 0 16px 105px;
+	width:268px;
+}
+
+
+
+/*c13_01_04*/
+.c13_01_04_img_01 {
+	margin-left: 7%;
+}
+
+
+/*c13_05*/
+.c13_05 .join_form_select01 {
+	display: block;
+	margin: 5px 0 0 0;
+}

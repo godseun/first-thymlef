@@ -23,21 +23,20 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.3.0'
-	implementation 'javax.servlet:jstl'
-	implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
 	implementation 'mysql:mysql-connector-java:8.0.25'
 
-	// https://mvnrepository.com/artifact/org.springframework.mobile/spring-mobile-device
+	implementation 'org.apache.tiles:tiles-jsp:3.0.8'
+	implementation 'javax.servlet:jstl:1.2'
+	providedRuntime 'org.apache.tomcat.embed:tomcat-embed-jasper'
+
 	implementation 'org.springframework.mobile:spring-mobile-device:1.1.5.RELEASE'
-	// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
 	implementation 'org.apache.commons:commons-lang3:3.0'
 
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	// implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	// providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
