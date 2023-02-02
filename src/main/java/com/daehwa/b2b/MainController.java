@@ -9,8 +9,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class MainController {
 
   @GetMapping(value = "")
-  public String getMethodName() {
+  public String index() {
     log.debug(" OK . ");
     return "index";
+  }
+
+  @GetMapping(value = "500")
+  public String notFound() throws Exception {
+    log.debug(" OK . ");
+    throw new Exception();
   }
 }
