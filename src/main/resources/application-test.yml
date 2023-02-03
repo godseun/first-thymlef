@@ -6,11 +6,6 @@ spring:
     activate:
       on-profile: test
 
-  # mvc:
-  #   view:
-  #     prefix: /WEB-INF/views/
-  #     suffix: .jsp
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/selltool?autoreconnect=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
@@ -18,7 +13,7 @@ spring:
     password: kyg85627!@#
 
 mybatis:
-  mapper-locations: classpath:/mybatis/mapper/*.xml
+  mapper-locations: classpath:/mybatis/mapper/**/*.xml
   # type-aliases-package: com.example.demo
   # configuration:
   #   map-underscore-to-camel-case: true

@@ -3,7 +3,9 @@ package com.daehwa.b2b.shop.web;
 import com.daehwa.b2b.common.util.ClassLoader;
 import com.daehwa.b2b.common.util.CommonUtil;
 import com.daehwa.b2b.common.util.SessionUtil;
-import com.daehwa.b2b.shop.factory.ShopServiceFactory;
+import com.daehwa.b2b.shop.service.ShopLogService;
+import com.daehwa.b2b.shop.service.ShopSearchService;
+import com.daehwa.b2b.shop.service.ShopUserService;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -31,7 +33,13 @@ public class ShopLoginController {
   );
 
   @Autowired
-  private ShopServiceFactory shopServiceFactory;
+  private ShopSearchService shopSearchService;
+
+  @Autowired
+  private ShopUserService shopUserService;
+
+  @Autowired
+  private ShopLogService shopLogService;
 
   /**
    * 메인 컨트롤러
@@ -47,26 +55,14 @@ public class ShopLoginController {
     logger.info("SitePreference : " + sitePreference);
     logger.info("Device : " + device);
     logger.info("param : " + param);
-    model.addAttribute(
-      "banners",
-      shopServiceFactory.getShopSearchService().getBanner(param)
-    );
+    model.addAttribute("banners", shopSearchService.getBanner(param));
     logger.info("1111 : ");
     if ("MOBILE".equals(sitePreference + "")) {
-      model.addAttribute(
-        "mPprdt",
-        shopServiceFactory.getShopSearchService().getTagList(param)
-      );
-      model.addAttribute(
-        "tsPprdt",
-        shopServiceFactory.getShopSearchService().getTSList(param)
-      );
+      model.addAttribute("mPprdt", shopSearchService.getTagList(param));
+      model.addAttribute("tsPprdt", shopSearchService.getTSList(param));
     } else {
       logger.info("222 : ");
-      model.addAttribute(
-        "mdPprdt",
-        shopServiceFactory.getShopSearchService().getMainList(param)
-      );
+      model.addAttribute("mdPprdt", shopSearchService.getMainList(param));
       logger.info("333 : ");
     }
     logger.info("4444 : ");
@@ -89,7 +85,7 @@ public class ShopLoginController {
   @RequestMapping(value = "/chgPw")
   public String chgPw(Model model, @RequestParam Map<String, Object> param)
     throws Exception {
-    String result = shopServiceFactory.getShopUserService().chkUrl(param);
+    String result = shopUserService.chkUrl(param);
     param.put("chk", result);
     model.addAttribute("pageParm", param);
     return "/shop/chgPw";
@@ -115,9 +111,7 @@ public class ShopLoginController {
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
     try {
-      String result = shopServiceFactory
-        .getShopUserService()
-        .insertAuthSMS(param);
+      String result = shopUserService.insertAuthSMS(param);
       if ("sendOk".equals(result)) {
         jsonObject.put("code", "success");
       } else {
@@ -141,9 +135,7 @@ public class ShopLoginController {
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
     try {
-      String result = shopServiceFactory
-        .getShopUserService()
-        .setPassWord(param);
+      String result = shopUserService.setPassWord(param);
       if ("chgOk".equals(result)) {
         jsonObject.put("code", "success");
       } else {
@@ -167,7 +159,7 @@ public class ShopLoginController {
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
     try {
-      shopServiceFactory.getShopUserService().setPassWord2(param);
+      shopUserService.setPassWord2(param);
       jsonObject.put("code", "success");
     } catch (Exception e) {
       e.printStackTrace();
@@ -187,9 +179,7 @@ public class ShopLoginController {
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
     try {
-      String result = shopServiceFactory
-        .getShopUserService()
-        .sendSetMail(param);
+      String result = shopUserService.sendSetMail(param);
 
       if ("sendOk".equals(result)) {
         jsonObject.put("code", "success");
@@ -221,9 +211,7 @@ public class ShopLoginController {
     param.put("device", device.toString());
 
     try {
-      Map<String, Object> user = shopServiceFactory
-        .getShopUserService()
-        .getView(param);
+      Map<String, Object> user = shopUserService.getView(param);
       //1 - 이메일 정보 없음.
       if (user == null) {
         param.put("isLogin", "N");
@@ -249,7 +237,7 @@ public class ShopLoginController {
           "이메일 또는 비밀번호가 일치 하지 않습니다.\n\n비밀번호 5회 오류시 비밀번호 변경 후 이용 가능 합니다."
         );
 
-        shopServiceFactory.getShopUserService().updateLoginInfo(param);
+        shopUserService.updateLoginInfo(param);
         //4 - 패스워드 맞음
       } else if ("0".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
@@ -291,9 +279,9 @@ public class ShopLoginController {
         SessionUtil.setLoginSession("userSession", user);
 
         param.put("isLogin", "Y");
-        shopServiceFactory.getShopUserService().updateLoginInfo(param);
+        shopUserService.updateLoginInfo(param);
       }
-      shopServiceFactory.getShopLogService().insertLog(param);
+      shopLogService.insertLog(param);
     } catch (Exception e) {
       e.printStackTrace();
       jsonObject.put("code", "error");
@@ -323,13 +311,11 @@ public class ShopLoginController {
     param.put("device", device.toString());
 
     try {
-      Map<String, Object> user = shopServiceFactory
-        .getShopUserService()
-        .getView(param);
+      Map<String, Object> user = shopUserService.getView(param);
 
       if (user == null) {
         param.put("isLogin", "N");
-        shopServiceFactory.getShopUserService().updateLoginInfo(param);
+        shopUserService.updateLoginInfo(param);
 
         jsonObject.put("code", "fail");
         jsonObject.put(
@@ -371,9 +357,9 @@ public class ShopLoginController {
         SessionUtil.setLoginSession("userSession", user);
 
         param.put("isLogin", "Y");
-        shopServiceFactory.getShopUserService().updateLoginInfo(param);
+        shopUserService.updateLoginInfo(param);
       }
-      shopServiceFactory.getShopLogService().insertLog(param);
+      shopLogService.insertLog(param);
     } catch (Exception e) {
       e.printStackTrace();
       jsonObject.put("code", "error");
@@ -407,9 +393,7 @@ public class ShopLoginController {
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
     try {
-      Map<String, Object> user = shopServiceFactory
-        .getShopUserService()
-        .getView(param);
+      Map<String, Object> user = shopUserService.getView(param);
 
       if (user != null) {
         jsonObject.put("code", "success");

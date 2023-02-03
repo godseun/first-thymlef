@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.common.cache.CommonCodeDao">
+    
+    <!-- 공통코드목록 -->
+	<select id="list" parameterType="map" resultType="map">
+		/*CommonCodeDao.list*/
+		SELECT
+			A.CL_CD
+			, A.CL_CD_NM
+			, B.DTL_CD
+			, B.DTL_CD_NM
+			, B.DTL_CD_DESC
+		FROM
+			CMM_CODE A
+		INNER JOIN
+			CMM_CODE_DTL B
+		ON
+			A.CL_CD = B.CL_CD
+		AND
+			A.USE_YN = 'Y'
+		AND
+			B.USE_YN = 'Y'
+		ORDER BY
+			B.CL_CD ASC, B.SORT_ORDR ASC
+	</select>
+	
+    <!-- 카테고리 메뉴 리스트 -->
+	<!-- <select id="CommonCateg.list" parameterType="map" resultType="map">
+		/*CommonCateg.list*/
+			SELECT 
+				CATEG_TY_CD
+				,P_CATEG_CD
+				,CATEG_CD
+				,CATEG_NM
+				,BRAND_CNT
+			FROM 
+				CATEG_INFO 
+			ORDER BY 
+				CATEG_TY_CD,P_CATEG_CD,CATEG_CD
+	</select> -->
+	
+	
+    <!-- 카테고리 전체 메뉴 리스트 -->
+	<!-- <select id="CommonCateg.aList" parameterType="map" resultType="map">
+			SELECT 
+		       T1.CATEG_CD          	AS LEV1_CD,
+		       T1.CATEG_NM          	AS LEV1_NM,
+		       T2.CATEG_CD          	AS LEV2_CD,
+		       T2.CATEG_NM          	AS LEV2_NM,
+		       T3.CATEG_CD          	AS LEV3_CD,
+		       T3.CATEG_NM          	AS LEV3_NM,
+		       T4.CATEG_CD          	AS LEV4_CD,
+		       T4.CATEG_NM          	AS LEV4_NM,
+		       T4.PRODUCT_CNT 		AS LEV4_CNT
+		FROM   CATEG_INFO           		AS T1
+		       LEFT JOIN CATEG_INFO 	AS T2
+		       ON     T2.P_CATEG_CD 		= T1.CATEG_CD
+		       LEFT JOIN CATEG_INFO 	AS T3
+		       ON     T3.P_CATEG_CD 		= T2.CATEG_CD
+		       LEFT JOIN CATEG_INFO 	AS T4
+		       ON     T4.P_CATEG_CD 		= T3.CATEG_CD
+		WHERE  T1.CATEG_TY_CD       	= '1'
+		ORDER BY T1.CATEG_CD, T2.CATEG_CD, T3.CATEG_CD , T4.CATEG_CD
+	</select> -->
+	
+	<!-- 공통코드목록 -->
+	<select id="comboList" parameterType="map" resultType="map">
+			/* CommonCodeDao.comboList */
+		 SELECT
+			DTL_CD AS cbCode
+			,DTL_CD_NM AS cbText  
+		FROM  CMM_CODE_DTL 
+		WHERE 1 = 1
+		AND CL_CD 			= #sCd#
+		<if test='useOnly.equals("useOnly")'>
+			AND USE_YN 		= 'Y'
+			AND VIEW_YN 		= 'Y'
+		</if>
+		ORDER BY SORT_ORDR, DTL_CD_NM
+	</select>	
+	
+	<select id="sheetCombo" parameterType="map" resultType="map">
+			/* CommonCodeDao.sheetCombo */
+		 SELECT
+			GROUP_CONCAT(DTL_CD  ORDER BY SORT_ORDR, DTL_CD_NM SEPARATOR '|') AS cbCode
+			,GROUP_CONCAT(DTL_CD_NM  ORDER BY SORT_ORDR, DTL_CD_NM SEPARATOR '|') AS cbText  
+		FROM  CMM_CODE_DTL 
+		WHERE 1 = 1
+		<if test='useOnly.equals("useOnly")'>
+			AND USE_YN 		= 'Y'
+			AND VIEW_YN 		= 'Y'
+		</if>
+		<if test='sCd != ""'>
+			AND CL_CD 		= #sCd#
+		</if>
+		<if test='sCdList != ""'>
+			AND CL_CD		IN
+			<foreach collection="list" index='index' item="sCdList" open="(" close=")"  separator=",">
+				 #sCdList[]#
+			</foreach>
+		</if>
+	</select>		
+	
+	<select id="sheetCategCombo" parameterType="map" resultType="map">
+			/* CommonCodeDao.sheetCategCombo */
+		SELECT
+			  GROUP_CONCAT(CATEG_CD  ORDER BY CATEG_NM SEPARATOR '|') AS cbCode
+		  	,GROUP_CONCAT(CATEG_NM  ORDER BY CATEG_NM SEPARATOR '|') AS cbText  
+		FROM  CATEG_INFO 
+		WHERE USE_YN 		= 'Y'
+		<if test='CATEG_TY_CD != ""' >
+			AND CATEG_TY_CD = #CATEG_TY_CD#
+		</if>
+		<if test='P_CATEG_CD != ""' >
+			AND P_CATEG_CD = #P_CATEG_CD#
+		</if>
+	</select>		
+		
+	<select id="getSheetMaker" parameterType="map" resultType="map">
+			/* CommonCodeDao.getSheetMaker */
+		SELECT
+			  GROUP_CONCAT(MAKR_CD  ORDER BY MAKR_NM SEPARATOR '|') AS cbCode
+		  	,GROUP_CONCAT(MAKR_NM  ORDER BY MAKR_NM SEPARATOR '|') AS cbText  
+		FROM MAKER_INFO 
+		WHERE USE_YN 		= 'Y'
+	</select>	
+
+	<select id="getMainPrdtList" parameterType="map" resultType="map">
+			/* CommonCodeDao.getMainPrdtList */
+			SELECT MD.RECOM_ID AS sId , 
+			       PM.PRDT_IMG AS sImg , 
+			       PM.PRDT_CD AS sPcd , 
+			       COUNT(PD.PRDT_DTL_CD) AS sScd , 
+			       MIN(PD.STNDRD) AS sSt , 
+			       MIN(PD.SEL_PRICE) AS sPrice , 
+      			   MIN(PD.SEL_PRICE) AS sSprice , 
+			       PM.PRDT_NM AS sNm , 
+			       PM.MAKR_NM AS sMk , 
+			       MD.RECOM_TP AS sRTp 
+			  FROM RECOM_PRDUCT MD, 
+			       PRDT_MST PM, 
+			       PRDT_DTL PD 
+			 WHERE MD.PRDT_CD 		= PM.PRDT_CD 
+			 	AND PD.PRDT_CD 			= PM.PRDT_CD 
+			    AND PD.STORE_ID 		= PM.STORE_ID 
+			    AND PD.USE_YN       	= 'Y'
+			 GROUP BY MD.RECOM_ID, PD.PRDT_CD, PM.PRDT_NM,PM.MAKR_NM
+			UNION ALL
+			SELECT MD.BBS_ID AS sId , 
+			       PM.PRDT_IMG AS sImg , 
+			       PM.PRDT_CD AS sPcd , 
+			       COUNT(PD.PRDT_DTL_CD) AS sScd , 
+			       MIN(PD.STNDRD) AS sSt , 
+			       MIN(PD.SEL_PRICE) AS sPrice ,  
+			       MIN(PD.SALE_PRICE) AS sSprice , 
+			       PM.PRDT_NM AS sNm , 
+			       PM.MAKR_NM AS sMk , 
+			       'S' AS sRTp 
+			  FROM BOARD MD, 
+			  	   PROMO_PRDUCT PP,	
+			       PRDT_MST PM, 
+			       PRDT_DTL PD 
+			 WHERE MD.ARTICLE_ID 		= PP.ARTICLE_ID
+			 	   AND PP.PRDT_CD 			= PM.PRDT_CD 
+			 	   AND PP.PRDT_CD 			= PD.PRDT_CD 
+			 	   AND PP.PRDT_DTL_CD 	= PD.PRDT_DTL_CD 
+			       AND PD.PRDT_CD 			= PM.PRDT_CD 
+			       AND PD.STORE_ID 		= PM.STORE_ID 
+			       AND MD.BBS_ID 			= 'TSP'
+			       AND MD.USE_YN 			= 'Y'
+			       AND PD.USE_YN       		= 'Y'
+			   GROUP BY MD.BBS_ID, PD.PRDT_CD, PM.PRDT_NM, PM.MAKR_NM 			 
+   		    ORDER BY sId, sRTp, sNm 			 
+	</select>	
+
+	<select id="getMMainPrdtList" parameterType="map" resultType="map">
+		/*CommonCodeDao.getMMainPrdtList*/
+		SELECT
+				A.PRDT_CD,
+				A.STORE_ID ,
+				A.CATEG_CD , 
+				A.PRDT_NM ,
+				A.MAKR_NM ,
+				MIN(A.SEL_PRICE) AS SEL_PRICE,  
+				COUNT(A.PRDT_DTL_CD) AS DTL_CNT,   
+				MIN(A.STNDRD) AS STNDRD, 
+				A.PRDT_IMG  
+		  FROM 
+		       (SELECT PM.PRDT_CD , 
+		              PD.PRDT_DTL_CD , 
+		              PM.STORE_ID , 
+		              PM.CATEG_CD , 
+		              PM.PRDT_NM , 
+		              PM.MAKR_NM , 
+		              PM.PRDT_INFO , 
+		              PD.STNDRD , 
+		              PD.MODEL_NM , 
+		              PD.SEL_PRICE , 
+		              PD.OUT_AMT, 
+		              PD.OUT_UNIT, 
+		              PD.SOLDOUT_AT, 
+		              PD.RE_SALE_DT, 
+		              PM.PRDT_IMG
+		         FROM PRDT_MST PM, 
+		              PRDT_DTL PD 
+			WHERE	PM.PRDT_CD = PD.PRDT_CD	
+				AND	PM.STORE_ID = PD.STORE_ID
+				AND	PM.USE_YN ='Y'
+				AND	PD.USE_YN ='Y'
+				AND  PM.PRDT_INFO LIKE CONCAT('%툴맨추천%')
+				AND  PM.PRDT_TP = 'J'	
+		)AS A
+		GROUP BY A.MAKR_NM, A.PRDT_CD, A.STORE_ID, A.CATEG_CD, A.PRDT_NM, A.PRDT_IMG 	
+		ORDER BY A.PRDT_NM	
+	</select>	
+ 
+	<select id="getBanner" parameterType="map" resultType="map">
+			/* CommonCodeDao.getBanner */
+		SELECT 
+			B.BBS_ID AS bTp 
+			,B.ARTICLE_ID AS bId
+       		,B.RELATE_ARTICLE_AT AS sRelNo
+       		,B.TITLE	AS bTit
+       		,B.CONTENT AS bCon
+       		,P.PROMO_TP  AS pTp
+       		,P.PROMO_ID  AS pId
+       		,P.CATEG_CD AS pCd
+       		,P.PRDT_CD AS pPrdtCd
+			,CONCAT(BF.FILE_STRE_COURS, BF.FILE_STRE_NM) AS bImg
+			,DATE_FORMAT(DATE(B.BBS_STRT_DT),'%Y%m%d090000') AS sDt
+			,DATE_FORMAT(DATE(B.BBS_END_DT),'%Y%m%d160000') AS eDt
+		FROM BOARD B
+			   LEFT JOIN ATCH_FILE BF       
+			  	   ON B.BBS_ID 		= BF.ATCH_TP 
+		      	  AND B.ARTICLE_ID 	= BF.ATCH_FILE_NO 
+		       	  AND BF.USE_AT 		= 'Y'    
+			   LEFT JOIN PROMO_BOARD P
+		       	ON B.ARTICLE_ID 		= P.ARTICLE_ID
+				OR B.RELATE_ARTICLE_AT = P.PROMO_ID  
+ 		WHERE B.BBS_ID IN('MSB','MCB','STF','MPB','TSP') 
+			AND B.BBS_STRT_DT <![CDATA[<=]]> DATE_FORMAT(NOW(),'%Y%m%d')
+			AND B.BBS_END_DT <![CDATA[>=]]> DATE_FORMAT(NOW(),'%Y%m%d')
+			AND B.USE_YN = 'Y'
+		ORDER BY B.BBS_ID DESC,  P.PROMO_TP DESC, B.ARTICLE_ID DESC,     P.CATEG_CD 
+	</select>	
+ 
+	<select id="getCodeText" parameterType="map" resultType="string">
+			/* CommonCodeDao.getCodeText */
+		SELECT 
+			DTL_CD_NM
+		FROM CMM_CODE_DTL
+ 		WHERE CL_CD 		= #cl_cd#
+ 			AND DTL_CD 	= #dtl_cd#
+ 			AND USE_YN	= 'Y'
+ 			AND DELETE_DT IS NULL
+       LIMIT 0,1	
+	</select>	
+</mapper>

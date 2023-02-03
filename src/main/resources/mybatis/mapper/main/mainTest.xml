@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.tmp.MainDao">
+
+    <select id="getSelect" resultType="map">
+    	/* MainDao.getSelect */
+ 		SELECT * FROM SHOP_VIEW_LOG
+    </select>
+
+    <select id="getSelect2" resultType="map">
+    	/* MainDao.getSelect2 */
+ 		SELECT * FROM SHOP_SEARCH_LOG
+    </select>
+</mapper>

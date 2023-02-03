@@ -3,7 +3,11 @@ package com.daehwa.b2b.config;
 import com.daehwa.b2b.common.error.CustomExceptionResolver;
 import java.util.List;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.mobile.device.DeviceHandlerMethodArgumentResolver;
 import org.springframework.mobile.device.DeviceResolverHandlerInterceptor;
+import org.springframework.mobile.device.site.SitePreferenceHandlerInterceptor;
+import org.springframework.mobile.device.site.SitePreferenceHandlerMethodArgumentResolver;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -26,7 +30,18 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
     registry.addInterceptor(new DeviceResolverHandlerInterceptor());
+    registry.addInterceptor(new SitePreferenceHandlerInterceptor());
+
     WebMvcConfigurer.super.addInterceptors(registry);
+  }
+
+  @Override
+  public void addArgumentResolvers(
+    List<HandlerMethodArgumentResolver> resolvers
+  ) {
+    resolvers.add(new DeviceHandlerMethodArgumentResolver());
+    resolvers.add(new SitePreferenceHandlerMethodArgumentResolver());
+    WebMvcConfigurer.super.addArgumentResolvers(resolvers);
   }
 
   @Override
