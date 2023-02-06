@@ -1,7 +1,9 @@
 package com.daehwa.b2b.config;
 
 import com.daehwa.b2b.common.error.CustomExceptionResolver;
+import com.daehwa.b2b.config.resolver.TilesSupportLiteDeviceDelegatingViewResolver;
 import java.util.List;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mobile.device.DeviceHandlerMethodArgumentResolver;
 import org.springframework.mobile.device.DeviceResolverHandlerInterceptor;
@@ -15,14 +17,36 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver;
+import org.springframework.web.servlet.view.tiles3.TilesConfigurer;
+import org.springframework.web.servlet.view.tiles3.TilesViewResolver;
 
 @Configuration
 @EnableWebMvc
 public class WebMvcConfiguration implements WebMvcConfigurer {
 
+  @Bean
+  public TilesConfigurer tilesConfigurer() {
+    final TilesConfigurer configurer = new TilesConfigurer();
+    configurer.setDefinitions(new String[] { "/WEB-INF/tiles/tiles.xml" });
+    configurer.setCheckRefresh(true);
+
+    return configurer;
+  }
+
   @Override
   public void configureViewResolvers(ViewResolverRegistry registry) {
-    registry.jsp("/WEB-INF/", ".jsp");
+    // registry.jsp("/WEB-INF/views/", ".jsp");
+
+    TilesSupportLiteDeviceDelegatingViewResolver viewResolvers = new TilesSupportLiteDeviceDelegatingViewResolver(
+      new TilesViewResolver()
+    );
+    viewResolvers.setEnableFallback(true);
+    viewResolvers.setDeviceType("deviceType");
+    viewResolvers.setMobilePrefix("mobile");
+    viewResolvers.setTabletPrefix("mobile");
+    viewResolvers.setNormalPrefix("jsp");
+
+    registry.viewResolver(viewResolvers);
 
     WebMvcConfigurer.super.configureViewResolvers(registry);
   }
@@ -49,6 +73,17 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
     registry
       .addResourceHandler("/resources/**")
       .addResourceLocations("/WEB-INF/resources/");
+
+    registry.addResourceHandler("/js/**").addResourceLocations("/WEB-INF/js/");
+    registry
+      .addResourceHandler("/css/**")
+      .addResourceLocations("/WEB-INF/css/");
+    registry
+      .addResourceHandler("/img/**")
+      .addResourceLocations("/WEB-INF/img/");
+    registry
+      .addResourceHandler("/upload/**")
+      .addResourceLocations("/WEB-INF/upload/");
 
     WebMvcConfigurer.super.addResourceHandlers(registry);
   }

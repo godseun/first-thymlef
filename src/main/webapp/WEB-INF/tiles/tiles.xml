@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC 
+        "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" 
+        "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+
+	<definition name="pay" 				template="/WEB-INF/views/common/layout/pay.jsp">
+		<put-attribute name="title" 	value="대화공업" />
+		<put-attribute name="body" 	value="" />
+	</definition>
+
+	<definition name="popup" 			template="/WEB-INF/views/common/layout/popup.jsp">
+		<put-attribute name="title" 	value="대화공업" />
+		<put-attribute name="body" 	value="" />
+	</definition>
+	
+	<definition name="ajax" 				template="/WEB-INF/views/common/layout/ajax.jsp">
+	    <put-attribute name="body"	value="" />
+	</definition>
+
+	<definition name="error" 			template="/WEB-INF/views/common/layout/error.jsp">
+		<put-attribute name="body" 	value="" />
+	</definition>
+
+	<!-- Exception -->
+	<definition name="/common/error/404" extends="error">
+		<put-attribute name="title" 		value="400 error" />
+		<put-attribute name="body" 		value="/WEB-INF/views/common/error/404.jsp" />
+	</definition> 
+
+	<!-- Shop -->
+	<definition name="shop_main" 		template="/WEB-INF/views/common/layout/shop_main.jsp">
+		<put-attribute name="title" 		value="대화공업" />
+		<put-attribute name="header" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_header.jsp" />
+		<put-attribute name="body" 		value="" />
+		<put-attribute name="footer" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_footer.jsp" />
+	</definition>
+
+	<definition name="shop_sub" 		template="/WEB-INF/views/common/layout/shop_sub.jsp">
+		<put-attribute name="title" 		value="대화공업" />
+		<put-attribute name="header" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_header.jsp" />
+		<put-attribute name="navi" 		value="" />
+		<put-attribute name="body" 		value="" />
+		<put-attribute name="footer" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_footer.jsp" />
+	</definition>
+
+	<definition name="shop_sub2" 		template="/WEB-INF/views/common/layout/shop_sub2.jsp">
+		<put-attribute name="title" 		value="대화공업" />
+		<put-attribute name="header" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_header.jsp" />
+		<put-attribute name="body" 		value="" />
+		<put-attribute name="footer" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_footer.jsp" />
+	</definition>
+
+	<definition name="shop_sub3" 		template="/WEB-INF/views/common/layout/shop_sub3.jsp">
+		<put-attribute name="title" 		value="대화공업" />
+		<put-attribute name="header" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_header.jsp" />
+		<put-attribute name="body" 		value="" />
+		<put-attribute name="footer" 	expression="/WEB-INF/views/common/layout/shop_${deviceType}_footer.jsp" />
+	</definition>
+
+	<!-- popup -->
+	<definition name="/popup/*" 			extends="popup">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/popup/{1}.jsp" />
+	</definition>
+
+	<!-- popup -->
+	<definition name="/pay/*" 				extends="pay">
+		<put-attribute name="body" 		expression="/INIpayStd/{1}.jsp" />
+	</definition>
+
+	<!-- ajax-->
+	<definition name="/ajax/*/*/*" 		extends="ajax">
+	    <put-attribute name="body" 		expression="/WEB-INF/views/ajax/${deviceType}/{1}/{2}/{3}.jsp" />
+	</definition>
+	
+	<!-- Shop Main --> 
+	<definition name="/shop/main" 		extends="shop_main">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/main.jsp" />
+	</definition>
+
+	<!-- Shop Join -->
+	<definition name="/shop/join/*" 		extends="shop_main">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/join/{1}.jsp" />
+	</definition>
+
+	<!-- Shop Login -->
+	<definition name="/shop/login" 		extends="shop_main">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/login.jsp" />
+	</definition>
+
+	<!-- Shop Change Password -->
+	<definition name="/shop/chgPw" 	extends="shop_main">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/chgPw.jsp" />
+	</definition>
+	
+	<!-- Shop Login -->
+	<definition name="/shop/provision" 	extends="shop_main">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/provision.jsp" />
+	</definition>
+
+	<!-- Shop Search -->
+	<definition name="/shop/search/*" 	extends="shop_sub">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/search/{1}.jsp" />
+		<put-attribute name="navi" 		expression="/WEB-INF/views/common/layout/shop_${deviceType}_ser_navi.jsp" />
+	</definition>
+
+	<!-- Shop Order -->
+	<definition name="/shop/order/*" 	extends="shop_main">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/order/{1}.jsp" />
+	</definition>
+
+	<!-- Shop Helpdesk -->
+	<definition name="/shop/helpdesk/*" 	extends="shop_sub">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/helpdesk/{1}.jsp" />
+		<put-attribute name="navi" 		expression="/WEB-INF/views/common/layout/shop_${deviceType}_lnb_navi.jsp" />
+	</definition>
+	
+	<!-- Shop Mypage -->
+	<definition name="/shop/mypage/*" 	extends="shop_sub">
+		<put-attribute name="body" 				expression="/WEB-INF/views/${deviceType}/shop/mypage/{1}.jsp" />
+		<put-attribute name="navi" 				expression="/WEB-INF/views/common/layout/shop_${deviceType}_lnb_navi.jsp" />
+	</definition>
+
+	<!-- Shop Helpdesk -->
+	<definition name="/shop/helpdesk/promoDtl" 	extends="shop_sub3">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/helpdesk/promoDtl.jsp" />
+	</definition>
+
+	<!-- Shop TAG SEARCH -->
+	<definition name="/shop/search/tagSearDtl" 	extends="shop_sub3">
+		<put-attribute name="body" 		expression="/WEB-INF/views/${deviceType}/shop/search/tagSearDtl.jsp" />
+	</definition>
+
+
+	<!-- Store main-->
+	<definition name="store_main" 				template="/WEB-INF/views/common/layout/store_main.jsp">
+		<put-attribute name="title" 				value="대화공업" />
+		<put-attribute name="header" 			expression="/WEB-INF/views/common/layout/store_${deviceType}_header.jsp" />
+		<put-attribute name="body" 				value="" />
+		<put-attribute name="footer" 			expression="/WEB-INF/views/common/layout/store_${deviceType}_footer.jsp" />
+	</definition>
+
+	<!-- Store sub-->
+	<definition name="store_sub" 				template="/WEB-INF/views/common/layout/store_sub.jsp">
+		<put-attribute name="title" 				value="대화공업" />
+		<put-attribute name="header" 			expression="/WEB-INF/views/common/layout/store_${deviceType}_header.jsp" />
+		<put-attribute name="navi" 				expression="/WEB-INF/views/common/layout/store_${deviceType}_lnb_navi.jsp" />
+		<put-attribute name="body" 				value="" />
+		<put-attribute name="footer" 			expression="/WEB-INF/views/common/layout/store_${deviceType}_footer.jsp" />
+	</definition>
+
+	<!-- Store Main --> 
+	<definition name="/store/main/*" 			extends="store_main">
+		<put-attribute name="body" 				expression="/WEB-INF/views/${deviceType}/store/{1}.jsp" />
+	</definition>
+
+	<!-- Store Join --> 
+	<definition name="/store/join/*" 				extends="store_main">
+		<put-attribute name="body" 				expression="/WEB-INF/views/${deviceType}/store/join/{1}.jsp" />
+	</definition>
+	
+	<!-- Store Upload --> 
+	<definition name="/store/upload/*" 			extends="store_main">
+		<put-attribute name="body" 				expression="/WEB-INF/views/${deviceType}/store/product/{1}.jsp" />
+	</definition>
+
+	<!-- Store sub-->
+	<definition name="/store/*/*" 				extends="store_sub">
+		<put-attribute name="body" 				expression="/WEB-INF/views/${deviceType}/store/{1}/{2}.jsp" />
+	</definition>
+
+	<!-- Store sub-->
+	<definition name="/store/partner" 			extends="store_main">
+		<put-attribute name="body" 				expression="/WEB-INF/views/${deviceType}/store/{1}/{2}.jsp" />
+	</definition>
+
+	<!-- Front popup-->
+	<definition name="front_popup" 				template="/WEB-INF/views/common/layout/front_popup.jsp">
+		<put-attribute name="title" 				value="대화공업" />
+		<put-attribute name="body" 				value="" />
+	</definition>
+
+	<!-- Front main-->
+	<definition name="front_main" 				template="/WEB-INF/views/common/layout/front_main.jsp">
+		<put-attribute name="title" 				value="대화공업" />
+		<put-attribute name="header" 			value="/WEB-INF/views/common/layout/front_header.jsp" />
+		<put-attribute name="body" 				value="" />
+		<put-attribute name="footer" 			value="/WEB-INF/views/common/layout/front_footer.jsp" />
+	</definition>
+
+	<!-- Front sub-->
+	<definition name="front_sub" 					template="/WEB-INF/views/common/layout/front_sub.jsp">
+		<put-attribute name="title" 				value="대화공업" />
+		<put-attribute name="header" 			value="/WEB-INF/views/common/layout/front_header.jsp" />
+<!-- 		
+		<put-attribute name="navi" 				value="/WEB-INF/views/common/layout/front_navi.jsp" />
+ -->		
+		<put-attribute name="body" 				value="" />
+		<put-attribute name="footer" 			value="/WEB-INF/views/common/layout/front_footer.jsp" />
+	</definition>
+
+
+	<!-- Front Popup -->
+	<definition name="/front/popup/*" 			extends="front_popup">
+		<put-attribute name="body" 				expression="/WEB-INF/views/jsp/popup/{1}.jsp" />
+	</definition>
+
+	<!-- Front Main -->
+	<definition name="/front/main/*" 			extends="front_main">
+		<put-attribute name="body" 				expression="/WEB-INF/views/jsp/front/{1}.jsp" />
+	</definition>
+	
+	<!-- Front Main --> 
+	<definition name="/front/search/*" 			extends="front_main">
+		<put-attribute name="body" 				expression="/WEB-INF/views/${deviceType}/front/search/{1}.jsp" />
+	</definition>
+	
+	<!-- Front Main -->
+	<definition name="/front/*/*" 				extends="front_sub">
+		<put-attribute name="body" 				expression="/WEB-INF/views/jsp/front/{1}/{2}.jsp" />
+	</definition>
+
+	<!-- Admin Api Main -->
+	<definition name="admin_api" 				template="/WEB-INF/views/common/layout/admin_api.jsp">
+		<put-attribute name="title" 				value="대화 관리자 OPEN MOBILE" />
+		<put-attribute name="header" 			value="/WEB-INF/views/common/layout/admin_header.jsp" />
+		<put-attribute name="body" 				value="" />
+		<put-attribute name="footer" 			value="/WEB-INF/views/common/layout/admin_footer.jsp" />
+	</definition>
+
+	<!-- Admin Api Main -->
+	<definition name="/admin/api/*" 			extends="admin_api">
+		<put-attribute name="body" 				expression="/WEB-INF/views/mobile/admin/{1}.jsp" />
+	</definition>
+
+</tiles-definitions>
