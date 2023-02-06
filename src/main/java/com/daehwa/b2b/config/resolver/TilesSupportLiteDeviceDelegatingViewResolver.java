@@ -68,12 +68,8 @@ public class TilesSupportLiteDeviceDelegatingViewResolver
     if ("index".equals(viewName)) {
       resolvedViewName = resolvedViewName.replace("index", "/index");
     }
-    System.out.println(" ::: zz 1 ::: " + request.getAttribute(deviceType));
 
     request.setAttribute(deviceType, attributeValue);
-    System.out.println(" ::: zz 2 ::: " + request.getAttribute(deviceType));
-    // MOBILE-63 "redirect:/" and "forward:/" can result in the view name
-    // containing multiple trailing slashes
     return stripTrailingSlash(resolvedViewName);
   }
 

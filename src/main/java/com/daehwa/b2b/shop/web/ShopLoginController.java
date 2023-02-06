@@ -57,16 +57,20 @@ public class ShopLoginController {
     logger.info("param : " + param);
     model.addAttribute("banners", shopSearchService.getBanner(param));
     logger.info("1111 : ");
+
+    String platformPrefix = "/";
     if ("MOBILE".equals(sitePreference + "")) {
       model.addAttribute("mPprdt", shopSearchService.getTagList(param));
       model.addAttribute("tsPprdt", shopSearchService.getTSList(param));
+      platformPrefix = platformPrefix + "mobile";
     } else {
       logger.info("222 : ");
       model.addAttribute("mdPprdt", shopSearchService.getMainList(param));
       logger.info("333 : ");
+      platformPrefix = platformPrefix + "jsp";
     }
     logger.info("4444 : ");
-    return "/shop/main";
+    return platformPrefix + "/shop/main";
   }
 
   /**
