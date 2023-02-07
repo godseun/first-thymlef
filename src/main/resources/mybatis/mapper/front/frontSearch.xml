@@ -1,0 +1,2908 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.front.dao.FrontSearchDao">
+	<sql id="FrontSearch.body">
+			SELECT 
+				   	PM.PRDT_CD ,
+			       	PD.PRDT_DTL_CD ,
+			       	PM.STORE_ID ,
+			       	PM.CATEG_CD ,
+			       	PM.PRDT_NM ,
+			       	PM.MAKR_NM ,
+			       	PD.STNDRD ,
+			       	PD.MODEL_NM ,
+			       	PD.SEL_PRICE ,
+			       	PD.OUT_AMT ,
+			       	PD.OUT_UNIT ,
+			       	PD.SOLDOUT_AT,
+			       	PD.RE_SALE_DT,
+			       	PM.PRDT_IMG,
+                  	CATEG.LEV1_CD,
+                	CATEG.LEV3_CD,
+                	CATEG.LEV3_NM,
+                	CATEG.LEV4_CD,
+                	CATEG.LEV4_NM,
+                	CATEG.LEV5_CD,
+                	CATEG.LEV5_NM
+			FROM   PRDT_MST PM,
+			       PRDT_DTL PD
+	</sql>
+	
+	<!-- 상품 info - 품목정보 -->
+	<sql id="FrontSearch.prductBody">
+			SELECT 
+					PM.PRDT_CD,
+					PM.STORE_ID,
+					PM.CATEG_CD,
+					PM.PRDT_NM,
+					PM.PRDT_ETC_NM,
+					PM.PRDT_TP,
+					PM.ORG_PRDT_CD,
+       				(SELECT DTL_CD_NM FROM CMM_CODE_DTL WHERE DTL_CD = PM.ORG_CMP_CD AND CL_CD ='1002') AS ORG_CMP_NM ,
+					PM.ORG_CMP_CD,
+					PM.PRDT_IMG,
+					PM.EXTRA_IMG_AT,
+					PM.EXTRA_IMG_NO,
+					PM.EBOOK_IMG_AT,
+					IF(PM.EBOOK_IMG_AT = 'Y',(SELECT CONCAT(FILE_PATH,FILE_SAVE_NAME) FROM BOARD_FILE WHERE FILE_ID = PM.EBOOK_IMG_NO AND  BBS_ID ='CATALOG'),'NO') AS EBOOK_IMG_NO,
+					PM.CTL_IMG_AT,
+					IF(
+						PM.CTL_IMG_AT = 'Y'
+						,(
+							SELECT
+							  GROUP_CONCAT(FILE_STRE_COURS, FILE_STRE_NM ORDER BY FILE_SEQ SEPARATOR '|')  
+							FROM  ATCH_FILE 
+							WHERE ATCH_FILE_NO = PM.CTL_IMG_NO
+							AND ATCH_TP = 'PDI'
+							AND USE_AT ='Y'
+						)
+						,''
+					) AS CTL_IMG,
+					PM.MOVE_AT,
+					PM.PRDT_INFO,
+					PM.PRDT_DTL_INFO,
+					PM.PRDT_NOTICE_TP,
+					PM.DLVY_TP,
+					PM.DLVY_FEE_TP,
+					PM.PKG_TP,
+					PM.DLVY_FEE,
+       				CASE WHEN PM.DLVY_TP = 'T' AND ( PM.DLVY_FEE_TP != '2' AND PM.DLVY_FEE_TP != '3' ) THEN 1 ELSE 0 END AS DLVY_MEG, 
+					PM.PRDT_MD,
+					PM.MAKR_NM,
+					PM.ORG_PLCE,
+					PM.EXT_INFO_TIT_1, 
+					PM.EXT_INFO_VAL_1,
+					PM.EXT_INFO_TIT_2,
+					PM.EXT_INFO_VAL_2,
+					PM.EXT_INFO_TIT_3,
+					PM.EXT_INFO_VAL_3,
+					PM.EXT_INFO_TIT_4,
+					PM.EXT_INFO_VAL_4,
+					PM.EXT_INFO_TIT_5,
+					PM.EXT_INFO_VAL_5,
+					PM.EXT_INFO_TIT_6,
+					PM.EXT_INFO_VAL_6,
+					SI.FREE_DLVY,
+					SI.FREE_AMT,
+					SI.RTN_FEE,
+					SI.ECHG_FEE,
+					SI.EXTRA_FEE_TP,
+					SI.T_ZONE1,
+					SI.T_ZONE2,
+					SI.T_ZONE3,
+					SI.H_ZONE1,
+					SI.H_ZONE2,
+					SI.H_ZONE3,
+					SI.APPN_RTN_HDRY,
+					SI.HDRY,
+					SI.RTN_ZIP_CD,
+					SI.RTN_ADRES,
+					SI.RTN_ADRES_DTL,  
+     				IF(SI.SHOW_TP='S',SI.STORE_NM, SI.CMP_NM) AS S_NM
+			  FROM   PRDT_MST PM,  STORE_INFO SI
+			  WHERE 1 = 1   
+			  	AND PM.STORE_ID = SI.STORE_ID
+	</sql>
+
+	<sql id="FrontSearch.prductWhere">  
+			<isNotEqual property="isAdmin" compareValue="N">
+				AND PM.USE_YN  	='Y'
+			</isNotEqual>
+				AND PM.PRDT_CD = #{pCode}
+	</sql>
+		
+	<sql id="FrontSearch.categBody">
+		   SELECT   
+		   			T1.CATEG_CD AS LEV1_CD,
+		            T1.CATEG_NM AS LEV1_NM,
+		            T2.CATEG_CD AS LEV2_CD,
+		            T2.CATEG_NM AS LEV2_NM,
+		            T3.CATEG_CD AS LEV3_CD,
+		            T3.CATEG_NM AS LEV3_NM,
+		            T4.CATEG_CD AS LEV4_CD,
+		            T4.CATEG_NM AS LEV4_NM,
+		            T5.CATEG_CD AS LEV5_CD,
+		            T5.CATEG_NM AS LEV5_NM,
+		            T5.PRODUCT_CNT AS LEV5_CNT
+		   FROM     CATEG_INFO           AS T1
+		            LEFT JOIN CATEG_INFO AS T2
+		            ON       T2.P_CATEG_CD = T1.CATEG_CD
+		            LEFT JOIN CATEG_INFO AS T3
+		            ON       T3.P_CATEG_CD = T2.CATEG_CD
+		            LEFT JOIN CATEG_INFO AS T4
+		            ON       T4.P_CATEG_CD = T3.CATEG_CD
+		            LEFT JOIN CATEG_INFO AS T5
+		            ON       T5.P_CATEG_CD = T4.CATEG_CD
+		   WHERE    1 = 1
+	</sql>	
+	
+	<sql id="FrontSearch.contactBody">
+			SELECT 
+			    ARTICLE_ID AS sArtCd
+			    ,BBS_ID AS sBbsId
+			    ,BBS_TP AS sBbsTp
+			    ,RELATE_CD AS sRltCd
+			    ,TITLE AS sTitle
+			    ,CONTENT AS sCont
+			    ,WRITER AS sWrite
+			    ,PHONE AS sPhone
+			    ,CREATE_DT AS sCdt
+			    ,CREATE_ID AS sCid
+			    ,ANSWER_TP AS sAtp
+			    ,ANSWER AS sACont
+			    ,ANSWER_DT AS sACdt
+			    ,ANSWER_ID AS sACid
+			    ,ANSWER_ID AS sACid
+			    ,IF(USE_YN = 'Y','0','1') AS sDcb
+			    ,IF(ANSWER_ID IS NULL,IF(DATE(NOW()) > DATE(CREATE_DT + INTERVAL 2 DAY), 1, 0 ),0) AS sIsOver
+		  FROM CONTACT_BOARD
+		  WHERE 1 = 1
+	</sql>	
+
+
+	<sql id="FrontSearch.where">  
+			WHERE		PM.PRDT_CD = PD.PRDT_CD	
+			AND			PM.STORE_ID = PD.STORE_ID
+			<isNotEmpty property="mValue">
+				AND(			
+								PM.PRDT_NM LIKE CONCAT('%',#{mValue},'%')
+						OR	PM.MAKR_NM LIKE CONCAT('%',#{mValue},'%')
+						OR	PD.STNDRD LIKE CONCAT('%',#{mValue},'%')
+						OR	PD.MODEL_NM LIKE CONCAT('%',#{mValue},'%')
+						OR	PM.PRDT_CD LIKE CONCAT('%',#{mValue},'%')
+						OR	PD.PRDT_DTL_CD LIKE CONCAT('%',#{mValue},'%')
+				)
+			</isNotEmpty>
+			<isNotEmpty property="mName">
+				AND			PM.PRDT_NM LIKE CONCAT('%',#{mName},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mBrand">
+				AND			PM.MAKR_NM LIKE CONCAT('%',#{mBrand},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mStndrd">
+				AND			PD.STNDRD LIKE CONCAT('%',#{mStndrd},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mModel">
+				AND			PD.MODEL_NM LIKE CONCAT('%',#{mModel},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mPrdtCd">
+				AND			PM.PRDT_CD = #{mPrdtCd}
+			</isNotEmpty>
+	</sql>
+	
+	<sql id="FrontSearch.categDepthWhere">
+			<isNotEmpty property="ca1">
+				<isNotEqual property="ca1" compareValue="C9999">
+					AND    T1.CATEG_TY_CD	= '1'
+			   		AND    T1.CATEG_CD 		= #{ca1}
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="ca2">
+				<isNotEqual property="ca2" compareValue="C9999">
+					AND    T2.CATEG_TY_CD	= '2'
+			   		AND    T2.CATEG_CD 		= #{ca2}
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="ca3">
+				<isNotEqual property="ca3" compareValue="C9999">
+					AND    T3.CATEG_TY_CD	= '3'
+			   		AND    T3.CATEG_CD 		= #{ca3}
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="ca4">
+				<isNotEqual property="ca4" compareValue="C9999">
+					AND    T4.CATEG_TY_CD	= '4'
+			   		AND    T4.CATEG_CD 		= #{ca4}
+				</isNotEqual>
+			</isNotEmpty>
+			<isNotEmpty property="ca5">
+				<isNotEqual property="ca5" compareValue="C9999">
+					AND    T5.CATEG_TY_CD	= '5'
+			   		AND    T5.CATEG_CD 		= #{ca5}
+				</isNotEqual>
+			</isNotEmpty>
+	</sql>
+ 
+ 	<sql id="OrdrMstBody">
+		SELECT  
+			   D.ORDR_ID AS sMordrId ,
+		       MAX(M.TOT_PRICE) AS sMprice,
+		       MAX(M.DEVY_FEE) AS sMdvFee,
+		       MAX(M.SUM_PRICE) AS sMsPrice,
+			   MAX(M.PAYMETHOD) AS sPaym ,
+			   MAX(M.OID) AS sOid,
+			   MAX(M.TID) AS sTid,
+			   MAX(M.ZONE_TP) AS sZoneTp,
+		       MAX(M.ORDR_USR_ID) AS sMoUsrId,
+               IF(MAX(M.TAX_BILL)='Y','요청','') AS sTaxBill,
+			   COUNT(D.O_ID) AS sMcntPrdt ,
+		       MAX(D.ORDR_DT) AS sMordrDt ,
+		       MAX(D.RECEIPT_DT) AS sMreceiptDt ,
+		       MAX(D.DELY_DT) AS sMdelyDt ,
+               MAX(U.USR_NM) AS sMordrUsr ,
+               MAX(U.MOBILE) AS sMusrPhone,
+		       (SELECT COUNT(C.ARTICLE_ID) 
+		         FROM CONTACT_BOARD C 
+		        WHERE D.ORDR_ID = C.RELATE_CD 
+		              AND C.BBS_ID = 'ORD' 
+		              AND C.USE_YN='Y'
+		       )AS sChk 
+		  FROM ORDR_MST M, 
+		       ORDR_DTL D  ,
+               USER_INFO U 
+		 WHERE   M.ORDR_ID 		= D.ORDR_ID 
+               AND M.ORDR_USR_ID = U.USR_ID 
+		       AND M.DELETE_DT 	IS NULL 
+		       AND D.DELETE_DT 	IS NULL                
+	</sql>
+	
+ 	<sql id="OrdrDtlBody">
+		SELECT   
+			   D.ORDR_ID AS sMordrId ,
+		       D.ORDR_DT AS sMordrDt ,
+		       D.O_ID AS sDoId ,
+               U.USR_NM AS sMordrUsr, 
+               U.MOBILE AS sMusrPhone, 
+		       SM.TOT_PRICE AS sMprice,
+		       SM.DEVY_FEE AS sMdvFee,
+		       SM.SUM_PRICE AS sMsPrice,
+		       SM.CNT_PRDT AS sMcntPrdt,
+
+		       D.PRDT_DTL_CD AS sDprdtCd,
+               D.PRDT_NM AS sDprdtNm,
+               D.MAKR_NM AS sDmakrNm,
+               D.STNDRD AS sDstndrd,
+		       D.TOT_PRICE AS sDtotPrice,
+		       D.QY AS sDqy,
+		       D.SUM_PRICE AS sDsumPrice,
+		       D.STTUS AS sDsttus,
+		       
+		       D.RECEIPT_DT AS sDreceiptDt ,
+		       D.DELY_DT AS sDdelyDt ,
+		       D.DELY_COMP_DT AS sDdelyCmpDt ,
+		       D.ORDT_COMP_DT AS sOrdrCmpDt ,
+		       
+		       D.DELY_CMP AS sDdlvyCmp ,
+			   D.INVOICE AS sDinvoice ,
+			   D.INVOICE AS sDinvPop ,
+			   D.DELY_COMP_DT AS sDdelyCompDt ,
+			   D.ORDT_COMP_DT AS sOrderCompDt ,
+			   D.CAL_DT AS sCalDt ,
+			   D.CAL_YN AS sCalYn ,
+			   D.RMK AS sRMK ,
+
+			   M.ADDR_NM AS sMaddrNm, 
+		       M.RECV_NM AS sMrecvNm, 
+		       M.ZONE_CODE AS sMZoneCode, 
+		       M.ZIP_CODE AS sMZipCode, 
+		       M.ADDRESS AS sMaddr, 
+		       M.ADDRESS_DETAIL AS sMaddrDtl, 
+		       M.TEL_NO AS sMtel, 
+		       M.RMK AS sMrmk,
+		       
+		       M.ORDR_USR_ID AS sMoUsrId,
+               IF(M.TAX_BILL='Y','요청','') AS sTaxBill,
+			   M.PAYMETHOD AS sPaym ,
+			   M.OID AS sOid,
+			   M.TID AS sTid, 
+       		   M.SEND_RESULT AS sResult
+       		   ,(SELECT COUNT(C.ARTICLE_ID) 
+		         FROM CONTACT_BOARD C 
+		        WHERE M.ORDR_ID = C.RELATE_CD 
+		              AND C.BBS_ID = 'ORD' 
+		              AND C.USE_YN='Y'
+		       ) AS sChk 
+		       ,(SELECT DLVY_TP FROM PRDT_MST WHERE PRDT_CD = D.PRDT_CD) AS DLVY_TP
+		  FROM ORDR_STR_MST SM, 
+		       ORDR_MST M, 
+		       ORDR_DTL D ,
+               USER_INFO U 
+		 WHERE   SM.STORE_ID 	= D.STORE_ID 
+		       AND SM.ORDR_ID 		= D.ORDR_ID 
+		       AND SM.ORDR_ID 		= M.ORDR_ID 
+               AND M.ORDR_USR_ID = U.USR_ID 
+		       AND M.USE_YN 		= 'Y'
+		       AND SM.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+		       AND M.DELETE_DT 	IS NULL 
+		       AND SM.DELETE_DT 	IS NULL 
+		       AND D.DELETE_DT 	IS NULL 
+	</sql>
+	
+ 	<sql id="RtnOrdrDtlBody">
+		SELECT   
+			   D.ORDR_ID AS sMordrId ,
+		       D.ORDR_DT AS sMordrDt ,
+		       D.O_ID AS sDoId ,
+               U.USR_NM AS sMordrUsr,
+               U.MOBILE AS sMusrPhone, 
+		       SM.TOT_PRICE AS sMprice,
+		       SM.DEVY_FEE AS sMdvFee,
+		       SM.SUM_PRICE AS sMsPrice,
+		       SM.CNT_PRDT AS sMcntPrdt,
+
+		       D.PRDT_DTL_CD AS sDprdtCd,
+               D.PRDT_NM AS sDprdtNm,
+               D.MAKR_NM AS sDmakrNm,
+               D.STNDRD AS sDstndrd,
+		       D.TOT_PRICE AS sDtotPrice,
+		       D.QY AS sDqy,
+		       D.QY AS nQy,
+		       D.SUM_PRICE AS sDsumPrice,
+		       D.STTUS AS sDsttus,
+		       
+		       D.RECEIPT_DT AS sDreceiptDt ,
+		       D.DELY_DT AS sDdelyDt ,
+		       D.DELY_COMP_DT AS sDdelyCmpDt ,
+		       D.ORDT_COMP_DT AS sOrdrCmpDt ,
+		       
+		       D.DELY_CMP AS sDdlvyCmp ,
+			   D.INVOICE AS sDinvoice ,
+			   D.INVOICE AS sDinvPop ,
+			   D.DELY_COMP_DT AS sDdelyCompDt ,
+			   D.ORDT_COMP_DT AS sOrderCompDt ,
+			   D.CAL_DT AS sCalDt ,
+			   D.CAL_YN AS sCalYn ,
+			   D.RMK AS sRMK ,
+		       
+			   M.PAYMETHOD AS sPaym ,
+			   M.ADDR_NM AS sMaddrNm, 
+		       M.RECV_NM AS sMrecvNm, 
+		       M.ZONE_CODE AS sMZoneCode, 
+		       M.ZIP_CODE AS sMZipCode, 
+		       M.ADDRESS AS sMaddr, 
+		       M.ADDRESS_DETAIL AS sMaddrDtl, 
+		       M.TEL_NO AS sMtel, 
+		       M.RMK AS sMrmk,
+		       
+			   M.PAYMETHOD AS sPaym ,
+			   M.OID AS sOid,
+			   M.TID AS sTid, 
+       		   M.SEND_RESULT AS sResult,
+		       M.ORDR_USR_ID AS sMoUsrId,
+               IF(M.TAX_BILL='Y','요청','') AS sTaxBill,
+       		   
+               C.RMK AS sCrmk,
+               C.DEVY_TP AS sCdevyTp,
+               C.BANK_CD AS sCbankCd,
+			   C.ACCT_NAME AS sCacctName,
+			   C.ACCT_NUM AS sCacctNum
+       		   
+		  FROM ORDR_STR_MST SM, 
+		       ORDR_MST M, 
+               USER_INFO U, 
+		       ORDR_DTL D
+               LEFT JOIN ORDR_CHG_MST C
+               ON D.CHG_ID			= C.CHG_ID
+               
+		 WHERE   SM.STORE_ID 	= D.STORE_ID 
+		       AND SM.ORDR_ID 		= D.ORDR_ID 
+		       AND SM.ORDR_ID 		= M.ORDR_ID 
+               AND M.ORDR_USR_ID = U.USR_ID 
+		       AND M.DELETE_DT 	IS NULL 
+		       AND SM.DELETE_DT 	IS NULL 
+		       AND D.DELETE_DT 	IS NULL 
+	</sql>
+	
+ 	<sql id="OrdrWhere">
+		<if test='sSus == ""'>
+			<if test='sDt != ""'>
+				AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+			</if>
+			<if test='eDt != ""'>
+				AND DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+			</if>		
+		</if>
+		<if test='sSus != ""'>
+			<if test='sSus == "0"'>
+				<if test='sDt != ""'>
+					AND DATE(D.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</if>
+				<if test='eDt != ""'>
+					AND DATE(D.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</if>		
+			</if>
+			<if test='sSus >= "1"'>
+				<if test='sDt != ""'>
+					AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</if>
+				<if test='eDt != ""'>
+					AND DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</if>		
+			</if>
+		</if>
+	</sql>
+ 
+	<select id="getCodeMst" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getCodeMst */
+			SELECT 
+					 CL_CD AS sCd
+					,CL_CD_NM AS sCdNm
+					,CL_CD_DESC AS sCdDesc
+					,USE_YN AS sUseYN
+					,IFNULL(UPDATE_DT, CREATE_DT) AS sCdt
+					,IFNULL(UPDATE_ID, CREATE_ID) AS sCid
+			FROM 	
+				CMM_CODE
+			WHERE 1=1
+			<isNotEmpty property="sCd" prepend="AND">
+				CL_CD = #{sCd}
+			</isNotEmpty>
+	</select>	
+ 
+	<select id="getCodeDtl" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getCodeDtl */
+			SELECT 
+					CL_CD as sCd
+					,DTL_CD as sDtlcd
+					,DTL_CD_NM as sCdNm
+					,DTL_CD_DESC as sCdDesc
+					,SORT_ORDR as sOrdr
+					,VIEW_YN as sViewYN
+					,USE_YN as sUseYN
+					,RMK as sRmk
+					,IFNULL(UPDATE_DT, CREATE_DT) as sCdt
+					,IFNULL(UPDATE_ID, CREATE_ID) as sCid
+			FROM 
+				CMM_CODE_DTL
+			WHERE 
+				CL_CD = #{sCd}
+	</select>	
+ 
+	<select id="getMakerCd" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getMakerCd */
+			SELECT 
+				  MAKR_CD as sMkCd
+				  , MAKR_NM as sMkNm
+				  , MAKR_ETC_NM as sMkEtcNm
+				  , USE_YN as sUseYN
+				  , IFNULL(UPDATE_DT,CREATE_DT) as sCdt
+				  , IFNULL(UPDATE_ID,CREATE_ID) as sCid
+			FROM 
+				MAKER_INFO
+			WHERE
+				 1 = 1
+			<isNotEmpty property="sValue" prepend="AND">
+				MAKR_NM LIKE CONCAT('%',#{sValue},'%')
+			</isNotEmpty>
+			<isNotEmpty property="sSus" prepend="AND">
+				USE_YN = #{sSus}
+			</isNotEmpty>
+	</select>	
+
+	<select id="getCateg" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getCateg */
+			SELECT  
+			  CATEG_TY_CD AS sCtp
+			  ,P_CATEG_CD AS sPcd
+			  ,CATEG_CD AS sCd
+			  ,CATEG_NM AS sNm
+			  ,BRAND_CNT AS sBcnt
+			  ,PRODUCT_CNT  AS sPcnt
+			  ,USE_YN AS sUseYN
+			  ,IFNULL(UPDATE_DT, CREATE_DT) AS sCdt
+			  ,IFNULL(UPDATE_ID,  CREATE_ID) AS sCid
+			FROM 
+				CATEG_INFO	
+			WHERE 1=1
+			<isNotEmpty property="sCtp" prepend="AND">
+				CATEG_TY_CD = #{sCtp}
+			</isNotEmpty>
+			<isNotEmpty property="sPcd" prepend="AND">
+				P_CATEG_CD = #{sPcd}
+			</isNotEmpty>
+	</select>	
+
+	<select id="getBbsList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getBbsList */
+			SELECT 
+					B.ARTICLE_ID AS sArtCd
+					,B.BBS_ID AS sBbsId
+					,B.BBS_TP  AS sBbsTp
+					,B.TITLE  AS sTitle
+					,B.CONTENT  AS sCont 
+					,B.RELATE_ARTICLE_AT  AS sRelNo
+					,B.BBS_STRT_DT  AS sSdt
+					,B.BBS_END_DT  AS  sEdt
+					,B.USE_YN AS sUseYN
+					,IFNULL(B.UPDATE_DT, B.CREATE_DT)  AS sCdt
+					,IFNULL(B.UPDATE_ID,  B.CREATE_ID)  AS sCid
+					,A.FILE_DC AS fileData
+					,A.FILE_SEQ AS fileSeq
+			FROM BOARD AS B
+					LEFT JOIN ATCH_FILE AS A 
+					ON 	B.ARTICLE_ID = A.ATCH_FILE_NO 
+					AND 	B.BBS_ID = A.ATCH_TP
+					AND 	A.USE_AT = 'Y'
+			WHERE 1=1
+			<isNotEmpty property="bbsId" prepend="AND">
+				B.BBS_ID = #{bbsId}
+			</isNotEmpty>
+			<isNotEmpty property="artCd" prepend="AND">
+				B.ARTICLE_ID = #{artCd}
+			</isNotEmpty>
+	</select>	
+	
+	<select id="getPromoList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getPromoList */
+			SELECT 
+					B.ARTICLE_ID AS sArtCd
+					,B.BBS_ID AS sBbsId
+					,B.BBS_TP  AS sBbsTp 
+					,B.CONTENT  AS sCont 
+					,B.RELATE_ARTICLE_AT  AS sRelNo
+					,B.BBS_STRT_DT  AS sSdt
+					,B.BBS_END_DT  AS  sEdt
+					,IFNULL(B.UPDATE_DT, B.CREATE_DT)  AS sCdt
+					,IFNULL(B.UPDATE_ID,  B.CREATE_ID)  AS sCid
+                    ,P.PROMO_ID AS sPrmId 
+                    ,P.PROMO_TP AS sPrmTp
+                    ,IFNULL(P.TITLE, B.TITLE) sTitle
+                    ,P.BGCOLOR AS sBgCr
+                    ,P.CATEG_CD AS caPm
+                    ,P.PRDT_CD AS sPrdtCd
+                    ,P.URL AS sUrl
+                    ,P.WIDTH AS sWidth
+                    ,P.HEIGHT AS sHeight
+                    ,P.USE_YN AS sUseYN
+					,A.FILE_DC AS sImg
+					,A.FILE_SEQ AS fileSeq
+			FROM BOARD AS B
+                    LEFT JOIN PROMO_BOARD AS P 
+					ON 	B.ARTICLE_ID 		= P.ARTICLE_ID 
+					LEFT JOIN ATCH_FILE AS A 
+					ON 	P.PROMO_ID 		= A.ATCH_FILE_NO
+                    AND 	A.ATCH_TP 			= 'DTL'
+                    AND	A.FILE_DC IS NOT NULL
+                    AND	A.USE_AT = 'Y'
+			WHERE B.BBS_ID IN ('PRM', 'MSB', 'MCB', 'STF')
+			<isNotEmpty property="bbsId" prepend="AND">
+				B.BBS_ID = #{bbsId}
+			</isNotEmpty>
+			<isNotEmpty property="artCd" prepend="AND">
+				B.ARTICLE_ID = #{artCd}
+			</isNotEmpty>
+	</select>	
+	
+	<select id="getUserList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getUserList */
+			SELECT 	
+				USR_ID AS sUsrId
+				,USR_NM AS sUsrNm 
+				,EMAIL AS sEmail 
+				,MOBILE AS sMobile 
+				,JOIN_ROUTE AS sJroute
+				,USE_YN AS sUseYn
+				,USR_TP AS sUsrTp
+				,USR_LV AS sUsrLv
+				,SMS_NOTI_AGRE_AT AS sSmsNoti
+				,SMS_AD_AGRE_AT	AS sSmsAd
+				,EMAIL_AD_AGRE_AT AS sEmailAd
+				,CNT_PW_ERROR AS sPwdErr
+				,PW_LAST_MOD_DT AS sPwLmod
+				,LAST_LOGIN_DT AS sLlogin
+				,IFNULL(UPDATE_DT, CREATE_DT) as sCdt
+				,IFNULL(UPDATE_ID, CREATE_ID) as sCid
+				,IF(USR_TP = 'A', SUBSTR(STORE_ID, 2, 1),'0') AS A1
+				,IF(USR_TP = 'A', SUBSTR(STORE_ID, 3, 1),'0') AS A2
+				,IF(USR_TP = 'A', SUBSTR(STORE_ID, 4, 1),'0') AS A3
+				,IF(USR_TP = 'A', SUBSTR(STORE_ID, 5, 1),'0') AS A4
+				,IF(USR_TP = 'A', SUBSTR(STORE_ID, 6, 1),'0') AS A9
+			FROM USER_INFO
+			WHERE WITHD_DT IS NULL
+			<isNotEmpty property="sUsrId" prepend="AND">
+				USR_ID = #{sUsrId}
+			</isNotEmpty>
+			<isNotEmpty property="sUsrNm" prepend="AND">
+				USR_NM = #{sUsrNm}
+			</isNotEmpty>
+			<isNotEmpty property="sUsrTp" prepend="AND">
+				USR_TP = #{sUsrTp}
+			</isNotEmpty>
+			<isNotEmpty property="sUsrLv" prepend="AND">
+				USR_LV = #{sUsrLv}
+			</isNotEmpty>
+			<isNotEmpty property="sValue">
+				AND(			
+							USR_ID LIKE CONCAT('%',#{sValue},'%')
+						OR USR_NM LIKE CONCAT('%',#{sValue},'%')
+						OR	 EMAIL LIKE CONCAT('%',#{sValue},'%')
+						OR MOBILE LIKE CONCAT('%',#{sValue},'%')
+				)
+			</isNotEmpty>
+	</select>	
+	
+	<select id="getStoreList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getStoreList */
+			SELECT 	
+				STORE_ID AS sStoreId
+				,SHOW_TP AS sShowTp
+				,STORE_NM AS sStoreNm
+				,CMP_NM AS sCmpNm
+				,FN_DECRYPT(CMP_BIZ_NO) AS sCmpBizNo
+				,RPRSNTV_NM AS sRprsntvNm
+				,BIZCND AS sBizcnd
+				,INDUTY AS sInduty
+				,TEL_NO AS sTelNo
+				,FAX_NO AS sFaxNo
+				,ZIP_CD AS sZipCd
+				,ADRES AS sAdres
+				,ADRES_DTL AS sAdresDtl
+				,CHARGER_DEPT 		AS sChargerDept
+				,CHARGER_NM 			AS sChargerNm
+				,CHARGER_TEL_NO 	AS sChargerTelNo
+				,CHARGER_EMAIL 		AS sChargerEmail
+				,ERP_LV	AS sErpLv
+				,MOU_TP AS sMouTp
+				,CONFM_DT AS sConfmDt
+				,CONFM_ID AS sConfmId
+				,EXPIRY_DT AS sExpiryDt
+				,PAYMENT_DT AS sPaymentDt
+				,DLVY_FEE AS sDlvyFee
+				,FREE_DLVY AS sFreeDlvy
+				,FREE_AMT AS sFreeAmt
+				,RTN_FEE AS sRtnFee
+				,ECHG_FEE AS sEchgFee
+				,BANK AS sBank
+				,ACNUT_NO AS sAcnutNo
+				,ACNTR AS sAcntr
+				,TEX_EMAIL AS sTexEmail
+				,EXTRA_FEE_TP AS sExtraFeeTp
+				,T_ZONE1 AS sT_ZONE1
+				,T_ZONE2 AS sT_ZONE2
+				,T_ZONE3 AS sT_ZONE3
+				,H_ZONE1 AS sH_ZONE1
+				,H_ZONE2 AS sH_ZONE2
+				,H_ZONE3 AS sH_ZONE3
+				,APPN_RTN_HDRY AS sAppnRtnHdry
+				,HDRY AS sHdry
+				,RTN_ZIP_CD AS sRtnZipCd
+				,RTN_ADRES AS sRtnAdres
+				,RTN_ADRES_DTL AS sRtnAdresDtl
+				,ATCH_FILE_NO
+				,STTUS AS sSttus
+				,RMK AS sRmk
+				,CREATE_DT AS sCdt
+				,CREATE_ID AS sCid
+				,UPDATE_DT AS sUdt
+				,UPDATE_ID AS sUid
+				,(
+						SELECT
+						  CONCAT('/upload',FILE_STRE_COURS, FILE_STRE_NM)  
+						FROM  ATCH_FILE 
+						WHERE ATCH_FILE_NO = STORE_ID
+						AND ATCH_TP = 'BSL'
+						AND USE_AT ='Y'
+					)AS sBslImg
+			FROM STORE_INFO
+			WHERE WITHD_DT IS NULL
+			 	AND DELETE_DT IS NULL
+			<isNotEmpty property="erpLv" prepend="AND">
+				ERP_LV = #{erpLv}
+			</isNotEmpty>
+			<isNotEmpty property="sSttus" prepend="AND">
+				STTUS = #{sSttus}
+			</isNotEmpty>
+			<isNotEmpty property="sStoreId" prepend="AND">
+				STORE_ID = #{sStoreId}
+			</isNotEmpty>
+			<isNotEmpty property="sCmpBizNo" prepend="AND">
+				 FN_DECRYPT(CMP_BIZ_NO) = #{sCmpBizNo} COLLATE utf8_general_ci
+			</isNotEmpty>
+			<isNotEmpty property="sKeyWd">
+				AND(			
+							RPRSNTV_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
+						OR CHARGER_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
+						OR STORE_NM LIKE 		CONCAT('%',#{sKeyWd},'%')
+						OR CMP_NM LIKE 			CONCAT('%',#{sKeyWd},'%')
+				)
+			</isNotEmpty>
+	</select>	
+	
+	
+	<select id="getTmpStoreList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getTmpStoreList */
+			SELECT 	
+				STORE_ID
+				,FN_DECRYPT(CMP_BIZ_NO) AS CMP_BIZ_NO
+				,CMP_NM
+				,RPRSNTV_NM
+				,BIZCND
+				,INDUTY
+				,TEL_NO
+				,FAX_NO
+				,ZIP_CD
+				,SIGUNGU_CD
+				,ADRES
+				,ADRES_DTL
+				,STORE_NM
+				,CHARGER_NM
+				,CHARGER_TEL_NO
+				,CHARGER_EMAIL
+				,ATCH_FILE_NO
+				,STTUS
+				,RMK
+				,CREATE_DT
+				,CREATE_ID
+				,CONFM_DT
+				,CONFM_ID	
+				,(
+					SELECT
+					  CONCAT('/upload',FILE_PATH, FILE_SAVE_NAME)  
+					FROM  BOARD_FILE 
+					WHERE ARTICLE_ID = STORE_ID
+					AND BBS_ID = 'BSL'
+					AND USE_AT ='Y'
+				)AS BSL_IMG		
+			FROM STORE_INFO
+			WHERE 1 = 1
+			<isNotEmpty property="sSttus" prepend="AND">
+				STTUS = #{sSttus}
+			</isNotEmpty>
+			<isNotEmpty property="sStoreId" prepend="AND">
+				STORE_ID = #{sStoreId}
+			</isNotEmpty>
+			<isNotEmpty property="sCmpBizNo" prepend="AND">
+				 FN_DECRYPT(CMP_BIZ_NO) = #{sCmpBizNo} COLLATE utf8_general_ci
+			</isNotEmpty>
+			<isNotEmpty property="sKeyWd">
+				AND(			
+							RPRSNTV_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
+						OR CHARGER_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
+						OR STORE_NM LIKE 		CONCAT('%',#{sKeyWd},'%')
+						OR CMP_NM LIKE 			CONCAT('%',#{sKeyWd},'%')
+				)
+			</isNotEmpty>
+	</select>	
+	
+	<select id="getContList" parameterType="hashMap" resultType="hashMap">
+ 		/* FrontSearchDao.getContList */
+		<include refid="FrontSearch.contactBody"/>
+	  	  AND WRITER = #{sWriter}
+		<if test='sBbsId != ""'>
+			AND BBS_ID IN (
+				#{sBbsId}
+				<if test='USR_TP == "H"'>
+					,'MNG'
+				</if>
+			)
+		</if>
+	</select>	
+	
+	<select id="getUserBbs" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getUserBbs */
+		<include refid="FrontSearch.contactBody"/>
+	  	  AND WRITER = #{sCid}
+		<isNotEmpty property="sBbsId" prepend="AND">
+			BBS_ID = #{sBbsId}
+		</isNotEmpty>
+	</select>	
+	
+	<select id="getUserCart" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getUserCart */
+		SELECT 
+			 M.PRDT_CD AS sPcd	
+			, D.PRDT_DTL_CD AS sDprdtCd
+			, M.PRDT_NM AS sDprdtNm
+			, D.STNDRD AS sDstndrd
+			, M.MAKR_NM AS sDmakrNm
+			, D.SEL_PRICE AS sDtotPrice
+			, C.QY AS sDqy
+			, (D.SEL_PRICE * C.QY) AS sDsumPrice
+			, C.CREATE_DT AS sCdt
+			, M.EBOOK_IMG_NO AS eIMGNo	
+		FROM USER_CART C, PRDT_MST M, PRDT_DTL D
+		WHERE C.PRDT_CD 			= M.PRDT_CD
+			AND C.PRDT_CD 			= D.PRDT_CD
+			AND C.PRDT_DTL_CD 	= D.PRDT_DTL_CD	
+			AND C.USR_ID 				= #{sCid}
+	</select>	
+	
+	<select id="getUserDCart" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getUserDCart */
+		SELECT 
+			 M.PRDT_CD AS sPcd	
+			, D.PRDT_DTL_CD AS sDprdtCd
+			, M.PRDT_NM AS sDprdtNm
+			, D.STNDRD AS sDstndrd
+			, M.MAKR_NM AS sDmakrNm
+			, D.SEL_PRICE AS sDtotPrice
+			, C.QY AS sDqy
+			, (D.SEL_PRICE * C.QY) AS sDsumPrice
+			, C.CREATE_DT AS sCdt
+			, C.DELETE_DT AS sDdt
+			, M.EBOOK_IMG_NO AS eIMGNo	
+		FROM USER_CART_HIST C, PRDT_MST M, PRDT_DTL D
+		WHERE C.PRDT_CD 			= M.PRDT_CD
+			AND C.PRDT_CD 			= D.PRDT_CD
+			AND C.PRDT_DTL_CD 	= D.PRDT_DTL_CD	
+			AND C.USR_ID 				= #{sCid}
+	</select>	
+	
+	<select id="getContBbsList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getContBbsList */
+		<include refid="FrontSearch.contactBody"/>
+		<isNotEmpty property="sCid" prepend="AND">
+	  	  	WRITER = #{sCid}
+		</isNotEmpty>
+		<isNotEmpty property="sBbsId" prepend="AND">
+			BBS_ID = #{sBbsId}
+		</isNotEmpty>
+		<isNotEmpty property="sValue" prepend="AND">
+			(
+				TITLE LIKE CONCAT('%',#{sValue},'%')
+				OR CONTENT LIKE CONCAT('%',#{sValue},'%')
+			)
+		</isNotEmpty>
+		<if test='isNoAns == "Y"'>
+			AND ANSWER_DT IS NULL
+		</if> 
+		<if test='isNoAns == "N"'>
+			AND ANSWER_DT IS NOT NULL
+		</if> 
+		<if test='sBbsId == ""'>
+			AND BBS_ID NOT IN ('MNG','ORD')
+		</if>
+		<isNotEmpty property="sDt" prepend="AND">
+			DATE(CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+		</isNotEmpty>
+		<isNotEmpty property="eDt" prepend="AND">
+			DATE(CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+		</isNotEmpty>
+		ORDER BY  ANSWER_DT, CREATE_DT, BBS_ID 
+	</select>	
+	
+	<select id="getPrdtList" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getPrdtList*/
+		SELECT DISTINCT
+			A.PRDT_CD as sPcd,
+			A.PRDT_DTL_CD as sScd,
+			A.OUT_AMT AS sOutAmt,
+			A.OUT_UNIT sOutUnit,
+			A.PRDT_NM as sNm,
+			A.MAKR_NM as sMk,
+			A.STNDRD as sSt, 
+			A.SEL_PRICE as sPrice,
+			CONCAT('/upload',A.PRDT_IMG) as sImg, 
+         	A.LEV1_CD as sCcd1,
+        	A.LEV5_CD as sCcd,
+        	A.LEV5_NM as sCnm
+		FROM (
+					<include refid="FrontSearch.body"/>
+						,(		  SELECT C.LEV1_CD, C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
+								  FROM   (
+												<include refid="FrontSearch.categBody"/>
+												<include refid="FrontSearch.categDepthWhere"/>
+								  				)AS C
+						)AS CATEG
+			<include refid="FrontSearch.where"/>
+			AND PM.CATEG_CD = CATEG.LEV3_CD	
+			AND PM.PRDT_TP = #{PRDT_TP}
+			AND PM.USE_YN = 'Y'
+			AND PM.DELETE_DT IS NULL
+			AND PD.USE_YN = 'Y'
+			AND PD.SOLDOUT_AT = 'N'
+			AND PD.DELETE_DT IS NULL
+         ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD, PD.PRDT_DTL_CD		
+		)AS A
+	</select>
+		
+	<select id="getPrdtDistList" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getPrdtDistList*/
+		SELECT DISTINCT
+			A.PRDT_CD as sPcd,
+			A.PRDT_NM as sNm,
+			A.MAKR_NM as sMk,
+			CONCAT('/upload',A.PRDT_IMG) as sImg, 
+         	A.LEV1_CD as sCcd1,
+        	A.LEV5_CD as sCcd,
+        	A.LEV5_NM as sCnm
+		FROM (
+					<include refid="FrontSearch.body"/>
+						,(		  SELECT C.LEV1_CD, C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
+								  FROM   (
+												<include refid="FrontSearch.categBody"/>
+												<include refid="FrontSearch.categDepthWhere"/>
+								  				)AS C
+						)AS CATEG
+			<include refid="FrontSearch.where"/>
+			AND PM.CATEG_CD = CATEG.LEV5_CD	
+			AND PM.PRDT_TP = #{PRDT_TP}
+			AND PM.USE_YN = 'Y'
+			AND PM.DELETE_DT IS NULL
+			AND PD.USE_YN = 'Y'
+			AND PD.SOLDOUT_AT = 'N'
+			AND PD.DELETE_DT IS NULL
+         ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD, PD.PRDT_DTL_CD		
+		)AS A
+	</select>	
+	
+	<select id="getPrdtInfo" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPrdtInfo */
+		<include refid="FrontSearch.prductBody"/>
+		<include refid="FrontSearch.prductWhere"/>	
+	</select>	
+	
+	
+	
+	
+	<select id="getPrdtDtlList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPrdtDtlList */			
+			SELECT 
+					PM.PRDT_CD AS sPcd,
+			       	PD.PRDT_DTL_CD AS sScd, 
+					PM.ORG_PRDT_CD , 
+					PM.PRDT_NM AS sNm,
+			       	PD.STNDRD AS sSt,
+					PM.STORE_ID,
+					SI.STORE_NM,
+					PM.MAKR_NM AS sMk,
+					PM.MAKR_CD, 
+					PD.MODEL_NM AS sMd,
+			       	PD.SEL_CNT,
+			       	PD.SEL_PRICE  AS sPrice,
+			       	PD.PUR_PRICE  AS sPprice,
+			       	PD.OUT_AMT ,
+			       	PD.OUT_UNIT ,
+			       	PD.PUR_SUPPLY,
+					PD.ORG_CMP_CD, 
+			       	PD.INVT_AMT,
+					PD.BARCODE,
+					PM.ORG_PLCE,
+					PM.CATEG_CD,
+					PM.PRDT_IMG,
+					PM.EXTRA_IMG_AT,
+					PM.EXTRA_IMG_NO,
+					PM.EBOOK_IMG_AT,
+                    PM.EBOOK_IMG_NO,
+                    PM.CTL_IMG_AT,
+					(SELECT FILE_DC 
+						FROM ATCH_FILE 
+					WHERE ATCH_FILE_NO = PM.CTL_IMG_NO 
+						AND ATCH_TP = 'PDI' 
+						AND USE_AT ='Y' 
+						LIMIT 0,1)AS CTL_IMG,
+					PM.PRDT_INFO,
+					PM.PRDT_DTL_INFO,
+					PM.PRDT_NOTICE_TP,
+					PM.DLVY_TP,
+					PM.DLVY_FEE_TP,
+					PM.PKG_TP,
+					PM.DLVY_FEE, 
+					PM.PRDT_MD,
+					PD.SOLDOUT_AT,
+					PD.SOLDOUT_DT,
+					PD.RE_SALE_DT,
+					PM.ORG_PLCE,
+					PM.EXT_INFO_TIT_1, 
+					PM.EXT_INFO_VAL_1,
+					PM.EXT_INFO_TIT_2,
+					PM.EXT_INFO_VAL_2,
+					PM.EXT_INFO_TIT_3,
+					PM.EXT_INFO_VAL_3,
+					PM.EXT_INFO_TIT_4,
+					PM.EXT_INFO_VAL_4,
+					PM.EXT_INFO_TIT_5,
+					PM.EXT_INFO_VAL_5,
+					PM.EXT_INFO_TIT_6,
+					PM.EXT_INFO_VAL_6, 
+                  	CATEG.LEV1_CD,
+                	CATEG.LEV2_CD,
+                	CATEG.LEV3_CD,
+                	CATEG.LEV4_CD,
+                	CATEG.LEV5_CD AS sCcd,
+                	CATEG.LEV5_NM  AS sCnm
+			FROM   PRDT_MST PM, PRDT_DTL PD,  STORE_INFO SI
+						,(		  SELECT C.LEV1_CD, C.LEV2_CD, C.LEV3_CD, C.LEV4_CD, C.LEV5_CD, C.LEV5_NM
+								  FROM   (
+												<include refid="FrontSearch.categBody"/>
+												<include refid="FrontSearch.categDepthWhere"/>
+								  				)AS C
+						)AS CATEG
+			<include refid="FrontSearch.where"/>
+			AND PM.CATEG_CD 	= CATEG.LEV5_CD	
+			AND PM.STORE_ID	= SI.STORE_ID
+			AND PM.PRDT_TP 	= #{PRDT_TP}
+			
+			<isNotEmpty property="mStoreId">
+				AND PM.STORE_ID	= #{mStoreId}
+			</isNotEmpty>
+			<isNotEmpty property="sPrdtTp">
+				<if test='sPrdtTp == "5"'>
+					AND PD.SOLDOUT_AT = 'Y'
+				</if>
+				<if test='sPrdtTp == "2"'>
+					AND PD.USE_YN = 'N'
+				</if>
+				<if test='sPrdtTp == "3"'>
+					AND PD.DELETE_DT IS NOT NULL
+				</if>
+				<if test='sPrdtTp == "1"'>
+					AND PD.USE_YN = 'Y'
+					AND PD.SOLDOUT_AT = 'N'
+					AND PD.DELETE_DT IS  NULL
+				</if>
+				<if test='sPrdtTp == "6"'>
+					AND PD.USE_YN = 'Y'
+					AND PD.DELETE_DT IS  NULL
+				</if>
+			</isNotEmpty> 
+         ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD, PD.PRDT_DTL_CD		
+	</select>	
+	
+	<select id="getPrdtDtlList2" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPrdtDtlList2 */			
+			SELECT 
+					PM.PRDT_CD ,
+			       	PD.PRDT_DTL_CD, 
+					PM.ORG_PRDT_CD , 
+					PM.PRDT_NM,
+			       	PD.STNDRD,
+					PM.STORE_ID,
+					SI.STORE_NM,
+					PM.MAKR_NM,
+					PM.MAKR_CD, 
+					PD.MODEL_NM,
+			       	PD.SEL_CNT,
+			       	PD.SEL_PRICE,
+			       	PD.PUR_PRICE,
+			       	PD.OUT_AMT ,
+			       	PD.OUT_UNIT ,
+			       	PD.PUR_SUPPLY,
+					PD.ORG_CMP_CD, 
+			       	PD.INVT_AMT,
+					PD.BARCODE,
+					PM.ORG_PLCE,
+					PM.CATEG_CD,
+					PM.PRDT_IMG,
+					PM.EXTRA_IMG_AT,
+					PM.EXTRA_IMG_NO,
+					PM.EBOOK_IMG_AT,
+                    PM.EBOOK_IMG_NO,
+                    PM.CTL_IMG_AT,
+					(SELECT FILE_DC 
+						FROM ATCH_FILE 
+					WHERE ATCH_FILE_NO = PM.CTL_IMG_NO 
+						AND ATCH_TP = 'PDI' 
+						AND USE_AT ='Y' 
+						LIMIT 0,1)AS CTL_IMG,
+					PM.PRDT_INFO,
+					PM.PRDT_DTL_INFO,
+					PM.PRDT_NOTICE_TP,
+					PM.DLVY_TP,
+					PM.DLVY_FEE_TP,
+					PM.PKG_TP,
+					PM.DLVY_FEE, 
+					PM.PRDT_MD,
+					PD.SOLDOUT_DT,
+					PD.RE_SALE_DT,
+					PM.ORG_PLCE,
+					PM.EXT_INFO_TIT_1, 
+					PM.EXT_INFO_VAL_1,
+					PM.EXT_INFO_TIT_2,
+					PM.EXT_INFO_VAL_2,
+					PM.EXT_INFO_TIT_3,
+					PM.EXT_INFO_VAL_3,
+					PM.EXT_INFO_TIT_4,
+					PM.EXT_INFO_VAL_4,
+					PM.EXT_INFO_TIT_5,
+					PM.EXT_INFO_VAL_5,
+					PM.EXT_INFO_TIT_6,
+					PM.EXT_INFO_VAL_6, 
+                  	CATEG.LEV1_CD,
+                	CATEG.LEV2_CD,
+                	CATEG.LEV3_CD,
+                	CATEG.LEV4_CD,
+                	CATEG.LEV5_CD AS sCcd,
+                	CATEG.LEV5_NM  AS sCnm
+			FROM   PRDT_MST PM, PRDT_DTL PD,  STORE_INFO SI
+						,(		  SELECT C.LEV1_CD, C.LEV2_CD, C.LEV3_CD, C.LEV4_CD, C.LEV5_CD, C.LEV5_NM
+								  FROM   (
+												<include refid="FrontSearch.categBody"/>
+												<include refid="FrontSearch.categDepthWhere"/>
+								  				)AS C
+						)AS CATEG
+			<include refid="FrontSearch.where"/>
+			AND PM.CATEG_CD 	= CATEG.LEV5_CD	
+			AND PM.STORE_ID	= SI.STORE_ID
+			AND PM.PRDT_TP 	= #{PRDT_TP}
+			
+			<isNotEmpty property="mStoreId">
+				AND PM.STORE_ID	= #{mStoreId}
+			</isNotEmpty>
+			<isNotEmpty property="sPrdtTp">
+				<if test='sPrdtTp == "5"'>
+					AND PD.SOLDOUT_AT = 'Y'
+				</if>
+				<if test='sPrdtTp == "2"'>
+					AND PD.USE_YN = 'N'
+				</if>
+				<if test='sPrdtTp == "3"'>
+					AND PD.DELETE_DT IS NOT NULL
+				</if>
+				<if test='sPrdtTp == "1"'>
+					AND PD.USE_YN = 'Y'
+					AND PD.SOLDOUT_AT = 'N'
+					AND PD.DELETE_DT IS  NULL
+				</if>
+			</isNotEmpty> 
+         ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD, PD.PRDT_DTL_CD		
+	</select>	
+	
+	<select id="getPrdtDtlList3" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPrdtDtlList3 */			
+			SELECT 
+					PM.PRDT_CD ,
+					PM.ORG_PRDT_CD , 
+					PM.PRDT_NM,
+					PM.STORE_ID,
+					PM.MAKR_NM,
+					PM.MAKR_CD, 
+					PM.ORG_PLCE,
+					PM.CATEG_CD,
+					PM.PRDT_IMG,
+					PM.EXTRA_IMG_AT,
+					PM.EXTRA_IMG_NO,
+					PM.EBOOK_IMG_AT,
+                    PM.EBOOK_IMG_NO,
+                    PM.CTL_IMG_AT,
+					(SELECT FILE_DC 
+						FROM ATCH_FILE 
+					WHERE ATCH_FILE_NO = PM.CTL_IMG_NO 
+						AND ATCH_TP = 'PDI' 
+						AND USE_AT ='Y' 
+						LIMIT 0,1)AS CTL_IMG,
+					PM.PRDT_INFO,
+					PM.PRDT_DTL_INFO,
+					PM.PRDT_NOTICE_TP,
+					PM.DLVY_TP,
+					PM.DLVY_FEE_TP,
+					PM.PKG_TP,
+					PM.DLVY_FEE, 
+					PM.PRDT_MD,
+					PM.ORG_PLCE,
+                  	CATEG.LEV1_CD,
+                	CATEG.LEV2_CD,
+                	CATEG.LEV3_CD,
+                	CATEG.LEV4_CD,
+                	CATEG.LEV5_CD AS sCcd,
+                	CATEG.LEV5_NM  AS sCnm
+			FROM   PRDT_MST PM
+						,(		  SELECT C.LEV1_CD, C.LEV2_CD, C.LEV3_CD, C.LEV4_CD, C.LEV5_CD, C.LEV5_NM
+								  FROM   (
+												<include refid="FrontSearch.categBody"/>
+												<include refid="FrontSearch.categDepthWhere"/>
+								  				)AS C
+						)AS CATEG
+			WHERE PM.CATEG_CD 	= CATEG.LEV5_CD	
+				AND PM.PRDT_TP 	= #{PRDT_TP}
+				<isNotEmpty property="mValue">
+					AND(			
+									PM.PRDT_NM LIKE CONCAT('%',#{mValue},'%')
+							OR	PM.MAKR_NM LIKE CONCAT('%',#{mValue},'%')
+							OR	PM.PRDT_CD LIKE CONCAT('%',#{mValue},'%')
+					)
+				</isNotEmpty>
+				<isNotEmpty property="mName">
+					AND			PM.PRDT_NM LIKE CONCAT('%',#{mName},'%')
+				</isNotEmpty>
+				<isNotEmpty property="mBrand">
+					AND			PM.MAKR_NM LIKE CONCAT('%',#{mBrand},'%')
+				</isNotEmpty>
+				<isNotEmpty property="mPrdtCd">
+					AND			PM.PRDT_CD = #{mPrdtCd}
+				</isNotEmpty>
+         ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD
+	</select>	
+	
+	<select id="getPrdtInfoMst" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPrdtInfoMst */			
+			SELECT DISTINCT 
+				   PM.PRDT_CD, 
+				   PM.STORE_ID, 
+			       PM.PRDT_NM, 
+			       PM.PRDT_ETC_NM, 
+			       PM.MAKR_NM, 
+			       PM.MAKR_CD, 
+			       PM.CATEG_CD, 
+			       PM.ORG_PLCE, 
+			       PM.ORG_PRDT_CD,   
+			       PM.ST_CARE_AT,  
+			       PM.MNF_AT,  
+			       PM.USE_YN,   
+			       PM.AD_YN,   
+			       PM.DLVY_FEE,  
+			       PM.PRDT_IMG, 
+			       PM.PRDT_INFO, 
+			       PM.EXT_INFO_TIT_1, 
+			       PM.EXT_INFO_VAL_1, 
+			       PM.EXT_INFO_TIT_2, 
+			       PM.EXT_INFO_VAL_2, 
+			       PM.EXT_INFO_TIT_3, 
+			       PM.EXT_INFO_VAL_3, 
+			       PM.EXT_INFO_TIT_4, 
+			       PM.EXT_INFO_VAL_4, 
+			       PM.EXT_INFO_TIT_5, 
+			       PM.EXT_INFO_VAL_5, 
+			       PM.EXT_INFO_TIT_6, 
+			       PM.EXT_INFO_VAL_6,   
+			       PM.VIEW_CNT, 
+			       PM.SEL_CNT,  
+			       PM.EXTRA_IMG_AT, 
+			       PM.EXTRA_IMG_NO, 
+			       PM.EBOOK_IMG_AT, 
+			       PM.EBOOK_IMG_NO, 
+			       PM.CTL_IMG_AT, 
+			       PM.CTL_IMG_NO,    
+			       PM.VIEW_CNT, 
+			       PM.SEL_CNT,
+			       CONCAT(CATEG.LEV2_NM, ' > ',CATEG.LEV3_NM, ' > ',CATEG.LEV4_NM, ' > ',CATEG.LEV5_NM) AS CATEG_NM     
+			FROM   STORE_INFO SI
+						,(		  SELECT C.LEV1_NM, C.LEV2_NM, C.LEV3_NM, C.LEV4_NM, C.LEV5_NM, C.LEV5_CD
+								  FROM   (
+												<include refid="FrontSearch.categBody"/>
+												<include refid="FrontSearch.categDepthWhere"/>
+								  				)AS C
+						)AS CATEG
+						, PRDT_MST PM
+				       LEFT JOIN PRDT_DTL PD  
+				       ON PM.PRDT_CD = PD.PRDT_CD
+				       AND PM.STORE_ID = PD.STORE_ID
+			WHERE PM.CATEG_CD 	= CATEG.LEV5_CD	
+			AND PM.STORE_ID	= SI.STORE_ID
+			AND PM.PRDT_TP 	= #{PRDT_TP}
+			<isNotEmpty property="mValue">
+					AND(			
+								PM.PRDT_NM LIKE CONCAT('%',#{mValue},'%')
+						OR	PM.MAKR_NM LIKE CONCAT('%',#{mValue},'%')
+						OR	PD.STNDRD LIKE CONCAT('%',#{mValue},'%')
+						OR	PD.MODEL_NM LIKE CONCAT('%',#{mValue},'%')
+						OR	PM.PRDT_CD LIKE CONCAT('%',#{mValue},'%')
+						OR	PD.PRDT_DTL_CD LIKE CONCAT('%',#{mValue},'%')
+					)
+			</isNotEmpty>
+			<isNotEmpty property="mPrdtCd">
+				AND PM.PRDT_CD = #{mPrdtCd}
+			</isNotEmpty>
+			<isNotEmpty property="mName">
+				AND PM.PRDT_NM LIKE CONCAT('%',#{mName},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mBrand">
+				AND PM.MAKR_NM LIKE CONCAT('%',#{mBrand},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mStndrd">
+				AND PD.STNDRD LIKE CONCAT('%',#{mStndrd},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mModel">
+				AND PD.MODEL_NM LIKE CONCAT('%',#{mModel},'%')
+			</isNotEmpty> 
+			<isNotEmpty property="mStoreId">
+				AND PM.STORE_ID	= #{mStoreId}
+			</isNotEmpty>
+			<isNotEmpty property="sPrdtTp">
+				<if test='sPrdtTp == "1"'> 
+					AND PM.USE_YN = 'Y'
+					AND PD.USE_YN = 'Y'
+					AND PD.SOLDOUT_AT = 'N' 
+				</if>
+				<if test='sPrdtTp == "5"'>
+					AND PD.SOLDOUT_AT = 'Y' 
+				</if>
+				<if test='sPrdtTp == "2"'>
+					AND PD.USE_YN = 'N'
+				</if>
+			</isNotEmpty>
+			<isNotEmpty property="sPrdtCd">
+				AND PM.PRDT_CD	= #{sPrdtCd}
+			</isNotEmpty>
+			<isNotEmpty property="STcareYn">
+				AND PM.ST_CARE_AT	= #{STcareYn}
+			</isNotEmpty>
+			<isNotEmpty property="mnfYn">
+				AND PM.MNF_AT	= #{mnfYn}
+			</isNotEmpty>
+			<isNotEmpty property="moveYn">
+				AND PM.MOVE_AT	= #{moveYn}
+			</isNotEmpty>
+			<isNotEmpty property="ebookYn">
+				AND PM.EBOOK_IMG_AT	= #{ebookYn}
+			</isNotEmpty>
+			<isNotEmpty property="ctlImgYn">
+				AND PM.CTL_IMG_AT	= #{ctlImgYn}
+			</isNotEmpty>
+			<isNotEmpty property="adYn">
+				AND PM.AD_YN	= #{adYn}
+			</isNotEmpty>
+         ORDER BY PM.PRDT_CD		
+	</select>	
+	
+	
+	
+	<select id="getPrdtInfoDtl" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPrdtInfoDtl */			
+			SELECT DISTINCT 
+			       PM.PRDT_NM, 
+				   PD.PRDT_CD, 
+				   PD.STORE_ID, 
+				   PD.PRDT_DTL_CD, 
+				   PD.BARCODE, 
+				   PD.PRDT_IMG, 
+				   PD.ORG_PRDT_CD, 
+				   PD.ORG_CMP_CD, 
+				   PD.STNDRD, 
+				   PD.MODEL_NM, 
+				   PD.INVT_AMT, 
+				   PD.SEL_PRICE, 
+				   PD.PUR_PRICE, 
+				   PD.OUT_AMT, 
+				   PD.OUT_UNIT, 
+				   PD.PUR_SUPPLY, 
+				   PD.SALE_PRICE, 
+				   PD.SOLDOUT_AT, 
+				   PD.SOLDOUT_DT, 
+				   PD.RE_SALE_DT, 
+				   PD.USE_YN 
+			FROM   PRDT_MST PM, PRDT_DTL PD,  STORE_INFO SI
+						,(		  SELECT C.LEV1_NM, C.LEV2_NM, C.LEV3_NM, C.LEV4_NM, C.LEV5_NM, C.LEV5_CD
+								  FROM   (
+												<include refid="FrontSearch.categBody"/>
+												<include refid="FrontSearch.categDepthWhere"/>
+								  				)AS C
+						)AS CATEG
+			<include refid="FrontSearch.where"/>
+			<isNotEmpty property="mStoreId">
+				AND PM.STORE_ID	= #{mStoreId}
+			</isNotEmpty>
+			AND PM.CATEG_CD 	= CATEG.LEV5_CD	
+			AND PM.STORE_ID	= SI.STORE_ID
+			AND PM.PRDT_TP 	= #{PRDT_TP}
+			<isNotEmpty property="sPrdtTp">
+				<if test='sPrdtTp == "1"'>
+					AND PM.USE_YN = 'Y'
+					AND PD.USE_YN = 'Y'
+					AND PD.SOLDOUT_AT = 'N' 
+				</if>
+				<if test='sPrdtTp == "5"'>
+					AND PD.SOLDOUT_AT = 'Y' 
+				</if>
+				<if test='sPrdtTp == "2"'>
+					AND PD.USE_YN = 'N'
+				</if>
+			</isNotEmpty> 
+			<isNotEmpty property="sPrdtCd">
+				AND PM.PRDT_CD	= #{sPrdtCd}
+			</isNotEmpty>
+			<isNotEmpty property="STcareYn">
+				AND PM.ST_CARE_AT	= #{STcareYn}
+			</isNotEmpty>
+			<isNotEmpty property="mnfYn">
+				AND PM.MNF_AT	= #{mnfYn}
+			</isNotEmpty>
+			<isNotEmpty property="moveYn">
+				AND PM.MOVE_AT	= #{moveYn}
+			</isNotEmpty>
+			<isNotEmpty property="ebookYn">
+				AND PM.EBOOK_IMG_AT	= #{ebookYn}
+			</isNotEmpty>
+			<isNotEmpty property="ctlImgYn">
+				AND PM.CTL_IMG_AT	= #{ctlImgYn}
+			</isNotEmpty>
+			<isNotEmpty property="adYn">
+				AND PM.AD_YN	= #{adYn}
+			</isNotEmpty>
+         ORDER BY PD.PRDT_CD, PD.PRDT_DTL_CD
+	</select>	
+	
+	<select id="getPromoPrdtList" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getPromoPrdtList*/
+			SELECT
+				A.PROMO_ID 		AS sPrmId,
+				A.ARTICLE_ID 		AS sArtCd,
+				A.PRDT_CD 			AS sPcd,
+				A.PRDT_DTL_CD 	AS sScd,
+				B.PRDT_NM 		AS sNm,
+				B.MAKR_NM 		AS sMk,
+				C.STNDRD 			AS sSt,
+				C.SEL_PRICE 		AS sPrice
+			FROM PROMO_PRDUCT A, PRDT_MST B, PRDT_DTL C
+			WHERE A.PROMO_ID 			= #{mPrmId}
+			 	AND A.ARTICLE_ID 		= #{mAartCd}
+				AND A.PRDT_DTL_CD 	= C.PRDT_DTL_CD
+				AND C.PRDT_CD 			= B.PRDT_CD
+         ORDER BY B.PRDT_CD, C.PRDT_DTL_CD		
+	</select>	
+	
+	<select id="getUpPrdtList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getUpPrdtList */
+		SELECT A.PRDT_CD AS sPrdtCd,
+		       A.STORE_ID AS sSId,
+		       (SELECT CMP_NM
+		       FROM    STORE_INFO
+		       WHERE   STORE_ID = A.STORE_ID
+		       ) AS sSNm ,
+		       A.PRDT_DTL_CD AS sPrdtDtlCd,
+		       A.CATEG_CD1 AS ca1,
+		       A.CATEG_CD2 AS ca2,
+		       A.CATEG_CD3 AS ca3,
+		       A.CATEG_CD4 AS ca4,
+		       A.CATEG_CD5 AS ca5,
+		       A.PRDT_NM AS sPrdtNm,
+		       A.PRDT_ETC_NM AS sPrdtEtcNm,
+		       A.PRDT_TP AS sPrdtTp,
+		       A.STNDRD AS sStndrd,
+		       A.MAKR_CD AS sMakerCd,
+		       A.MAKR_NM AS sMakerNm,
+		       A.MODEL_NM AS sModelNm,
+		       A.ORG_PLCE AS sOrgPlce,
+		       A.INVT_AMT AS sAmt,
+		       A.SEL_PRICE AS sPrice,
+		       A.PUR_PRICE AS sPurPrice,
+		       (SELECT CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME)
+		       FROM    BOARD_FILE
+		       WHERE   BBS_ID     ='PRDT_MAIN'
+		       AND     ARTICLE_ID = A.PRDT_CD
+		       ) AS sPImg,
+		       A.EXTRA_IMG_AT AS sEImgYn,
+		       (SELECT  GROUP_CONCAT(CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME) ORDER BY FILE_ID SEPARATOR '|')
+		       FROM     BOARD_FILE
+		       WHERE    BBS_ID     ='PRDT_SUB'
+		       AND      ARTICLE_ID = A.PRDT_CD
+		       )  AS sEImg,
+		       A.PRDT_INFO AS sPdrtInfo,
+		       A.PRDT_DTL_INFO AS sPrdtDtlInfo,
+		       A.PRDT_NOTICE_TP AS sPrdtNotiTp,
+		       A.DLVY_TP AS sDlTp,
+		       A.DLVY_FEE_TP AS sDlFeeTp,
+		       A.PKG_TP AS sPkgTp,
+		       A.DLVY_FEE AS sDlFee,
+		       A.CONFM_YN AS sConYN,
+		       A.CONFM_DT AS sConDt,
+		       A.CONFM_ID AS sConId,
+		       A.CONFM_RMK AS sConRMK,
+		       A.STTUS AS sSttus,
+		       A.CREATE_DT AS sCdt,
+		       A.CREATE_ID AS sCid,
+		       A.UPDATE_DT AS sUdt,
+		       A.UPDATE_ID AS sUid
+		FROM   TMP_PRDT_INFO A
+		WHERE 1 = 1
+			AND A.USE_YN = 'Y'
+		<isNotEmpty property="sSus" prepend="AND">
+			A.STTUS = #{sSus}
+		</isNotEmpty>
+		<isNotEmpty property="sNm"  prepend="AND">
+			A.STORE_ID = #{sNm}
+		</isNotEmpty> 
+		<isNotEmpty property="sValue"  prepend="AND">
+			(
+			A.PRDT_NM LIKE CONCAT('%',#{sValue},'%')
+			OR A.STNDRD LIKE CONCAT('%',#{sValue},'%')
+			)
+		</isNotEmpty> 
+		<isNotEmpty property="sDt"  prepend="AND">
+			DATE(A.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+		</isNotEmpty> 
+		<isNotEmpty property="eDt"  prepend="AND">
+			DATE(A.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+		</isNotEmpty> 
+	</select>	
+	
+	<select id="getMdPrdtList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getMdPrdtList */
+		SELECT MD.RECOM_ID AS sId , 
+		       CONCAT('/upload',PM.PRDT_IMG) AS sImg , 
+		       PM.PRDT_CD AS sPcd , 
+		       COUNT(PD.PRDT_DTL_CD) AS sScd , 
+		       MIN(PD.STNDRD) AS sSt , 
+		       MIN(PD.SEL_PRICE) AS sPrice , 
+		       PM.PRDT_NM AS sNm , 
+		       PM.MAKR_NM AS sMk , 
+		       MD.RECOM_TP AS sRTp 
+		  FROM RECOM_PRDUCT MD, 
+		       PRDT_MST PM, 
+		       PRDT_DTL PD 
+		 WHERE MD.PRDT_CD 	= PM.PRDT_CD 
+		 	AND PD.PRDT_CD 		= PM.PRDT_CD 
+		    AND PD.STORE_ID 	= PM.STORE_ID 
+		 GROUP BY MD.RECOM_ID, PD.PRDT_CD, PM.PRDT_NM,PM.MAKR_NM
+		ORDER BY MD.RECOM_ID, MD.RECOM_TP		
+	</select>	
+	<select id="getMdPrdtList2" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getMdPrdtList */
+		SELECT 
+			   MD.RECOM_ID    	AS sId ,
+		       CONCAT('/upload',PM.PRDT_IMG) AS sImg ,
+		       PD.PRDT_CD     	AS sPcd ,
+		       PD.PRDT_DTL_CD 	AS sScd ,
+		       PD.STNDRD      	AS sSt ,
+		       PD.SEL_PRICE   	AS sPrice ,
+		       PM.PRDT_NM     	AS sNm ,
+		       PM.MAKR_NM     	AS sMk ,
+		       MD.RECOM_TP    	AS sRTp
+		FROM   RECOM_PRDUCT MD,
+		       PRDT_MST PM,
+		       PRDT_DTL PD
+		WHERE  MD.PRDT_CD 		= PM.PRDT_DTL_CD
+			AND  PD.PRDT_CD     	= PM.PRDT_CD
+			AND  PD.STORE_ID    	= PM.STORE_ID	
+	</select>	
+	
+	<select id="getMovieList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getMovieList */
+			SELECT 
+			 	P.PROMO_ID AS sPrmId
+               ,P.BBS_ID AS sBbsId
+               ,P.ARTICLE_ID AS sArtCd
+               ,P.PROMO_TP AS sPrmTp
+               ,P.PRDT_CD AS sPrdtCd
+               ,P.TITLE AS sTitle
+               ,P.URL AS sUrl
+               ,P.WIDTH AS sWidth
+               ,P.HEIGHT AS sHeight
+               ,P.USE_YN AS sUseYN
+			FROM PROMO_BOARD AS P
+			WHERE P.USE_YN = 'Y' 
+			<isNotEmpty property="onlyMovie">
+				AND P.URL IS NOT NULL
+			</isNotEmpty>
+			<isNotEmpty property="sPrdtCd">
+				AND P.PRDT_CD = #{sPrdtCd}
+			</isNotEmpty>
+			<isNotEmpty property="sBbsId">
+				AND P.BBS_ID = #{sBbsId}
+			</isNotEmpty>
+	</select>	
+	
+	<select id="getOrderDashBoard" parameterType="hashMap" resultType="hashMap">
+		SELECT 
+			SUM(A.T_OR) AS T_OR   
+			,SUM(A.T_OR_ITEM) AS T_OR_ITEM 
+			,SUM(A.OR_0) AS OR_0 
+			,SUM(A.OR_1) AS OR_1 
+			,SUM(A.OR_O_1) AS OR_O_1 
+			,SUM(A.OR_2) AS OR_2 
+			,SUM(A.OR_O_2) AS OR_O_2 
+			,SUM(A.OR_3) AS OR_3 
+			,SUM(A.OR_O_3) AS OR_O_3 
+			,SUM(A.OR_C_3) AS OR_C_3 
+			,SUM(A.OR_4) AS OR_4 
+			,SUM(A.OR_O_4) AS OR_O_4 
+
+			,SUM(A.E_3) AS E_3 
+			,SUM(A.E_O_3) AS E_O_3 
+			,SUM(A.E_S_4) AS E_S_4 
+			,SUM(A.E_C_5) AS E_C_5 
+			,SUM(A.E_C_9) AS E_C_9 
+			
+			,SUM(A.OR_5) AS OR_5 
+			,SUM(A.OR_51) AS OR_51 
+			,SUM(A.OR_52) AS OR_52 
+			,SUM(A.OR_C_52) AS OR_C_52 
+			,SUM(A.OR_7) AS OR_7 
+			,SUM(A.OR_71) AS OR_71 
+			
+		FROM (	
+			SELECT 
+				   0 AS T_OR
+				   ,0 AS T_OR_ITEM
+				   
+			       ,COUNT(DISTINCT D.ORDR_ID) AS OR_0
+			       ,0 AS OR_1
+			       ,0 AS OR_O_1
+                   
+			       ,0 AS OR_2
+			       ,0 AS OR_O_2
+                   
+                   ,0 AS OR_3 
+                   ,0 AS OR_O_3
+                   ,0 AS OR_C_3
+
+			       ,0 AS OR_4                   
+			       ,0 AS OR_O_4
+                   
+			       ,0 AS E_3
+			       ,0 AS E_O_3
+			       ,0 AS E_S_4
+			       ,0 AS E_C_5
+			       ,0 AS E_C_9
+			       
+			       ,0 AS OR_5
+			       ,0 AS OR_51
+			       ,0 AS OR_52
+			       ,0 AS OR_C_52
+			       ,0 AS OR_7
+			       ,0 AS OR_71
+			       
+			  FROM ORDR_DTL D 
+			 WHERE D.USE_YN    = 'Y'
+               AND D.STTUS 		= '0'
+               AND D.DELETE_DT IS NULL 
+               AND DATE(D.CREATE_DT) >= DATE(( NOW()-INTERVAL 7 DAY))
+               
+         UNION ALL      
+         
+			SELECT 
+				   COUNT(DISTINCT D.ORDR_ID) AS T_OR  
+				   ,COUNT(D.O_ID) AS T_OR_ITEM  
+				   
+			       ,0 AS OR_0 
+			       ,SUM( IF ( D.STTUS = 1, 1, 0 )) AS OR_1 
+			       ,SUM( IF ( D.STTUS = 1 AND ( DATE(NOW()) > DATE(D.ORDR_DT + INTERVAL 1 DAY)), 1, 0 )) AS OR_O_1 
+                   
+			       ,SUM( IF ( D.STTUS = 2, 1, 0 )) AS OR_2 
+			       ,SUM( IF ( D.STTUS = 2 AND ( DATE(NOW()) > DATE(D.RECEIPT_DT + INTERVAL 1 DAY)), 1, 0 )) AS OR_O_2
+                   
+                   ,SUM( IF ( D.STTUS = 3, 1, 0 )) AS OR_3  
+                   ,SUM( IF ( D.STTUS = 3 AND D.INVOICE = 9, 1, 0 )) AS OR_O_3 
+                   ,SUM( IF ( D.STTUS = 3 AND ( DATE(NOW()) > DATE(D.DELY_DT + INTERVAL 3 DAY)), 1, 0 )) AS OR_C_3 
+                                      
+			       ,SUM( IF ( D.STTUS IN(4, 9), 1, 0 )) AS OR_4                    
+			       ,SUM( IF ( D.STTUS IN(9), 1, 0 )) AS OR_O_4 
+
+                   ,SUM( IF ( D.STTUS <![CDATA[>=]]> 3 AND M.PAYMETHOD IN ('VBank','DirectBank'), 1, 0 )) AS E_3 
+                   ,SUM( IF ( D.STTUS <![CDATA[>=]]> 3 AND D.INVOICE != '9' AND M.PAYMETHOD IN ('VBank','DirectBank') AND M.SEND_RESULT = 0, 1, 0 )) AS E_O_3
+                    
+                   ,SUM( IF ( D.STTUS = 4 AND M.SEND_RESULT = 1, 1, 0 )) AS E_S_4
+                   ,SUM( IF ( D.STTUS = 4 AND M.SEND_RESULT = 8, 1, 0 )) AS E_C_5
+                   ,SUM( IF ( D.STTUS = 9, 1, 0 )) AS E_C_9 
+                   
+			       ,SUM( IF ( D.STTUS = 5, 1, 0 )) AS OR_5 
+			       ,SUM( IF ( D.STTUS = 51, 1, 0 )) AS OR_51 
+			       ,SUM( IF ( D.STTUS = 52 AND D.DELY_ID IS NULL, 1, 0 )) AS OR_52 
+			       ,SUM( IF ( D.STTUS = 52 AND D.DELY_ID IS NOT NULL AND D.DELY_COMP_DT IS NOT NULL, 1, 0 )) AS OR_C_52 
+			       ,SUM( IF ( D.STTUS = 7, 1, 0 )) AS OR_7 
+			       ,SUM( IF ( D.STTUS = 71, 1, 0 )) AS OR_71 
+                   
+			  FROM ORDR_DTL D, ORDR_MST M 
+			 WHERE D.USE_YN    = 'Y'
+               AND M.USE_YN    = 'Y'
+               AND D.ORDR_ID  = M.ORDR_ID
+               AND D.DELETE_DT IS NULL 
+               AND M.DELETE_DT IS NULL 
+               AND DATE(D.ORDR_DT) >= DATE(( NOW()-INTERVAL 7 DAY))
+		)A
+	</select>	
+	
+	<select id="getOrderList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getOrderList */
+		<include refid="OrdrMstBody"/> 
+		<include refid="OrdrWhere"/>
+		<if test='jobTp == "orderMng"'>
+		       AND M.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+			<isEmpty property="sSus">
+				AND D.STTUS <![CDATA[>=]]> '1'
+			</isEmpty>
+			<isNotEmpty property="sSus">
+				AND D.STTUS = #{sSus}
+			</isNotEmpty>
+		</if>
+		<if test='jobTp == "deliveryMng"'>
+		       AND M.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+			<if test='sSus == ""'>
+				AND D.STTUS NOT IN ('0','7','8','9')
+			</if>
+			<if test='sSus != ""'>
+				<if test='sSus == "0"'>
+					AND D.STTUS <![CDATA[>=]]> '3'
+				</if>		
+				<if test='sSus == "3"'>
+					AND D.STTUS 		= '3'
+					AND D.INVOICE 	= '9'
+				</if>		
+				<if test='sSus == "4"'>
+					AND D.STTUS 		= '3'
+					AND D.INVOICE 	!= '9'
+				</if>		
+				<if test='sSus == "5"'>
+					AND D.STTUS 		= '3'
+					AND DATE(NOW()) > DATE(D.DELY_DT + INTERVAL 3 DAY)
+				</if>		
+				<if test='sSus == "6"'>
+					AND D.STTUS IN(4, 9)
+				</if>		
+				<if test='sSus == "9"'>
+					AND D.STTUS = '9'
+				</if>		
+			</if>
+		</if>
+		<if test='jobTp == "escrowMng"'>
+		       AND M.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+			AND M.PAYMETHOD IN ('VBank','DirectBank')
+			<if test='sSus == ""'>
+				AND D.STTUS <![CDATA[>=]]> '3'
+			</if>
+			<if test='sSus != ""'>
+				<if test='sSus == "4"'>
+					AND D.INVOICE 	!= '9'
+					AND M.PAYMETHOD IN ('VBank','DirectBank')
+					AND M.SEND_RESULT = 0
+				</if>	
+				<if test='sSus == "8"'>
+					AND D.STTUS 			 = '4'
+					AND M.SEND_RESULT = 8
+				</if>	
+			</if>
+		</if>
+		<if test='jobTp == "returnMng"'>
+			<if test='ordrId != ""'>
+				AND M.ORDR_ID = #{ordrId}
+			</if>
+			<if test='sSus == ""'>
+			       AND M.USE_YN 		= 'Y'
+			       AND D.USE_YN 			= 'Y'
+			</if>
+			<if test='sSus != ""'>
+				<if test='sSus == "50"'>
+					AND D.STTUS IN ('5','51','52','53')
+				</if>	
+				<if test='sSus == "51"'>
+					AND D.STTUS 			 = '51'
+				</if>	
+				<if test='sSus == "52"'>
+					AND D.STTUS 			 = '52'
+				</if>	
+				<if test='sSus == "53"'>
+					AND D.STTUS 			 = '53'
+				</if>	
+				<if test='sSus == "5"'>
+					AND D.STTUS 			 = '5'
+				</if>	
+			</if>
+		</if>
+		<if test='jobTp == "cancelMng"'>
+			<if test='ordrId != ""'>
+				AND M.ORDR_ID = #{ordrId}
+			</if>
+			<if test='sSus == ""'>
+					AND D.STTUS NOT IN ('0')
+			</if>
+			<if test='sSus != ""'>
+				<if test='sSus == "6"'>
+					AND D.STTUS IN ('7','71')
+				</if>	
+				<if test='sSus == "71"'>
+					AND D.STTUS 			 = '71'
+				</if>	
+				<if test='sSus == "7"'>
+					AND D.STTUS 			 = '7'
+				</if>
+			</if>
+		</if>
+		<if test='mValue != ""'>
+			AND(			
+							D.ORDR_ID 				LIKE CONCAT('%',#{mValue},'%')
+					OR		D.INVOICE 				LIKE CONCAT('%',#{mValue},'%')
+					
+					OR		D.PRDT_DTL_CD 		LIKE CONCAT('%',#{mValue},'%')
+					OR		D.PRDT_NM 			LIKE CONCAT('%',#{mValue},'%')
+					OR		D.MAKR_NM 			LIKE CONCAT('%',#{mValue},'%')
+					OR		D.STNDRD 				LIKE CONCAT('%',#{mValue},'%')
+
+					OR		U.USR_NM LIKE CONCAT('%',#{mValue},'%')
+					OR		REPLACE(U.MOBILE,'-','')LIKE CONCAT('%',REPLACE(#{mValue},'-',''),'%')
+			)
+		</if>	
+		GROUP BY D.ORDR_ID
+		ORDER BY D.ORDR_DT, D.ORDR_ID, D.STTUS,  D.O_ID
+	</select>	
+	
+	<select id="getOrderDtlList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getOrderDtlList */
+		<include refid="OrdrDtlBody"/> 
+		<include refid="OrdrWhere"/>
+		AND D.ORDR_ID = #{ordrId}
+		ORDER BY D.ORDR_DT, D.ORDR_ID, D.STTUS,  D.O_ID
+	</select>	
+	
+	<select id="getOrderAllList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getOrderAllList */
+		<include refid="OrdrDtlBody"/> 
+		<isNotEmpty property="sDt" prepend="AND">
+			DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+		</isNotEmpty>
+		<isNotEmpty property="eDt" prepend="AND">
+			DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+		</isNotEmpty>		
+		<isNotEmpty property="sSus" prepend="AND">
+			D.STTUS = #{sSus}
+		</isNotEmpty>
+		<isNotEmpty property="sOusr" prepend="AND">
+			D.ORDR_USR_ID = #{sOusr}
+		</isNotEmpty>
+		<isNotEmpty property="mValue">
+			AND(			
+							D.ORDR_ID 				LIKE CONCAT('%',#{mValue},'%')
+					OR		D.INVOICE 				LIKE CONCAT('%',#{mValue},'%')
+					
+					OR		D.PRDT_DTL_CD 		LIKE CONCAT('%',#{mValue},'%')
+					OR		D.PRDT_NM 			LIKE CONCAT('%',#{mValue},'%')
+					OR		D.MAKR_NM 			LIKE CONCAT('%',#{mValue},'%')
+					OR		D.STNDRD 				LIKE CONCAT('%',#{mValue},'%')
+
+					OR		U.USR_NM LIKE CONCAT('%',#{mValue},'%')
+					OR		REPLACE(U.MOBILE,'-','')LIKE CONCAT('%',REPLACE(#{mValue},'-',''),'%')
+			)
+		</isNotEmpty>		 
+		ORDER BY D.ORDR_DT, D.ORDR_ID, D.STTUS,  D.O_ID      			
+	</select>	
+	
+	<select id="getRtnOrderDtl" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getRtnOrderDtl */
+		<include refid="RtnOrdrDtlBody"/> 
+		<include refid="OrdrWhere"/>
+		AND D.ORDR_ID = #{ordrId}
+		<isNotEqual property="jobTp" compareValue="returnMng">
+			<isNotEqual property="jobTp" compareValue="cancelMng">
+		       AND M.USE_YN 		= 'Y'
+		       AND SM.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+			</isNotEqual>
+		</isNotEqual>
+		ORDER BY D.ORDR_DT, D.ORDR_ID, D.STTUS,  D.O_ID
+	</select>	
+	
+	<select id="getOrdrRmk" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getOrdrRmk */
+		SELECT 
+			C.ARTICLE_ID AS sArtCd ,  
+			C.CONTENT AS sCont ,
+			C.CREATE_DT AS sCdt ,
+			U.USR_NM  AS sUsrNm 
+		FROM CONTACT_BOARD C, USER_INFO U
+		WHERE C.BBS_ID 			= #{BBS_ID}
+			AND C.CREATE_ID 	= U.USR_ID
+			AND C.RELATE_CD 	= #{ordrId}
+		ORDER BY C.CREATE_DT DESC	
+	</select>	
+	
+	<select id="chartDailyMagam" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.chartDailyMagam */
+		SELECT IF(PAYMETHOD = 'Card',APPLDATE,TRANS_DATE) AS NAL,
+	              SUM(SUM_PRICE) AS SUM_PRICE ,
+	              SUM(TOTPRICE) AS TOTPRICE ,
+	              SUM(REFPRICE) AS REFPRICE 
+	         FROM ORDR_PAY 
+	        WHERE (TOTPRICE + REFPRICE) > 0
+				AND IF(PAYMETHOD = 'Card',APPLDATE,TRANS_DATE) <![CDATA[>=]]>  DATE(CONCAT(#{mon2},'01')) 
+				AND IF(PAYMETHOD = 'Card',APPLDATE,TRANS_DATE) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))
+	              AND 
+	              ( 
+	                (
+	                  PAYMETHOD = 'Card' 
+	                  AND APPLDATE IS NOT NULL
+	                ) 
+	                OR 
+	                (
+	                  PAYMETHOD != 'Card' 
+	                  AND TRANS_DATE IS NOT NULL
+	                ) 
+	              ) 
+       		AND DELETE_DT IS NULL
+	        GROUP BY IF(PAYMETHOD = 'Card',APPLDATE,TRANS_DATE) 
+	</select>	
+
+	<select id="chartDailyJoin" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.chartDailyJoin */
+		SELECT 
+			   A.JOIN_DT AS NAL, 
+			   A.CNT1, 
+			   A.CNT2, 	
+		       SUM(B.CNT1) AS DIR, 
+		       SUM(B.CNT2) AS SNS, 
+		       SUM(B.CNT1 + B.CNT2) AS ACNT 
+		  FROM 
+		       (SELECT JOIN_DT, 
+		              SUM(IF(JOIN_USR_ID = '',1, 0)) AS CNT1, 
+		              SUM(IF(JOIN_USR_ID = '',0, 1)) AS CNT2 
+		         FROM USER_INFO 
+		        WHERE USR_TP = 'B' 
+		              AND DELETE_DT IS NULL 
+		          GROUP BY JOIN_DT
+		       ) AS A, 
+		       (SELECT JOIN_DT, 
+		              SUM(IF(JOIN_USR_ID = '',1, 0)) AS CNT1, 
+		              SUM(IF(JOIN_USR_ID = '',0, 1)) AS CNT2 
+		         FROM USER_INFO 
+		        WHERE USR_TP = 'B' 
+		              AND DELETE_DT IS NULL 
+		          GROUP BY JOIN_DT
+		       ) AS B 
+		 WHERE B.JOIN_DT <![CDATA[<=]]>  A.JOIN_DT 
+			AND A.JOIN_DT <![CDATA[>=]]>  DATE(CONCAT(#{mon2},'01')) 
+			AND A.JOIN_DT <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+		  GROUP BY A.JOIN_DT, A.CNT1, A.CNT2 		
+	</select>	
+
+	<select id="chartMakerMagam" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.chartMakerMagam */
+				
+		SELECT D.MAKR_NM, 
+		       SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D1', D.SUM_PRICE, 0), 0) )AS D1_O , 
+		       SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D2', D.SUM_PRICE, 0), 0) )AS D2_O , 
+		       SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D3', D.SUM_PRICE, 0), 0) )AS D3_O , 
+		       SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D4', D.SUM_PRICE, 0), 0) )AS D4_O , 
+		       SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D5', D.SUM_PRICE, 0), 0) )AS D5_O , 
+		       SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D6', D.SUM_PRICE, 0), 0) )AS D6_O , 
+		       SUM( IF(D.USE_YN = 'N' AND D.STTUS ='7', D.SUM_PRICE, 0)) AS PRD_C7, 
+		       SUM( IF(D.USE_YN = 'N' AND D.STTUS !='7', D.SUM_PRICE, 0)) AS PRD_C8 
+		  FROM ORDR_DTL D , PRDT_MST P 
+		 WHERE D.PRDT_CD = P.PRDT_CD 
+			AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+			AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))
+			AND D.STORE_ID = P.STORE_ID 
+			AND D.DELETE_DT IS NULL
+		   GROUP BY D.MAKR_NM 
+		 ORDER BY D.MAKR_NM		
+	</select>	
+	<select id="chartCategMagam" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.chartCategMagam */
+			SELECT RIGHT(C.DTL_CD, 2) AS NAL, 
+			       A.D1_O, 
+			       A.D2_O, 
+			       A.D3_O, 
+			       A.D4_O, 
+			       A.D5_O, 
+			       A.D6_O, 
+			       A.DVY_O, 
+			       A.PRD_C7, 
+			       A.PRD_C8 
+			  FROM CMM_CODE_DTL C 
+			     LEFT JOIN 
+			       (SELECT C.DATE AS DATE , 
+			              SUM(C.D1_O) AS D1_O, 
+			              SUM(C.D2_O) AS D2_O, 
+			              SUM(C.D3_O) AS D3_O, 
+			              SUM(C.D4_O) AS D4_O, 
+			              SUM(C.D5_O) AS D5_O, 
+			              SUM(C.D6_O) AS D6_O, 			             
+			              SUM(C.DVY_O) AS DVY_O, 
+			              SUM(C.PRD_C7 + C.DVY_C7) AS PRD_C7, 
+			              SUM(C.PRD_C8 + C.DVY_C8) AS PRD_C8  
+			         FROM 
+			              (SELECT DATE_FORMAT(D.ORDR_DT,'%Y%m%d')AS DATE , 
+			                     SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D1', D.SUM_PRICE, 0), 0) )AS D1_O , 
+			                     SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D2', D.SUM_PRICE, 0), 0) )AS D2_O , 
+			                     SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D3', D.SUM_PRICE, 0), 0) )AS D3_O , 
+			                     SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D4', D.SUM_PRICE, 0), 0) )AS D4_O , 
+			                     SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D5', D.SUM_PRICE, 0), 0) )AS D5_O , 
+			                     SUM( IF(D.USE_YN = 'Y', IF(LEFT(P.CATEG_CD,3) = 'D6', D.SUM_PRICE, 0), 0) )AS D6_O , 
+			                    SUM( IF(D.USE_YN = 'N' AND D.STTUS ='7', D.SUM_PRICE, 0)) AS PRD_C7, 
+			                     SUM( IF(D.USE_YN = 'N' AND D.STTUS !='7', D.SUM_PRICE, 0)) AS PRD_C8, 
+			                     0 AS DVY_O, 
+			                     0 AS DVY_C7, 
+			                     0 AS DVY_C8 
+			                FROM ORDR_DTL D, 
+			                     PRDT_MST P 
+			               WHERE D.PRDT_CD = P.PRDT_CD
+								AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+								AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))
+								AND D.STORE_ID = P.STORE_ID 
+								AND D.DELETE_DT IS NULL 
+			                 GROUP BY DATE_FORMAT(D.ORDR_DT,'%Y%m%d') 
+			                    UNION ALL 
+			              SELECT DATE_FORMAT(A.DATE,'%Y%m%d')AS DATE , 
+			                     0 AS D1_O , 
+			                     0 AS D2_O , 
+			                     0 AS D3_O , 
+			                     0 AS D4_O , 
+			                     0 AS D5_O , 
+			                     0 AS D6_O , 			                  
+			                     0 AS PRD_C7 , 
+			                     0 AS PRD_C7 , 
+			                     SUM(A.O_DEVY_FEE) AS DVY_O , 
+			                     SUM(A.C_DEVY_FEE7) AS DVY_C7 , 
+			                     SUM(A.C_DEVY_FEE8) AS DVY_C8 
+			                FROM 
+			                     (SELECT DATE(D.ORDR_DT) AS DATE , 
+			                            M.ORDR_ID , 
+			                            IF(M.USE_YN = 'Y', MAX(M.DEVY_FEE), 0) AS O_DEVY_FEE, 
+			                            IF(M.USE_YN = 'N' AND D.STTUS ='7', MAX(M.DEVY_FEE), 0) AS C_DEVY_FEE7, 
+			                            IF(M.USE_YN = 'N' AND D.STTUS !='7', MAX(M.DEVY_FEE), 0) AS C_DEVY_FEE8 
+			                       FROM ORDR_DTL D, 
+			                            ORDR_MST M 
+			                      WHERE D.ORDR_ID = M.ORDR_ID 
+										AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+										AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))
+		      					 		AND D.DELETE_DT IS NULL
+			                        GROUP BY DATE(D.ORDR_DT), 
+			                            M.ORDR_ID 
+			                     )A 
+			                 GROUP BY A.DATE 
+			              )AS C 
+			          GROUP BY C.DATE 
+			       )A 
+			         ON CONCAT(#{mon},C.DTL_CD) = A.DATE 
+			       AND C.CL_CD = '1016' 
+			 WHERE C.CL_CD = '1016'  		 
+			ORDER BY NAL
+	</select>	
+
+	<select id="getCalculateDashBoard" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getCalculateDashBoard */
+			SELECT 
+				C.CATEG_CD
+   			 	,C.CATEG_NM
+			    ,A.OR_CNT
+			    ,A.OR_SUM
+			    ,A.OR_7_CNT
+			    ,A.OR_7_SUM
+			    ,A.OR_8_CNT
+			    ,A.OR_8_SUM
+			    ,A.OR_3_CNT
+			    ,A.OR_3_SUM
+			FROM CATEG_INFO C
+			LEFT JOIN
+						(
+							SELECT 
+								LEFT(P.CATEG_CD,3) AS CATEG_CD
+								,SUM(IF(D.USE_YN = 'Y', 1, 0)) AS OR_CNT
+								,SUM(IF(D.USE_YN = 'Y', D.SUM_PRICE, 0)) AS OR_SUM
+							    
+								,SUM(IF(D.STTUS = '7', 1, 0)) AS OR_7_CNT
+								,SUM(IF(D.STTUS = '7', D.SUM_PRICE, 0)) AS OR_7_SUM
+							    
+								,SUM(IF(D.STTUS = '8', 1, 0)) AS OR_8_CNT
+								,SUM(IF(D.STTUS = '8', D.SUM_PRICE, 0)) AS OR_8_SUM
+							    
+								,SUM(IF(D.STTUS = '3', 1, 0)) AS OR_3_CNT
+								,SUM(IF(D.STTUS = '3', D.SUM_PRICE, 0)) AS OR_3_SUM
+							FROM ORDR_DTL D, PRDT_MST P
+							WHERE DATE(D.ORDR_DT) = DATE(( NOW()-INTERVAL 1 DAY))
+								AND D.PRDT_CD = P.PRDT_CD
+								AND D.STORE_ID = P.STORE_ID
+		       					AND D.DELETE_DT IS NULL
+							GROUP BY LEFT(P.CATEG_CD,3)
+						)AS A
+			ON C.CATEG_CD = A.CATEG_CD
+			WHERE C.CATEG_TY_CD = '1'
+			ORDER BY C.CATEG_CD
+	</select>	
+	
+	<select id="getCommMsg" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getCommMsg */
+			SELECT 
+				DTL_CD_NM AS ID,
+				DTL_CD_DESC AS NM,
+				SORT_ORDR AS CNT,
+				RMK AS RMK
+			FROM CMM_CODE_DTL 
+			WHERE CL_CD ='1023'
+				AND USE_YN ='Y' 
+			ORDER BY SORT_ORDR DESC
+	</select>	
+	
+	<select id="getMagamMng" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getMagamMng */
+			SELECT P.ORDR_ID ,
+			       P.OID ,
+			       CASE WHEN P.USE_YN = 'N' THEN 'ACAN' 
+			       	   	   WHEN P.USE_YN = 'Y' AND P.REFPRICE > 0 THEN 'PCAN' 
+			       		   ELSE 'ORDR' 
+			       END AS STTUS_TXT ,
+			       P.USE_YN ,
+			       MAX(D.ORDR_DT) AS ORDR_DT ,
+			       MAX(D.CANCEL_DT) AS CANCEL_DT ,
+			       MAX(D.ORDT_COMP_DT) AS ORDT_COMP_DT ,
+			       P.TOTPRICE ,
+			       P.REFPRICE ,
+			       P.PAYMETHOD ,
+               	   MAX(U.USR_NM) AS ORDR_USR
+			  FROM ORDR_PAY P, 
+			       ORDR_DTL D,
+               	   USER_INFO U 
+			 WHERE P.ORDR_ID = D.ORDR_ID 
+			       AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+			       AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))
+       			   AND D.CAL_DT IS NULL
+			       AND D.ORDR_USR_ID = U.USR_ID  
+			       AND P.DELETE_DT IS NULL 
+			       AND D.DELETE_DT IS NULL 
+			   GROUP BY P.ORDR_ID
+			   ORDER BY D.ORDR_DT
+	</select>	
+	
+	<select id="getPurchaseMng" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPurchaseMng */
+			SELECT D.O_ID ,
+			       D.USE_YN ,
+			       D.STTUS ,
+			       D.CAL_DT ,
+			       D.STORE_ID ,
+			       S.STORE_NM ,
+			       D.ORDR_USR_ID ,
+			       U.USR_NM ,
+			       D.ORDR_ID ,
+			       D.TOT_PRICE ,
+			       D.QY ,
+			       D.SUM_PRICE ,
+			       D.PRDT_NM ,
+			       D.MAKR_NM ,
+			       D.STNDRD ,
+			       D.PRDT_CD ,
+			       D.ORDR_DT ,
+			       D.RECEIPT_DT ,
+			       D.DELY_DT ,
+			       D.DELY_COMP_DT ,
+			       D.ORDT_COMP_DT ,
+			       D.CANCEL_DT 
+			  FROM ORDR_DTL D, 
+			       STORE_INFO S ,
+			       USER_INFO U 
+			 WHERE D.CAL_DT = #{mon}
+			       AND D.CAL_YN = 'N' 
+			       AND D.DELETE_DT IS NULL 
+			       AND D.STORE_ID = S.STORE_ID 
+			       AND D.ORDR_USR_ID = U.USR_ID 
+			ORDER BY D.STORE_ID, D.STTUS DESC, D.ORDR_DT	
+	</select>	
+	
+	<select id="getStrMagam" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getStrMagam */
+			SELECT S.STORE_ID ,
+				   FN_DECRYPT(S.CMP_BIZ_NO) AS BIZ_NO,
+			       S.STORE_NM ,
+			       S.MAGAM_TP ,
+			       S.MAGAM_DEVY ,
+			       S.MAGAM_RATE AS S,
+			       SUM(A.SUM_9) AS A ,
+			       SUM(M.DEVY_FEE) AS DEVY,
+			       IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE)) AS B,
+			       ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) AS Q,
+			       SUM(A.SUM_9) - ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) + IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE)) AS F,
+			       ROUND((SUM(A.SUM_9) - ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) + IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE))) * 0.1) AS T1,
+			       ROUND((SUM(A.SUM_9) - ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) + IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE))) * 0.9) AS T2
+			  FROM STORE_INFO S , 
+			       (SELECT D.STORE_ID , 
+			              D.ORDR_ID , 
+			              SUM(D.SUM_PRICE) AS SUM_9  
+			         FROM ORDR_DTL D 
+			        WHERE D.CAL_DT = #{mon}
+			              AND D.CAL_YN = #{calYn}
+			              AND D.DELETE_DT IS NULL 
+			              AND D.STTUS ='9'
+			          GROUP BY D.STORE_ID, 
+			              D.ORDR_ID 
+			       )AS A 
+			     LEFT JOIN (
+								SELECT 
+									   M.ORDR_ID, 
+								       M.STORE_ID, 
+								       MAX(M.DEVY_FEE) AS DEVY_FEE 
+								  FROM ORDR_DTL D, 
+								       ORDR_STR_MST M 
+								 WHERE D.CAL_DT 		= #{mon}
+								       AND D.ORDR_ID 	= M.ORDR_ID 
+								       AND M.STTUS 		= '9' 
+								       AND D.USE_YN 		= 'Y' 
+								       AND M.USE_YN 	= 'Y' 
+								       AND D.DELETE_DT IS NULL 
+								   GROUP BY D.ORDR_ID 
+							     )M 
+			         ON A.ORDR_ID = M.ORDR_ID 
+			       AND A.STORE_ID = M.STORE_ID 
+			 WHERE S.STORE_ID = A.STORE_ID	
+	</select>	
+	
+	<select id="getPurchase" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getPurchase */
+			SELECT S.STORE_ID ,
+				   FN_DECRYPT(S.CMP_BIZ_NO) AS BIZ_NO,
+			       S.STORE_NM ,
+			       S.MAGAM_TP ,
+			       S.MAGAM_DEVY ,
+			       S.MAGAM_RATE AS S,
+			       A.PRDT_AMT AS A ,
+			       A.DEVY_AMT AS DEVY,
+			       A.DEVY_AMT AS B,
+			       A.ORDR_FEE AS Q,
+			       A.TOT_AMT AS F,
+				   A.TAX_FEE AS T1,
+				   A.TAX_AMT AS T2,
+				   A.TAXBILL_AMT
+			  FROM STORE_INFO S , MA_PURCHASE A
+			 WHERE A.TAR_DT 	= #{mon}
+			 	AND A.CAL_YN 	= 'N'	
+			 	AND S.STORE_ID 	= A.STORE_ID
+	</select>	
+	
+	<select id="getStrMagamDtl" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getStrMagamDtl */
+			SELECT D.O_ID , 
+			       D.USE_YN , 
+			       D.STTUS , 
+			       D.CAL_DT , 
+			       D.STORE_ID , 
+			       D.ORDR_USR_ID , 
+			       U.USR_NM , 
+			       D.ORDR_ID , 
+			       D.TOT_PRICE , 
+			       D.QY , 
+			       D.SUM_PRICE, 
+			       D.PRDT_NM , 
+			       D.MAKR_NM , 
+			       D.STNDRD , 
+			       D.PRDT_CD , 
+			       D.ORDR_DT , 
+			       D.RECEIPT_DT , 
+			       D.DELY_DT , 
+			       D.DELY_COMP_DT , 
+			       D.ORDT_COMP_DT , 
+			       D.CANCEL_DT, 
+			       CASE WHEN D.STTUS = '9' AND DATE(D.ORDR_DT) <![CDATA[<]]> DATE(CONCAT(#{mon},'01')) THEN '1' 
+			       		   WHEN D.CAL_DT = DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m') THEN '2' 
+			       ELSE '0' END AS GUBUN 
+			  FROM ORDR_DTL D, 
+			       USER_INFO U 
+			 WHERE D.STORE_ID = #{storeId}
+			   	 AND ( 
+			         D.CAL_DT = #{mon}
+			         OR D.CAL_DT = DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m') 
+			       ) 
+			       AND D.ORDR_USR_ID = U.USR_ID 
+			       AND D.CAL_YN = 'N' 
+			       AND D.USE_YN = 'Y' 
+				   AND D.DELETE_DT IS NULL 
+			ORDER BY D.CAL_DT , D.ORDR_DT  	
+	</select>	
+	
+	<select id="getStrDevy" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getStrDevy */
+			SELECT M.ORDR_ID , 
+			       CASE WHEN MAX(D.CAL_DT) <![CDATA[<]]> #{mon} THEN '1' 
+			       		   WHEN MAX(D.CAL_DT) <![CDATA[>]]> #{mon} THEN '2' 
+			       		   ELSE '0' END GUBUN , 
+			       MAX(D.CAL_DT) AS MON, 
+			       MAX(M.DEVY_FEE) AS DEVY_FEE, 
+			       MAX(M.TOT_PRICE) AS TOT_PRICE
+			  FROM ORDR_DTL D, 
+			       ORDR_STR_MST M 
+			 WHERE D.STORE_ID = #{storeId}
+			       AND 
+			       ( 
+			         D.CAL_DT = #{mon}
+			         OR D.CAL_DT = DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m') 
+			       ) 
+			       AND D.ORDR_ID = M.ORDR_ID 
+			       AND D.CAL_YN = 'N' 
+			       AND D.USE_YN = 'Y' 
+			       AND D.DELETE_DT IS NULL 
+			   GROUP BY D.ORDR_ID 
+			ORDER BY MAX(D.CAL_DT), D.ORDR_DT	
+	</select>	
+
+	<select id="getSalesMng" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getSalesMng */
+			SELECT 
+					A.DT,
+					A.GUBUN,
+					A.PAYMETHOD , 
+					A.ORDR_ID , 
+					A.OID , 
+					A.TID , 
+					A.PRICE 
+			  FROM
+			       (SELECT DATE_FORMAT ( IF(P.PAYMETHOD = 'VBank', CONCAT(P.TRANS_DATE,P.TRANS_TIME ), CONCAT(P.APPLDATE,P.APPLTIME )),'%Y/%m/%d %T') AS DT ,
+			              'APP' AS  GUBUN,
+			              P.PAYMETHOD ,
+			              P.ORDR_ID ,
+			              P.OID ,
+			              P.TID ,
+			              P.SUM_PRICE AS PRICE 
+			         FROM ORDR_PAY P 
+			        WHERE P.TOTPRICE + P.REFPRICE > 0 
+			              AND P.DELETE_DT IS NULL 
+			              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+			              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01')))   
+			             UNION ALL  
+			       SELECT DATE_FORMAT (R.CANCEL_DT,'%Y/%m/%d %T') AS DT ,
+			              'CAN' AS  GUBUN,
+			              P.PAYMETHOD ,
+			              P.ORDR_ID ,
+			              P.OID ,
+			              P.TID ,
+			              -P.REFPRICE AS PRICE 
+			         FROM ORDR_PAY P , 
+			              ORDR_DTL R 
+			        WHERE P.ORDR_ID = R.ORDR_ID 
+			              AND P.TOTPRICE + P.REFPRICE > 0 
+			              AND P.REFPRICE > 0 
+			              AND P.DELETE_DT IS NULL  
+			              AND DATE(R.CANCEL_DT) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+			              AND DATE(R.CANCEL_DT) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+			          GROUP BY P.ORDR_ID  
+			       )A 
+			ORDER BY A.PAYMETHOD, A.OID, A.DT, A.GUBUN
+	</select>
+	
+	<select id="getSalesSum" parameterType="hashMap" resultType="hashMap">	
+			/* FrontSearchDao.getSalesSum */
+			SELECT 
+					#{mon} AS TAR_MON,
+			       (SELECT SUM(A.PRICE) 
+			         FROM 
+			              (SELECT P.SUM_PRICE AS PRICE 
+			                FROM ORDR_PAY P 
+			               WHERE P.TOTPRICE + P.REFPRICE > 0 
+			                     AND P.DELETE_DT IS NULL 
+						              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+						              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01')))   
+			                    UNION ALL 
+			              SELECT -P.REFPRICE AS PRICE 
+			                FROM ORDR_PAY P , 
+			                     ORDR_DTL R 
+			               WHERE P.ORDR_ID = R.ORDR_ID 
+			                     AND P.TOTPRICE + P.REFPRICE > 0 
+			                     AND P.REFPRICE > 0 
+			                     AND P.DELETE_DT IS NULL 
+						              AND DATE(R.CANCEL_DT) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+						              AND DATE(R.CANCEL_DT) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+			                 GROUP BY P.ORDR_ID 
+			              )A 
+			       )AS TOT_SUM, 
+			       (SELECT SUM(A.SUM_PRICE) 
+			         FROM 
+			              (SELECT M.SUM_PRICE 
+			                FROM ORDR_MST M, 
+			                     ORDR_DTL D 
+			               WHERE M.ORDR_ID = D.ORDR_ID 
+			                     AND M.USE_YN = 'Y' 
+			                     AND D.USE_YN = 'Y' 
+			                     AND M.DELETE_DT IS NULL 
+			                     AND D.DELETE_DT IS NULL 
+			                     AND DATE(D.ORDR_DT) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+			                     AND DATE(D.ORDR_DT) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+			                 GROUP BY M.ORDR_ID 
+			              )AS A 
+			       )AS NOW_SUM, 
+			       (SELECT SUM(A.PRICE) 
+			         FROM 
+			              (SELECT P.REFPRICE AS PRICE 
+			                FROM ORDR_PAY P , 
+			                     ORDR_DTL R 
+			               WHERE P.ORDR_ID = R.ORDR_ID 
+			                     AND P.TOTPRICE + P.REFPRICE > 0 
+			                     AND P.REFPRICE > 0 
+			                     AND P.DELETE_DT IS NULL 
+			                     AND R.DELETE_DT IS NULL 
+						              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+						              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01')))   
+			                     AND DATE(R.CANCEL_DT)<![CDATA[>]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+			                 GROUP BY P.ORDR_ID 
+			              )A 
+			       )AS CAN_SUM 
+			  FROM DUAL  		
+	</select>
+
+	<select id="getCancelMng" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getCancelMng */
+			SELECT 
+					A.DT,
+					A.GUBUN,
+					A.PAYMETHOD , 
+					A.ORDR_ID , 
+					A.OID , 
+					A.TID , 
+					A.PRICE 
+			  FROM
+			       ( SELECT DATE_FORMAT (R.CANCEL_DT,'%Y/%m/%d %T') AS DT ,
+			              'CAN' AS  GUBUN,
+			              P.PAYMETHOD ,
+			              P.ORDR_ID ,
+			              P.OID ,
+			              P.TID ,
+			              -P.REFPRICE AS PRICE 
+			         FROM ORDR_PAY P , 
+			              ORDR_DTL R 
+			        WHERE P.ORDR_ID = R.ORDR_ID 
+			              AND P.TOTPRICE + P.REFPRICE > 0 
+			              AND P.REFPRICE > 0 
+			              AND P.DELETE_DT IS NULL  
+						  AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+						  AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01')))   
+						  AND DATE(R.CANCEL_DT)<![CDATA[>]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+			          GROUP BY P.ORDR_ID  
+			       )A 
+			ORDER BY A.PAYMETHOD, A.OID, A.DT, A.GUBUN
+	</select>
+	
+	<select id="getSalesCal" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getSalesCal */
+			SELECT 
+					A.TAR_DT,
+					A.PAY_TP , 
+					A.MA_TP,
+					A.MA_TOT , 
+					A.MA_SUM , 
+					A.MA_FEE ,  
+					A.MA_INC
+			  FROM MA_SALES A
+		    WHERE A.TAR_DT = #{mon} 
+	</select>
+	
+	<select id="getEstMstList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getEstMstList */
+			SELECT 
+				EM.EST_ID
+				,EM.MOBILE
+				,EM.USR_PW
+				,EM.CHAR_NM
+				,EM.CHAR_EMAIL
+				,EM.CMP_NM
+				,EM.RPRSNTV_NM
+				,EM.TEL_NO
+				,EM.FAX_NO
+				,EM.ADRESS
+				,EM.REQ_RMK
+				,EM.REC_RMK
+				,EM.CNT
+				,EM.TOT_P
+				,EM.TAX_P
+				,EM.SUM_P
+				,EM.D_FEE
+				,EM.DISC
+				,EM.EST_P
+				,EM.REQ_DT
+				,EM.REC_DT
+				,EM.REC_ID
+				,EM.CONF_DT
+				,EM.CONF_ID
+				,EM.STTUS
+			  FROM ESTIMATE_MST EM
+			 WHERE USE_YN = 'Y'
+				<isNotEmpty property="sDt"  prepend="AND">
+					DATE(EM.REQ_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</isNotEmpty> 
+				<isNotEmpty property="eDt"  prepend="AND">
+					DATE(EM.REQ_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</isNotEmpty> 
+				<isNotEmpty property="sSttus" prepend="AND">
+					EM.STTUS = #{sSttus}
+				</isNotEmpty>
+				<isNotEmpty property="sValue" prepend="AND">
+					(			
+							EM.EST_ID LIKE CONCAT('%',#{sValue},'%')
+						OR EM.CHAR_NM LIKE CONCAT('%',#{sValue},'%')
+						OR EM.CMP_NM LIKE CONCAT('%',#{sValue},'%')
+					)
+				</isNotEmpty>
+	</select>	
+			
+	<select id="getEstPrdtList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getEstPrdtList */
+			SELECT 
+				E.EST_ID
+				,E.PRDT_DTL_CD
+				,E.PRDT_CD
+				,E.PRICE
+				,E.QY
+				,E.UNIT
+				,E.TOT_PRICE
+				,E.PERIOD
+				,E.RMK  
+				,E.REC_RMK
+				,M.PRDT_NM
+				,M.MAKR_NM
+				,D.STNDRD
+				,D.OUT_AMT 
+				,D.OUT_UNIT 
+			FROM ESTIMATE_PRDT E, PRDT_MST M, PRDT_DTL D
+			WHERE E.USE_YN = 'Y'
+			AND E.PRDT_CD = M.PRDT_CD
+			AND E.PRDT_CD = D.PRDT_CD
+			AND E.PRDT_DTL_CD = D.PRDT_DTL_CD
+			AND E.EST_ID = #{EST_ID}
+	</select>	
+	
+	<select id="searchMob" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.searchMob */
+		(SELECT 
+						DISTINCT PHONE AS MOB_NUM	
+						,CONCAT(SUBSTRING_INDEX(PHONE,#{mob},1)
+										, <![CDATA['<sapn style="color:red">']]>
+										, #{mob}   
+										, <![CDATA['</sapn>']]>
+										) AS MOB_TEXT
+		  FROM CRM_USR 
+		 WHERE PHONE LIKE CONCAT( '%', #{mob} )	
+		) 		
+		UNION ALL
+		(SELECT 
+						PHONE2 AS MOB_NUM	
+						,CONCAT(SUBSTRING_INDEX(PHONE2,#{mob},1)
+										, <![CDATA['<sapn style="color:red">']]>
+										, #{mob}   
+										, <![CDATA['</sapn>']]>
+										) AS MOB_TEXT
+		  FROM CRM_USR 
+		 WHERE PHONE2 LIKE CONCAT( '%', #{mob} )	
+			 AND PHONE2 IS NOT NULL
+		) 	
+		ORDER BY MOB_NUM
+	</select>	
+			
+	<select id="getCrmUsr" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getCrmUsr */
+		SELECT 
+			PHONE
+			,CRM_USR_ID
+			,USR_NM
+			,USR_ID
+			,USR_LV
+			,PHONE2
+			,UPDATE_DT
+			,UPDATE_ID		
+		FROM CRM_USR	
+		WHERE PHONE = #{mobile} 
+			OR PHONE2	= #{mobile}
+	</select>	
+			
+	<select id="getCrmList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getCrmList */
+			SELECT 
+				DISTINCT
+				C.CRM_ID
+				,C.JOB_TP
+				,C.REQ_TP
+				,C.STTUS
+				,C.PHONE1
+				,C.REQ_DT
+				,(SELECT USR_NM FROM USER_INFO WHERE USR_ID = C.REQ_ID) AS REQ_ID
+				,C.REC_DT
+				,(SELECT USR_NM FROM USER_INFO WHERE USR_ID = C.REC_ID) AS REC_ID
+				,C.CONF_DT
+				,(SELECT USR_NM FROM USER_INFO WHERE USR_ID = C.CONF_ID) AS CONF_ID
+				,U.USR_NM
+			FROM CRM_MST C, CRM_USR U  
+			WHERE C.USE_YN = 'Y'
+				AND (
+						     C.PHONE1 = U.PHONE 
+						OR C.PHONE1 = U.PHONE2
+						) 
+			<if test='mobile != ""'>
+				AND (
+						     U.PHONE  = #{mobile}
+						OR U.PHONE2 = #{mobile}
+						)
+			</if>
+			<if test='sSttus != ""'>
+				<choose>
+					<when test="sSttus == '0'">
+					AND C.STTUS NOT IN ('9', '8')
+					</when>
+					<otherwise>
+					AND C.STTUS = #{sSttus}
+					</otherwise>
+				</choose>
+			</if>
+			<if test='jobTp != ""'>
+				AND C.JOB_TP	= #{jobTp}
+			</if>
+			<if test='reqTp != ""'>
+				AND C.REQ_TP	= #{reqTp}
+			</if>
+			<if test='usrId != ""'>
+				AND (
+							C.REC_ID	= #{usrId}
+						OR C.CONF_ID	= #{usrId}
+						)
+			</if>
+			<if test='mobile == ""'>
+				<if test='sDt != ""'>
+					AND DATE(C.REQ_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</if>
+				<if test='eDt != ""'>
+					AND DATE(C.REQ_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</if>	
+			</if>
+			ORDER BY C.JOB_TP, C.STTUS ASC, C.REQ_DT DESC
+	</select>	
+	
+	<select id="getCrmDtl" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getCrmDtl */
+			SELECT 
+				C.CRM_ID
+				,C.STTUS
+				,C.RMK
+				,C.CREATE_DT
+				,(SELECT USR_NM FROM USER_INFO WHERE USR_ID = C.CREATE_ID) AS CREATE_ID
+			FROM CRM_DTL C 
+			WHERE C.USE_YN = 'Y'
+				AND C.CRM_ID = #{crmId}
+			ORDER BY C.SEQ
+	</select>	
+	<select id="getTaxInfo" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getTaxInfo */
+			SELECT
+				UI.USR_ID
+				, UI.USR_NM
+				, UI.EMAIL
+				, UI.MOBILE
+				, UI.AUTO_TAXBILL
+				, DATE(UI.JOIN_DT) AS JOIN_DT
+				, UT.CMP_NM
+				, UT.CMP_BIZ_NO
+				, UT.RPRSNTV_NM
+				, UT.BIZCND
+				, UT.INDUTY
+				, UT.ADDRESS
+				, UT.TAX_EMAIL
+			FROM
+				USER_INFO UI 
+			LEFT JOIN 
+				USER_TAXBILL UT
+			ON 	
+				UI.USR_ID = UT.USR_ID
+			WHERE 
+					UI.DELETE_DT IS NULL
+			AND 
+					UI.WITHD_DT IS NULL  	
+	    	AND
+	    			UI.USR_ID = #{usrId}
+    </select>
+    	
+	<select id="getNotiList" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getNotiList */
+			SELECT 
+				N.CRM_ID
+				,N.JOB_TP
+				,N.STTUS
+				,N.PHONE
+				,N.RELATE_CD
+				,N.RMK
+				,N.USE_YN
+				,N.CREATE_DT
+				,N.CREATE_ID
+			FROM CRM_NOTI N 
+			WHERE N.USE_YN 	= 'Y'
+				<isNotEmpty property="mobile">
+					AND N.PHONE = REPLACE(#{mobile},'-','')
+				</isNotEmpty> 
+				<isEmpty property="mobile">
+					AND N.STTUS = '1'
+				</isEmpty> 
+			ORDER BY N.STTUS, N.CRM_ID DESC
+	</select>	
+			
+	<select id="getSaleList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getSaleList */
+			SELECT 
+					B.ARTICLE_ID AS sArtCd
+					,B.BBS_ID AS sBbsId
+					,B.BBS_TP  AS sBbsTp
+					,B.TITLE  AS sTitle
+					,B.CONTENT  AS sCont 
+					,B.RELATE_ARTICLE_AT  AS sRelNo
+					,B.BBS_STRT_DT  AS sSdt
+					,B.BBS_END_DT  AS  sEdt
+					,B.USE_YN AS sUseYN
+					,IFNULL(B.UPDATE_DT, B.CREATE_DT)  AS sCdt
+					,IFNULL(B.UPDATE_ID,  B.CREATE_ID)  AS sCid
+			FROM BOARD AS B
+			WHERE B.BBS_ID = 'TSP'
+			<isNotEmpty property="sValue">
+				AND (
+						B.ARTICLE_ID LIKE CONCAT('%',#{sValue},'%')
+					OR	B.TITLE LIKE CONCAT('%',#{sValue},'%')
+					)
+			</isNotEmpty>
+			<isNotEmpty property="sDt">
+				AND DATE(B.BBS_STRT_DT) <![CDATA[>=]]>  DATE(#{sDt})
+			</isNotEmpty> 
+			<isNotEmpty property="eDt">
+				AND DATE(B.BBS_END_DT) <![CDATA[<=]]>  DATE(#{eDt})
+			</isNotEmpty> 
+	</select>	
+	
+	<select id="getSalePrdtList" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getSalePrdtList */
+			SELECT
+				C.PRDT_DTL_CD 	AS sScd,
+				B.PRDT_NM 		AS sNm,
+				C.STNDRD 			AS sSt,
+				B.MAKR_NM 		AS sMk,
+				C.SEL_PRICE 		AS sPrice,
+				C.SALE_PRICE 		AS sSalePrice,
+				A.ARTICLE_ID 		AS sArtCd,
+				A.PRDT_CD 			AS sPcd,
+	        	B.CATEG_CD 		AS sCcd,
+	        	B.STORE_ID 		AS STORE_ID
+			FROM PROMO_PRDUCT A, PRDT_MST B, PRDT_DTL C
+			WHERE A.PRDT_CD 		= B.PRDT_CD
+			AND A.PRDT_CD 			= C.PRDT_CD
+			AND A.PRDT_DTL_CD 	= C.PRDT_DTL_CD
+			AND A.PROMO_ID 		= #{mPrmId}
+			AND A.ARTICLE_ID 		= #{mPrmId}
+         ORDER BY  B.PRDT_NM, C.STNDRD	
+	</select>	
+	
+	<select id="getMissCall" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getMissCall */
+			SELECT 
+				M.CALL_ID
+				,M.PHONE
+				,M.STTUS
+				,M.CALL_DT
+				,M.CONF_DT
+				,(SELECT USR_NM FROM USER_INFO WHERE USR_ID = M.CONF_ID) AS CONF_ID
+			FROM CRM_MISSCALL M 
+			WHERE DATE(M.CALL_DT) = DATE(#{eDt})
+			ORDER BY M.STTUS, M.CALL_DT
+	</select>	
+	
+	<select id="getArsUsrInfo" parameterType="hashMap" resultType="hashMap">
+		/* FrontSearchDao.getArsUsrInfo */
+		SELECT
+			UI.USR_ID
+			, UI.USR_NM
+			, UI.STORE_ID
+			, UI.EMAIL
+			, UI.MOBILE
+			, UI.JOIN_USR_ID
+			, UI.JOIN_ROUTE
+			, UI.USR_TP
+			, UI.USR_LV
+			, UI.SMS_NOTI_AGRE_AT
+			, UI.SMS_AD_AGRE_AT
+			, UI.EMAIL_AD_AGRE_AT			
+			, UI.CNT_PW_ERROR
+			, UI.PW_LAST_MOD_DT
+			, UI.LAST_LOGIN_DT	
+			, UI.AUTO_TAXBILL			
+		FROM
+			USER_INFO UI 
+		WHERE
+			(	
+					 REPLACE(UI.MOBILE,'-','') = REPLACE(#{mobile},'-','')
+				OR REPLACE(UI.JOIN_USR_ID,'-','') = REPLACE(#{mobile},'-','')
+			)
+		AND 
+			UI.USR_TP  = 'T'
+		AND 
+			UI.USE_YN 	= 'Y'
+		ORDER BY 
+			UI.USR_ID
+		LIMIT 0, 1
+	</select>	
+
+	<select id="getCaImgInfo" parameterType="hashMap" resultType="hashMap">
+			/* FrontSearchDao.getCaImgInfo */
+			SELECT 
+					FILE_ID, 
+					CONCAT(FILE_PATH,FILE_SAVE_NAME) AS IMG, 
+			       	IF( FILE_ID = #{code} , 'O', 'X') AS CUR
+			FROM BOARD_FILE 
+			 WHERE BBS_ID =	'CATALOG' 
+   		  	     AND FILE_ID BETWEEN (#{code} - 3000) AND (#{code} + 3000)
+			ORDER BY FILE_ID
+	</select>
+	
+	<select id="getSetPrdMst" parameterType="hashMap" resultType="hashMap">
+		/* "getSetPrdMst" */
+		SELECT 
+			PRDT_CD AS sPcd
+			,PRDT_CD AS sScd
+			,STORE_ID
+			,CATEG_CD AS sCcd
+			,PRDT_NM AS sNm
+			,PRDT_ETC_NM 
+			,MAKR_NM AS sMk
+			,MAKR_CD
+			,PRDT_IMG
+			,PRDT_INFO
+			,PRDT_DTL_INFO
+		FROM PRDT_MST
+		WHERE USE_YN 			= 'Y'
+			AND SOLDOUT_AT 	= 'N'
+			AND V_MD_AT 			= 'Y'	
+			AND PRDT_CD LIKE 'ST7%'
+			<isNotEmpty property="mCd">
+				AND	PRDT_CD LIKE CONCAT('%',#{mCd},'%')
+			</isNotEmpty>
+			<isNotEmpty property="mNm">
+				AND	PRDT_NM LIKE CONCAT('%',#{mNm},'%')
+			</isNotEmpty>
+	</select>
+	
+	<select id="getSetPrdtList" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getSetPrdtList*/
+			SELECT
+				A.PROMO_ID 		AS sPrmId,
+				A.ARTICLE_ID 		AS sArtCd,
+				A.PRDT_CD 			AS sPcd,
+				A.PRDT_DTL_CD 	AS sScd,
+				B.PRDT_NM 		AS sNm,
+				B.MAKR_NM 		AS sMk,
+	        	D.CATEG_CD 		AS sCcd,
+	        	D.CATEG_NM 		AS sCnm
+			FROM PROMO_PRDUCT A, PRDT_MST B, CATEG_INFO D
+			WHERE A.PRDT_CD 		= B.PRDT_CD
+			AND A.CATEG_CD 		= D.CATEG_CD
+			AND A.PROMO_ID 		= #{mPrmId}
+			AND A.ARTICLE_ID 		= #{mAartCd}
+         ORDER BY D.CATEG_NM , B.PRDT_CD		
+	</select>	
+		
+	<select id="getAdPrdtList" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getAdPrdtList*/
+		SELECT 
+				M.PRDT_CD ,
+				M.PRDT_NM ,
+				M.MAKR_NM,
+				C.CATEG_NM AS sCnm
+		  FROM RECOM_PRDUCT R, PRDT_MST M, CATEG_INFO C  
+		 WHERE R.RECOM_ID = #{recomId}
+		       AND R.PRDT_CD = #{sPrdtCd}
+		       AND R.PRDT_DTL_CD = M.PRDT_CD   
+		       AND M.CATEG_CD = C.CATEG_CD
+	</select>
+	
+	<select id="getPrdtImgL" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getPrdtImgL*/
+		SELECT 
+		  A.FILE_SEQ AS PSEQ
+		  ,A.ATCH_FILE_NO AS PCD
+		  ,A.FILE_STRE_COURS AS IDIR
+		  ,A.FILE_STRE_NM AS INM
+		  ,CONCAT('/upload',A.FILE_STRE_COURS,A.FILE_STRE_NM ) AS sImg
+		FROM PROMO_PRDUCT PP,  ATCH_FILE A
+		WHERE PP.ARTICLE_ID 	= 0
+			AND PP.PROMO_ID 	= #{mPrmId}
+			AND PP.PRDT_CD 		= A.ATCH_FILE_NO
+			AND A.ATCH_TP 		= 'PDI'
+			AND A.USE_AT 		= 'Y'
+	</select>
+	
+	<select id="getImgPrdt" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getImgPrdt*/
+		SELECT 
+			    P.CATEG_CD AS PSEQ
+			    ,P.PRDT_CD AS INM
+			    ,D.PRDT_DTL_CD AS sScd
+			    ,M.PRDT_NM AS sNm
+			    ,D.STNDRD AS sSt
+			    ,M.MAKR_NM AS sMk
+			    ,D.SEL_PRICE AS sPrice
+		FROM PROMO_PRDUCT P, PRDT_MST M, PRDT_DTL D
+		WHERE P.PROMO_ID 		= #{mPrmId}
+		  AND P.ARTICLE_ID 		= #{mPrmId}
+		  AND P.PRDT_DTL_CD 	= D.PRDT_DTL_CD
+		  AND D.PRDT_CD 		= M.PRDT_CD
+		  AND P.PRDT_CD 		!= '0'
+		ORDER BY P.CATEG_CD, M.PRDT_NM 
+	</select>
+	
+	<select id="getOrdrUsrInfo" parameterType="hashMap" resultType="hashMap">
+		/*FrontSearchDao.getOrdrUsrInfo*/
+		SELECT 
+			USR_ID
+			,USR_NM
+			,EMAIL
+			,MOBILE
+		FROM USER_INFO
+		WHERE USR_ID = #{sMoUsrId}
+	</select>
+</mapper>

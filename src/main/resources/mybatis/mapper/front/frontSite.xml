@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.front.dao.FrontSiteDao">
+  	<insert id="setBoard">
+    	<selectKey keyProperty="sArtCd" resultType="string">
+    		SELECT IF(#{sArtCd} = 'NEW' OR #{sArtCd} = '', IFNULL(MAX(ARTICLE_ID), 1000000) + 1,#{sArtCd}) AS sArtCd FROM BOARD 
+    		WHERE ARTICLE_ID <![CDATA[>=]]> 1000000
+    		AND ARTICLE_ID <![CDATA[<]]> 2000000
+    	</selectKey>
+			/* FrontSite.setBoard */
+		  INSERT
+		  INTO   BOARD
+		         (
+					ARTICLE_ID
+					,BBS_ID
+					,BBS_TP
+					,RELATE_ARTICLE_AT
+					,TITLE
+					,CONTENT
+					,BBS_STRT_DT
+					,BBS_END_DT
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{sArtCd}
+					,#{sBbsId}
+					,#{sBbsTp}
+					,#{sRelNo}
+					,#{sTitle}
+					,#{sCont}
+					,#{sSdt}
+					,#{sEdt}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				BBS_ID				= #{sBbsId}
+				,BBS_TP				= #{sBbsTp}
+				,RELATE_ARTICLE_AT= #{sRelNo}
+				,TITLE				= #{sTitle}
+				,CONTENT			= #{sCont}
+				,BBS_STRT_DT		= #{sSdt}
+				,BBS_END_DT		= #{sEdt}
+				,USE_YN				= #{sUseYN}
+				,UPDATE_DT 		= NOW()
+				,UPDATE_ID 		= #{usrId}			
+	</insert>
+  	<insert id="setPromo">
+    	<selectKey keyProperty="sPrmId" resultType="string">
+    		SELECT IF(#{sPrmId} = 'NEW' OR #{sPrmId} = '', IFNULL(MAX(PROMO_ID), 2000000) + 1,#{sPrmId}) AS sPrmId FROM PROMO_BOARD  
+    		WHERE PROMO_ID <![CDATA[>=]]> 2000000
+    		AND PROMO_ID <![CDATA[<]]> 3000000
+    	</selectKey>
+			/* FrontSite.setPromo */
+		  INSERT
+		  INTO   PROMO_BOARD
+		         (
+					PROMO_ID
+					,BBS_ID
+					,ARTICLE_ID
+					,PROMO_TP
+					,TITLE
+					,CATEG_CD
+					,PRDT_CD
+					,BGCOLOR
+					,URL
+					,WIDTH
+					,HEIGHT
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{sPrmId}
+					,#{sBbsId}
+					,#{sArtCd}
+					,#{sPrmTp}
+					,#{sTitle}
+					,#{caPm}
+					,#{sPrdtCd}
+					,#{sBgCr}
+					,IF(#{sUrl} = '' , NULL , #{sUrl})
+					,IF(#{sWidth} = '', 0, #{sWidth})
+					,IF(#{sHeight} = '', 0, #{sHeight})
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				BBS_ID			= #{sBbsId}
+				,PROMO_TP			= #{sPrmTp}
+				,TITLE				= #{sTitle}
+				,CATEG_CD			= #{caPm}
+				,PRDT_CD			= #{sPrdtCd}
+				,BGCOLOR			= #{sBgCr}
+				,URL					= IF(#{sUrl} = '' , NULL , #{sUrl})
+				,WIDTH				= IF(#{sWidth} = '', 0, #{sWidth})
+				,HEIGHT				= IF(#{sHeight} = '', 0, #{sHeight})
+				,USE_YN				= #{sUseYN}
+				,UPDATE_DT 		= NOW()
+				,UPDATE_ID 		= #{usrId}			
+	</insert>
+	
+	<update id="delPromoPrdt">
+			/* FrontSiteDao.delPromoPrdt */
+		DELETE  
+		FROM PROMO_PRDUCT
+		WHERE 
+			PROMO_ID 		= #{prmId}
+		AND 
+			ARTICLE_ID 	= #{artCd}
+		AND 
+			PRDT_DTL_CD 	= #{sScd}
+	</update>
+	
+  	<insert id="setPromoPrdt">
+			/* FrontSiteDao.setPromoPrdt */
+		  INSERT
+		  INTO   PROMO_PRDUCT
+		         (
+					PROMO_ID
+					,ARTICLE_ID
+					,PRDT_DTL_CD
+					,PRDT_CD
+					,CATEG_CD
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+					#{prmId}
+					,#{artCd}
+					,#{sScd}
+					,#{sPcd}
+					,#{sCcd}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				PRDT_CD		= #{sPcd}
+				,CATEG_CD		= #{sCcd}
+				,UPDATE_DT	= NOW()
+				,UPDATE_ID	  	= #{usrId}
+				
+	</insert>
+	
+  	<insert id="setMDPrdt">
+			/* FrontSiteDao.setMDPrdt */
+		  INSERT
+		  INTO   RECOM_PRDUCT
+		         (
+					RECOM_ID
+					,RECOM_TP
+					,PRDT_CD
+					,PRDT_DTL_CD
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+					#{recomId}
+					,#{sTp}
+					,#{sPcd}
+					,#{sScd}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				RECOM_TP		= #{sTp}
+				,UPDATE_DT	= NOW()
+				,UPDATE_ID	  	= #{usrId}
+	</insert>
+		
+	<update id="delMDPrdt">
+			/* FrontSiteDao.delMDPrdt */
+		DELETE  
+		FROM RECOM_PRDUCT
+		WHERE 
+			RECOM_ID 		= #{recomId}
+		AND 
+			PRDT_CD 		= #{sPcd}
+		AND 
+			PRDT_DTL_CD	= #{sScd}
+	</update>
+</mapper>

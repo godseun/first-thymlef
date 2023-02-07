@@ -73,7 +73,7 @@
 			,DTL_CD_NM AS cbText  
 		FROM  CMM_CODE_DTL 
 		WHERE 1 = 1
-		AND CL_CD 			= #sCd#
+		AND CL_CD 			= #{sCd}
 		<if test='useOnly.equals("useOnly")'>
 			AND USE_YN 		= 'Y'
 			AND VIEW_YN 		= 'Y'
@@ -93,7 +93,7 @@
 			AND VIEW_YN 		= 'Y'
 		</if>
 		<if test='sCd != ""'>
-			AND CL_CD 		= #sCd#
+			AND CL_CD 		= #{sCd}
 		</if>
 		<if test='sCdList != ""'>
 			AND CL_CD		IN
@@ -111,10 +111,10 @@
 		FROM  CATEG_INFO 
 		WHERE USE_YN 		= 'Y'
 		<if test='CATEG_TY_CD != ""' >
-			AND CATEG_TY_CD = #CATEG_TY_CD#
+			AND CATEG_TY_CD = #{CATEG_TY_CD}
 		</if>
 		<if test='P_CATEG_CD != ""' >
-			AND P_CATEG_CD = #P_CATEG_CD#
+			AND P_CATEG_CD = #{P_CATEG_CD}
 		</if>
 	</select>		
 		
@@ -251,8 +251,8 @@
 		SELECT 
 			DTL_CD_NM
 		FROM CMM_CODE_DTL
- 		WHERE CL_CD 		= #cl_cd#
- 			AND DTL_CD 	= #dtl_cd#
+ 		WHERE CL_CD 		= #{cl_cd}
+ 			AND DTL_CD 	= #{dtl_cd}
  			AND USE_YN	= 'Y'
  			AND DELETE_DT IS NULL
        LIMIT 0,1	

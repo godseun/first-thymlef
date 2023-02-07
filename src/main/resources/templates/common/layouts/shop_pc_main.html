@@ -16,7 +16,7 @@
           th:replace="common/fragments/shop/shop_pc_header::shopPcHeader"
         ></th:block>
       </div>
-      <div id="section" style="width: auto">
+      <div id="section" style="width: auto" th:with="host='http://localhost:8090'">
         <!-- content fragment 사용 -->
         <th:block layout:fragment="content"></th:block>
       </div>

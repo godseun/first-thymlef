@@ -1,0 +1,860 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.front.dao.FrontOrderDao">
+
+	<update id="setOrderInvoice">
+		/* FrontOrderDao.setOrderInvoice */
+		UPDATE ORDR_DTL SET
+			STTUS 				= #{aSttus} 
+			,DELY_DT			= IF(DELY_DT IS NULL, NOW(), DELY_DT)
+			,DELY_CMP			= #{dlvyCmp}
+			,DELY_CMP_NM	= (SELECT DTL_CD_NM FROM CMM_CODE_DTL WHERE CL_CD = '1003' AND DTL_CD = #{dlvyCmp})
+			,INVOICE			= #{invoice}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STTUS			= #{bSttus}
+			AND O_ID 			= #{oId}
+	</update>
+	
+	<update id="setAcceptMstSttus">
+		/* FrontOrderDao.setAcceptMstSttus */
+		UPDATE ORDR_STR_MST M 
+		       SET M.STTUS =  
+							       (SELECT 
+							       		IF( COUNT(D.O_ID) = SUM(IF(D.STTUS = 2,1,0)), 2 , 1 ) 
+							         FROM ORDR_DTL D 
+							        WHERE D.ORDR_ID IN 
+													              (SELECT 
+													              		DISTINCT ORDR_ID 
+													                FROM ORDR_DTL 
+													              WHERE O_ID IN 
+																	<foreach collection="array" item="oId" open="(" close=")" separator=",">
+																		#{oId}
+																	</foreach>
+													              ) 
+							             AND D.USE_YN  = 'Y' 
+							             AND D.ORDR_ID = M.ORDR_ID 
+							       )
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE M.ORDR_ID IN 
+					              (
+					              	SELECT 
+					              		DISTINCT ORDR_ID 
+					                FROM ORDR_DTL 
+					               WHERE O_ID IN 
+									<foreach collection="array" item="oId" open="(" close=")" separator=",">
+										#{oId}
+									</foreach>
+					              ) 		
+	</update>
+	
+	<update id="setAcceptSttus">
+		/* FrontOrderDao.setAcceptSttus */
+		UPDATE ORDR_DTL SET
+			STTUS 				= #{aSttus}
+			,RECEIPT_DT 		= IF(#{aSttus} = '2', NOW(), RECEIPT_DT)
+			,RECEIPT_ID 		= IF(#{aSttus} = '2', #{usrId}, RECEIPT_ID)
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STTUS			= #{bSttus}
+			AND O_ID IN 
+			<foreach collection="array" item="oId" open="(" close=")" separator=",">
+				#{oId}
+			</foreach>
+	</update>
+	
+	<update id="setOrderMstInvoice">
+		/* FrontOrderDao.setOrderMstInvoice */
+		UPDATE ORDR_STR_MST M 
+		       SET M.STTUS =  
+							       (SELECT IF( COUNT(D.O_ID) = SUM( IF(D.STTUS = #{bSttus},1,0)), #{aSttus}, M.STTUS ) 
+							         FROM ORDR_DTL D 
+							        WHERE D.ORDR_ID IN 
+													              (SELECT DISTINCT ORDR_ID
+													                FROM ORDR_DTL 
+													               WHERE O_ID IN 
+																					<foreach collection="array" item="oId" open="(" close=")" separator=",">
+																						#{oId}
+																					</foreach>
+													              ) 
+							              AND D.USE_YN  = 'Y' 
+							              AND D.ORDR_ID = M.ORDR_ID 
+							       )
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE M.ORDR_ID IN 
+					              (
+					              	SELECT DISTINCT ORDR_ID 
+					                FROM ORDR_DTL 
+					               WHERE O_ID IN 
+													<foreach collection="array" item="oId" open="(" close=")" separator=",">
+														#{oId}
+													</foreach>
+					              ) 		
+	</update>
+	
+	<update id="setOrderSttus">
+		/* FrontOrderDao.setOrderSttus */
+		UPDATE ORDR_DTL SET
+			STTUS				= #{aSttus}				
+			,DELY_COMP_DT	= #{cDt}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STTUS			= #{bSttus}
+			AND DELY_CMP	= #{dlvyCmp}
+			AND INVOICE		= #{invoice}
+			AND O_ID IN
+					<foreach collection="array" item="oId" open="(" close=")" separator=",">
+						#{oId}
+					</foreach>
+	</update>
+	
+	<update id="setOrderSttus2">
+		/* FrontOrderDao.setOrderSttus */
+		UPDATE ORDR_DTL SET
+			STTUS				= #{aSttus}				
+			,DELY_COMP_DT	= NOW()
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STTUS			= #{bSttus}
+			AND O_ID IN
+					<foreach collection="array" item="oId" open="(" close=")" separator=",">
+						#{oId}
+					</foreach>
+	</update>
+	
+	<select id="getIniOrdrInfo" parameterType="hashMap" resultType="hashMap">
+			/* FrontOrderDao.getIniOrdrInfo*/
+			SELECT 
+				  M.TID AS tid
+				  ,M.OID AS oid 
+				  ,D.INVOICE AS dlv_invoice
+				  , #{usrNm} AS dlv_name
+				  ,(SELECT DTL_CD_DESC FROM CMM_CODE_DTL WHERE CL_CD = '1003' AND DTL_CD = D.DELY_CMP ) AS dlv_excode 
+				  ,(SELECT DTL_CD_NM FROM CMM_CODE_DTL WHERE CL_CD = '1003' AND DTL_CD = D.DELY_CMP ) AS dlv_exname 
+				  ,IF(M.DEVY_FEE = 0 ,'SH' ,'BH') AS dlv_charge   
+				  ,DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s') AS dlv_invoiceday
+				  ,'대화' AS dlv_sendname 
+				  ,S.ZIP_CD AS dlv_sendpost
+				  ,S.ADRES AS dlv_sendaddr1
+				  ,S.ADRES_DTL AS dlv_sendaddr2
+				  ,'1833-8917' AS dlv_sendtel
+				  ,M.RECV_NM AS dlv_recvname 
+				  ,M.ZIP_CODE AS dlv_recvpost 
+				  ,M.ADDRESS AS dlv_recvaddr
+				  ,M.ADDRESS_DETAIL AS dlv_recvtel 
+				  ,D.PRDT_CD AS dlv_goodscode 
+				  ,CONCAT(D.PRDT_NM,IF(COUNT(D.O_ID)=1,'',CONCAT('외 ', (COUNT(D.O_ID)-1),'품목')))AS dlv_goods 
+				  ,COUNT(D.O_ID) AS dlv_goodcnt 
+				  ,M.TOT_PRICE as price
+			FROM ORDR_MST M, ORDR_DTL D, STORE_INFO S
+			WHERE M.ORDR_ID 	= D.ORDR_ID
+				AND D.STORE_ID 	= S.STORE_ID
+				AND M.SEND_RESULT = #{sendResult}
+				AND D.USE_YN 	= 'Y'
+				AND M.USE_YN 	= 'Y'
+				AND D.O_ID IN
+			<foreach collection="array" item="oId" open="(" close=")" separator=",">
+				#{oId}
+			</foreach>
+	</select>
+	
+	<update id="setIniOrdrMst">
+		/* FrontOrderDao.setIniOrdrMst */
+		UPDATE ORDR_MST SET
+			SEND_RESULT		= #{sSttus}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE ORDR_ID		= #{ordrId}
+	</update>	
+	
+	<update id="setRefOrdrPay">
+		/* FrontOrderDao.setRefOrdrPay */
+		
+		UPDATE ORDR_PAY SET
+			EVENTCODE 		= #{result}
+			,REFPRICE 			= TOTPRICE
+			,TOTPRICE 			= 0
+			,USE_YN 			= 'N'
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE ORDR_ID		= #{ordrId}
+	</update>	
+		
+	<update id="setRefOrdrMst">
+		/* FrontOrderDao.setRefOrdrMst */
+		UPDATE ORDR_MST SET
+			SEND_RESULT			= #{sSttus}
+			,RESULT_DT			= NOW()
+			,USE_YN 				= 'N'
+			,UPDATE_DT			= NOW()
+			,UPDATE_ID				= #{usrId}
+			
+		WHERE ORDR_ID			= #{ordrId}
+			AND SEND_RESULT 	= #{result}
+			AND USE_YN			= 'Y'
+	</update>	
+		
+	<update id="setRefOrdrStr">
+		/* FrontOrderDao.setRefOrdrStr */
+		UPDATE ORDR_STR_MST SET
+			CAN_PRDT 				= CNT_PRDT	
+			,STTUS					= #{sSttus}
+			,USE_YN 				= 'N'
+			,UPDATE_DT			= NOW()
+			,UPDATE_ID				= #{usrId}
+			
+		WHERE ORDR_ID			= #{ordrId}
+			AND STTUS				= #{bSttus}
+			AND USE_YN			= 'Y'
+	</update>	
+		
+	<update id="setRefOrdrDtl">
+		/* FrontOrderDao.setRefOrdrDtl */
+		UPDATE ORDR_DTL SET
+			STTUS					= #{sSttus}
+<!-- 			
+			,CONFM_DT				= NOW()
+			,CONFM_ID				= #{usrId}
+ -->			
+			,CONFM_RMK			= #{usrId}
+			,USE_YN 				= 'N'
+			,UPDATE_DT			= NOW()
+			,UPDATE_ID				= #{usrId}
+			
+		WHERE ORDR_ID			= #{ordrId}
+			AND STTUS				= #{bSttus}
+			AND USE_YN			= 'Y'
+	</update>	
+
+	<insert id="saveOrdrRmk">
+			/* FrontOrderDao.saveOrdrRmk*/
+		  INSERT
+		  INTO   CONTACT_BOARD
+		         (
+					BBS_ID
+					,RELATE_CD
+					,TITLE
+					,CONTENT
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+					#{bbsId}
+					,#{relateCd}
+					,#{title}
+					,#{content}
+					,NOW()
+					,#{usrId}
+		         )
+	</insert>	
+			
+	<update id="setHightLight">
+		/* FrontOrderDao.setHightLight */
+		UPDATE ORDR_DTL SET
+				RMK					= #{rmk}
+		WHERE ORDR_ID			= #{ordrId}
+			AND USE_YN			= 'Y'
+	</update>	
+	
+
+	<insert id="setCopyCart">
+		/* FrontOrderDao.setCopyCart */
+		  INSERT
+		  INTO   USER_CART
+		         (
+		                USR_ID ,
+		                PRDT_CD ,
+		                PRDT_DTL_CD ,
+		                QY ,
+		                CREATE_DT ,
+		                CREATE_ID
+		         )
+		         VALUES
+		         (
+		                #{ordrUsrId} ,
+		                (SELECT PRDT_CD FROM PRDT_DTL WHERE PRDT_DTL_CD = #{sDprdtCd}) ,
+		                #{sDprdtCd} ,
+		                #{sDqy} ,
+		                NOW() ,
+		                #{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+		  	QY = #{sDqy},
+		  	UPDATE_DT = NOW(), 
+		  	UPDATE_ID = #{usrId}
+	</insert>
+			
+	<update id="setSplitQy">
+		/* FrontOrderDao.setSplitQy */
+		UPDATE ORDR_DTL SET
+			SUM_PRICE 		=	(QY - #{Qy}) * TOT_PRICE
+			,QY					=	QY - #{Qy}
+			,UPDATE_DT		=	NOW()
+			,UPDATE_ID			=	#{usrId}
+		WHERE ORDR_ID		= 	#{ordrId}
+			AND O_ID 			= 	#{oId}
+			AND STTUS IN ('1','2','3','4')
+	</update>	
+		
+	<insert id="insOdrReq">
+			/* FrontOrderDao.insOdrReq*/
+		  INSERT
+		  INTO   ORDR_DTL
+		         (
+					ORDR_ID
+					,ORDR_USR_ID
+					,PRDT_CD
+					,STORE_ID
+					,PRDT_DTL_CD
+					,PRDT_NM
+					,STNDRD
+					,MAKR_NM
+					,TOT_PRICE
+					,PUR_PRICE
+					,QY
+					,SUM_PRICE
+					,STTUS
+					,ORDR_DT
+					,RECEIPT_DT
+					,RECEIPT_ID
+					,CONFM_DT
+					,CONFM_ID
+					,CONFM_RMK
+					,DELY_DT
+					,DELY_ID
+					,DELY_CMP
+					,DELY_CMP_NM
+					,INVOICE
+					,DELY_COMP_DT
+					,ORDT_COMP_DT
+					,CANCEL_DT
+					,CAL_DT
+					,CAL_YN
+					,CHG_ID
+					,USE_YN
+					,RMK
+					,CREATE_DT
+					,CREATE_ID
+					,UPDATE_DT
+					,UPDATE_ID
+		         )
+		         SELECT 
+					ORDR_ID
+					,ORDR_USR_ID
+					,PRDT_CD
+					,STORE_ID
+					,PRDT_DTL_CD
+					,PRDT_NM
+					,STNDRD
+					,MAKR_NM
+					,TOT_PRICE
+					,PUR_PRICE
+					,#{Qy}
+					,(#{Qy} * TOT_PRICE)
+					,#{sttus}
+					,ORDR_DT
+					,RECEIPT_DT
+					,RECEIPT_ID
+					,CONFM_DT
+					,CONFM_ID
+					,CONFM_RMK
+					,DELY_DT
+					,DELY_ID
+					,DELY_CMP
+					,DELY_CMP_NM
+					,INVOICE
+					,DELY_COMP_DT
+					,ORDT_COMP_DT
+					<choose>
+						<when test="sttus == '7'">
+						,NOW()
+						</when>
+						<otherwise>
+						,CANCEL_DT
+						</otherwise>
+					</choose>
+					,CAL_DT
+					,CAL_YN
+					,#{chgId}
+					,#{useYn}
+					,RMK
+					,CREATE_DT
+					,CREATE_ID
+					,NOW()
+					,#{usrId}
+		         FROM ORDR_DTL
+				WHERE ORDR_ID		= #{ordrId}
+					AND O_ID 			= #{oId}
+					AND STTUS IN ('1','2','3','4')
+	</insert>	
+	
+	
+	<update id="uptRtnReq">
+		/* FrontOrderDao.uptRtnReq */
+		UPDATE ORDR_DTL SET
+			STTUS				=	#{sttus}
+			<if test="sttus == '7'">
+				,USE_YN				=	#{useYn}
+				,CANCEL_DT		=	NOW()
+			</if>		
+			,CHG_ID				=	#{chgId}
+			,UPDATE_DT		=	NOW()
+			,UPDATE_ID			=	#{usrId}
+		WHERE ORDR_ID		=	#{ordrId}
+			AND O_ID 			=	#{oId}
+			<choose>
+				<when test="sttus == '7'">
+				AND STTUS IN ('1','2')
+				</when>
+				<otherwise>
+				AND STTUS IN ('1','2','3','4')
+				</otherwise>
+			</choose>
+	</update>	
+	
+		
+	<insert id="setRtnMsg">
+		<selectKey keyProperty="chgId" resultType="Integer" type="post">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+		/* FrontOrderDao.setRtnMsg */
+		INSERT INTO ORDR_CHG_MST (
+			ORDR_ID
+			,ORDR_USR_ID
+			,STORE_ID
+			,TID
+			,CNT_PRDT
+			,SUM_PRICE
+			,RMK_CD
+			,RMK
+			,DEVY_TP
+			,CREATE_DT
+			,CREATE_ID		
+		)
+		SELECT 
+			   M.ORDR_ID ,
+		       M.ORDR_USR_ID ,
+		       M.STORE_ID ,
+		       P.TID ,
+		       COUNT(M.O_ID) ,
+		       SUM(M.SUM_PRICE) ,
+		       #{rtnCd} ,
+		       #{rmk} ,
+		       #{rtnDv} ,
+		       NOW() ,
+		       #{usrId} 
+		  FROM ORDR_DTL M , 
+		       ORDR_PAY P 
+		 WHERE M.ORDR_ID 				= P.ORDR_ID  
+				AND M.ORDR_ID			= #{ordrId} 
+				AND M.O_ID IN 
+				<foreach collection="array" item="oId" open="(" close=")" separator=",">
+					#{oId}
+				</foreach>
+		   GROUP BY M.ORDR_ID, M.ORDR_USR_ID, M.STORE_ID
+	</insert>
+
+	<update id="setRtnCan">
+		/* FrontOrderDao.setRtnCan */
+		UPDATE ORDR_DTL SET
+			STTUS				=	IF(DELY_COMP_DT IS NOT NULL, '4', IF(DELY_DT IS NOT NULL, '3', IF(RECEIPT_DT IS NOT NULL ,'2', '1'))) 
+			,CHG_ID				=	null
+			,UPDATE_DT		=	NOW()
+			,UPDATE_ID			=	#{usrId}
+		WHERE ORDR_ID		=	#{ordrId}
+			AND O_ID 			IN 
+			<foreach collection="array" item="oId" open="(" close=")" separator=",">
+				#{oId}
+			</foreach>
+			AND STTUS IN ('51','52','53')
+	</update>	
+	
+	<select id="getOrdrMst" parameterType="hashMap" resultType="hashMap">
+	  	/*FrontOrderDao.getOrdrMst*/
+		SELECT 
+			   M.ORDR_ID , 
+		       M.TOT_PRICE , 
+		       M.DEVY_FEE , 
+		       M.SUM_PRICE , 
+		       M.ADDR_NM , 
+		       M.RECV_NM , 
+		       M.ZONE_TP , 
+		       M.ZONE_CODE , 
+		       M.ZIP_CODE , 
+		       M.ADDRESS , 
+		       M.ADDRESS_DETAIL , 
+		       M.TEL_NO , 
+		       M.RMK , 
+		       M.TID,
+		       P.SUM_PRICE AS P_SUM_PRICE , 
+		       P.TOTPRICE AS P_TOTPRICE , 
+		       P.REFPRICE AS P_REFPRICE , 
+		       P.PAYMETHOD , 
+		       DATE_FORMAT ( CONCAT(P.APPLDATE,P.APPLTIME ),'%Y/%m/%d %T') AS APPL_DT, 
+		       P.CARD_NUM, 
+		       (SELECT DTL_CD_NM 
+		         FROM CMM_CODE_DTL 
+		        WHERE CL_CD ='1011' 
+		              AND DTL_CD = P.CARD_CODE 
+		       ) AS CARD_NM, 
+		       P.VACT_NUM ,   
+		       (SELECT DTL_CD_NM 
+		         FROM CMM_CODE_DTL 
+		        WHERE CL_CD ='1012' 
+		              AND DTL_CD = P.ACCT_BANK_CODE 
+		       ) AS ACCT_BANK_NM, 
+		       (SELECT DTL_CD_NM 
+		         FROM CMM_CODE_DTL 
+		        WHERE CL_CD ='1012' 
+		              AND DTL_CD = P.VACT_BANK_CODE 
+		       ) AS VBANK_NM,  
+		       P.VACT_NAME , 
+		       P.VACT_INPUT_NAME , 
+		       DATE_FORMAT ( CONCAT(P.VACT_DATE,P.VACT_TIME ),'%Y/%m/%d %T') AS LIMIT_DT, 
+       		   DATE_FORMAT ( CONCAT(P.TRANS_DATE,P.TRANS_TIME ),'%Y/%m/%d %T') AS TRANS_DT,
+       		   M.USE_YN,
+       		   IFNULL((SELECT EMAIL FROM USER_INFO WHERE M.ORDR_USR_ID = USR_ID), 'ars@selltool.kr') AS buyeremail,
+       		   IFNULL((SELECT DTL_CD FROM CMM_CODE_DTL WHERE CL_CD ='1025' AND USE_YN ='Y' ORDER BY SORT_ORDR LIMIT 1), 'A') AS RTN_TP
+   		  FROM ORDR_MST M, ORDR_PAY P 
+		 WHERE M.ORDR_ID = P.ORDR_ID 
+		 	AND M.ORDR_ID = #{ordrId}
+		 	AND M.DELETE_DT IS NULL
+	</select>
+
+	<insert id="setRefundPay">
+		/* FrontOrderDao.setRefundPay */
+		  INSERT
+		  INTO   ORDR_REPAY
+		         (
+					ORDR_ID
+					,TYPE
+					,TID
+					,NTID
+					,CANCELDATE
+					,CANCELTIME
+					,PAYMETHOD
+					,O_PRICE
+					,C_PRICE
+					,PRICE
+					,CSHR_RESULT_CODE
+					,CSHR_CANCEL_NUM
+					,CSHR_CANCEL_DATE
+					,CSHR_CANCEL_TIME 
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{ordrId}
+					,#{procType}
+					,#{tid}
+					,#{Ntid}
+					,#{CancelDate}
+					,#{CancelTime}
+					,#{PAYMETHOD}
+					,#{O_PRICE}
+					,#{PRTC_Price}
+					,#{PRTC_Remains}
+					,#{CSHR_ResultCode}
+					,#{CSHR_CancelNum}
+					,#{CSHR_CancelDate}
+					,#{CSHR_CancelTime} 
+					,NOW()
+					,#{usrId}	         
+		         )
+	</insert>
+
+	<update id="canOrderDtl">
+		/* FrontOrderDao.canOrderDtl */
+		UPDATE ORDR_DTL SET
+			STTUS				=	#{sttus}
+			,USE_YN				=	#{useYn}
+			,CANCEL_DT		=	NOW()
+			,UPDATE_DT		=	NOW()
+			,UPDATE_ID			=	#{usrId}
+		WHERE ORDR_ID		=	#{ordrId}
+			AND O_ID 			IN 
+			<foreach collection="array" item="oId" open="(" close=")" separator=",">
+				#{oId}
+			</foreach>
+			<if test='proc == "rtn"'>
+				AND STTUS IN ('51','52','53')
+			</if>	
+			<if test='proc == "can"'>
+				AND STTUS IN ('1','2','71')
+			</if>
+	</update>	
+
+
+	<insert id="insOrderStrMstHist">
+		/* FrontOrderDao.insOrderStrMstHist */
+		  INSERT
+		  INTO  ORDR_STR_MST_HIST	
+		         (
+					INSERT_DT
+					,INSERT_ID
+					,O_ID
+					,ORDR_ID
+					,STORE_ID
+					,ORDR_USR_ID
+					,TOT_PRICE
+					,CNT_PRDT
+					,CAN_PRDT
+					,DEVY_FEE
+					,SUM_PRICE
+					,STTUS
+					,CREATE_DT
+					,CREATE_ID
+					,USE_YN
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID	
+	    	 )
+			SELECT 
+					NOW()
+					,#{usrId}	   
+					,O_ID
+					,ORDR_ID
+					,STORE_ID
+					,ORDR_USR_ID
+					,TOT_PRICE
+					,CNT_PRDT
+					,CAN_PRDT
+					,DEVY_FEE
+					,SUM_PRICE
+					,STTUS
+					,CREATE_DT
+					,CREATE_ID
+					,USE_YN
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID	
+			FROM ORDR_STR_MST
+		WHERE ORDR_ID 			= #{ordrId}
+			AND DELETE_DT		IS NULL
+	</insert>
+	
+	<!-- 주문 정보 리스트 수정-->
+	<update id="canOrderStrMst">
+		/* FrontOrderDao.canOrderStrMst */
+		UPDATE ORDR_STR_MST SET
+			UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+			,USE_YN					= #{mUseYn}
+			,CNT_PRDT				= (CNT_PRDT - #{cCnt})
+			,CAN_PRDT				= (CAN_PRDT + #{cCnt})
+			,TOT_PRICE				=#{nTotPrice}
+			,DEVY_FEE				=#{nDvyPrice}
+			,SUM_PRICE			=#{nSumPrice}
+			<if test='nSumPrice == "0"'>
+				,STTUS 					= #{sttus}
+			</if>
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+			AND STTUS NOT IN ('0', '5', '7', '8', '9')
+	</update>	
+		
+	<!-- 주문 정보 품목수 조정-->
+	<update id="setStrCnt">
+		/* FrontOrderDao.setStrCnt */
+		UPDATE ORDR_STR_MST SET
+			CNT_PRDT				= (CNT_PRDT + 1)
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</update>	
+	
+	<insert id="insOrderMstHist">
+		/* FrontOrderDao.insOrderMstHist */
+		  INSERT
+		  INTO  ORDR_MST_HIST	
+		         (
+					INSERT_DT
+					,INSERT_ID
+					,ORDR_ID
+					,ORDR_USR_ID
+					,STORE_CNT
+					,TOT_PRICE
+					,DEVY_FEE
+					,SUM_PRICE
+					,PAYMETHOD
+					,TOTPRICE
+					,OID
+					,TID
+					,ADDR_NM
+					,RECV_NM
+					,ZONE_TP
+					,ZONE_CODE
+					,ZIP_CODE
+					,ADDRESS
+					,ADDRESS_DETAIL
+					,TEL_NO
+					,RMK
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID
+	    	 )
+			SELECT 
+					NOW()
+					,#{usrId}	
+					,ORDR_ID
+					,ORDR_USR_ID
+					,STORE_CNT
+					,TOT_PRICE
+					,DEVY_FEE
+					,SUM_PRICE
+					,PAYMETHOD
+					,TOTPRICE
+					,OID
+					,TID
+					,ADDR_NM
+					,RECV_NM
+					,ZONE_TP
+					,ZONE_CODE
+					,ZIP_CODE
+					,ADDRESS
+					,ADDRESS_DETAIL
+					,TEL_NO
+					,RMK
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID
+			FROM ORDR_MST
+		WHERE ORDR_ID 			= #{ordrId} 
+			AND DELETE_DT IS NULL
+	</insert>	
+
+	<!-- 주문 정보 리스트 수정-->
+	<update id="canOrderMst">
+		/* FrontOrderDao.canOrderMst */
+		UPDATE ORDR_MST SET
+			UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+			,USE_YN					= #{mUseYn}
+			,TOT_PRICE				=#{nTotPrice}
+			,DEVY_FEE				=#{nDvyPrice}
+			,SUM_PRICE			=#{nSumPrice}
+			,TOTPRICE				=#{nSumPrice}
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</update>
+
+
+	<!-- 주문 정보 결제정보 취소-->
+	<update id="canOrderPay">
+		/* FrontOrderDao.canOrderPay */
+		UPDATE ORDR_PAY SET
+			USE_YN					= #{mUseYn}
+			,TOTPRICE 				= (TOTPRICE - #{ck_s})
+			,REFPRICE 				= (REFPRICE + #{ck_s})
+			,UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</update>
+
+	<insert id="insRtnDvyFee">
+			/* FrontOrderDao.insRtnDvyFee*/
+			INSERT INTO ORDR_DTL
+			(
+			  ORDR_ID
+			  ,ORDR_USR_ID
+			  ,PRDT_CD
+			  ,STORE_ID
+			  ,PRDT_DTL_CD
+			  ,PRDT_NM
+			  ,STNDRD
+			  ,MAKR_NM
+			  ,TOT_PRICE
+			  ,PUR_PRICE
+			  ,QY
+			  ,SUM_PRICE
+			  ,STTUS
+			  ,ORDR_DT
+			  ,CANCEL_DT
+			  ,CAL_YN
+			  ,USE_YN
+			  ,CREATE_DT
+			  ,CREATE_ID
+			  ,UPDATE_DT
+			  ,UPDATE_ID
+			)
+			SELECT
+			   ORDR_ID
+			  , ORDR_USR_ID
+			  , 'ST99999999'
+			  , STORE_ID
+			  , 'ST99999999'
+			  , '배송비 환불'
+			  , '배송비 환불'
+			  , '배송비 환불'
+			  , #{rtnFee}
+			  , #{rtnFee}
+			  , 1
+			  , #{rtnFee}
+			  , 7
+			  , ORDR_DT
+			  , NOW()
+			  , CAL_YN
+			  , 'N'
+			  , CREATE_DT
+			  
+			  , CREATE_ID
+			  , NOW()
+			  , #{usrId}
+			FROM ORDR_DTL
+			WHERE ORDR_ID = #{ordrId}
+			LIMIT 1			
+	</insert>	
+
+	<update id="setRtnDvyStrMst">
+		/* FrontOrderDao.setRtnDvyStrMst */
+		UPDATE ORDR_STR_MST SET
+			UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+			,DEVY_FEE 				= DEVY_FEE 	- #{rtnFee}
+			,SUM_PRICE 			= SUM_PRICE 	- #{realRtn}			
+		WHERE ORDR_ID 			= #{ordrId}
+			AND STTUS NOT IN ('0', '7', '8', '9')
+	</update>		
+
+	<update id="setRtnDvyMst">
+		/* FrontOrderDao.setRtnDvyMst */
+		UPDATE ORDR_MST SET
+			UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+			,DEVY_FEE 				= DEVY_FEE 	- #{rtnFee}
+			,SUM_PRICE 			= SUM_PRICE 	- #{realRtn}			
+			,TOTPRICE 				= TOTPRICE 	- #{realRtn}			
+		WHERE ORDR_ID			= #{ordrId}
+	</update>	
+		
+	<update id="setRtnDvyPay"> 
+		/* FrontOrderDao.setRtnDvyPay */
+		UPDATE ORDR_PAY SET
+			UPDATE_DT			= NOW()
+			,UPDATE_ID			= #{usrId}
+			,TOTPRICE 			= TOTPRICE 	- #{realRtn}			
+			,REFPRICE 			= REFPRICE 	+ #{realRtn}			
+		WHERE ORDR_ID		= #{ordrId}
+	</update>	
+	
+</mapper>

@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="StoreOrderDao">
+	<update id="StoreOrderDao.setOrderSttus">
+		/* StoreOrderDao.setOrderSttus */
+		UPDATE ORDR_DTL SET
+			STTUS 				= #{aSttus}
+			,RECEIPT_DT 		= IF(#{aSttus} = '2', NOW(), RECEIPT_DT)
+			,RECEIPT_ID 		= IF(#{aSttus} = '2', #{usrId}, RECEIPT_ID)
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STORE_ID 	= #{storeId}
+			AND STTUS			= #{bSttus}
+			AND O_ID IN
+			<iterate property="oId" open="(" conjunction="," close=")">
+				 #oId[]#
+			</iterate>
+	</update>
+	
+	<update id="StoreOrderDao.setOrderInvoice">
+		/* StoreOrderDao.setOrderInvoice */
+		UPDATE ORDR_DTL SET
+			STTUS 				= #{aSttus}
+			,DELY_DT			= NOW()
+			,DELY_CMP			= #{dlvyCmp}
+			,DELY_CMP_NM	= (SELECT DTL_CD_NM FROM CMM_CODE_DTL WHERE CL_CD = '1003' AND DTL_CD = #{dlvyCmp})
+			,INVOICE			= #{invoice}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STORE_ID 	= #{storeId}
+			AND STTUS			= #{bSttus}
+			AND O_ID 			= #{oId}
+	</update>
+	
+	<update id="StoreOrderDao.setOrderMstSttus">
+		/* StoreOrderDao.setOrderMstSttus */
+		UPDATE ORDR_STR_MST M 
+		       SET M.STTUS =  
+							       (SELECT IF( COUNT(D.O_ID) = SUM(IF(D.STTUS = 2,1,0)), 2 , 1 ) 
+							         FROM ORDR_DTL D 
+							        WHERE D.ORDR_ID IN 
+													              (SELECT DISTINCT ORDR_ID 
+													                FROM ORDR_DTL 
+													               WHERE STORE_ID 	= #{storeId}
+													               AND O_ID IN
+																	<iterate property="oId" open="(" conjunction="," close=")">
+																		 #oId[]#
+																	</iterate>
+													              ) 
+							              AND D.STORE_ID 	= #{storeId}
+							              AND D.USE_YN  = 'Y' 
+							              AND D.ORDR_ID = M.ORDR_ID 
+							       )
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE M.STORE_ID 	= #{storeId}			
+    	AND  M.ORDR_ID IN 
+					              (
+					              	SELECT DISTINCT ORDR_ID 
+					                FROM ORDR_DTL 
+					               WHERE STORE_ID 	= #{storeId}
+					               AND O_ID IN
+									<iterate property="oId" open="(" conjunction="," close=")">
+										 #oId[]#
+									</iterate>
+					              ) 		
+	</update>
+	
+	<update id="StoreOrderDao.setOrderMstInvoice">
+		/* StoreOrderDao.setOrderMstInvoice */
+		UPDATE ORDR_STR_MST M 
+		       SET M.STTUS =  
+							       (SELECT IF( COUNT(D.O_ID) = SUM(IF(D.STTUS = 3,1,0)), 3 , M.STTUS ) 
+							         FROM ORDR_DTL D 
+							        WHERE D.ORDR_ID IN 
+													              (SELECT DISTINCT ORDR_ID 
+													                FROM ORDR_DTL 
+													               WHERE STORE_ID 	= #{storeId}
+													               AND O_ID IN
+																	<iterate property="oId" open="(" conjunction="," close=")">
+																		 #oId[]#
+																	</iterate>
+													              ) 
+							              AND D.STORE_ID 	= #{storeId}
+							              AND D.ORDR_ID = M.ORDR_ID 
+							              AND D.STTUS NOT IN ('5', '7', '8', '51', '52', '53')
+							       )
+							       
+		WHERE M.STORE_ID 	= #{storeId}			
+    	AND  M.ORDR_ID IN 
+					              (
+					              	SELECT DISTINCT ORDR_ID 
+					                FROM ORDR_DTL 
+					               WHERE STORE_ID 	= #{storeId}
+					               AND O_ID IN
+									<iterate property="oId" open="(" conjunction="," close=")">
+										 #oId[]#
+									</iterate>
+					              ) 		
+	</update>
+
+	<select id="StoreOrderDao.getOrderRefusalList" parameterType="hashMap" resultType="hashMap">
+			/* StoreOrderDao.getOrderRefusalList */		
+			SELECT 
+				M.ORDR_ID, 
+				IFNULL(S.O_ID,'0') AS CHK , 
+				M.PRDT_DTL_CD , 
+				M.PRDT_NM , 
+				M.STNDRD , 
+				M.MAKR_NM , 
+				M.TOT_PRICE , 
+				M.QY , 
+				M.SUM_PRICE ,
+				SM.CNT_PRDT 		AS M_QY,
+				SM.TOT_PRICE 	AS M_TOT_PRICE,
+				SM.DEVY_FEE 		AS M_DEVY_FEE,
+				SM.SUM_PRICE 	AS M_SUM_PRICE
+			FROM ORDR_STR_MST SM, 
+					ORDR_DTL M 
+			LEFT OUTER JOIN ORDR_DTL S 
+				ON S.ORDR_ID		= #{ordrId} 
+				AND S.STORE_ID 	= #{storeId} 
+				AND S.O_ID 		= M.O_ID 
+				AND S.O_ID IN
+				<iterate property="oId" open="(" conjunction="," close=")">
+					 #oId[]#
+				</iterate>
+			WHERE M.ORDR_ID 	= #{ordrId} 
+				AND M.STORE_ID 	= #{storeId} 
+				AND M.ORDR_ID 	= SM.ORDR_ID 
+				AND M.STORE_ID 	= SM.STORE_ID		
+       			AND M.USE_YN 	= 'Y'
+	</select>
+	
+	<insert id="StoreOrderDao.reqRefusal">
+		<selectKey keyProperty="chgId" resultType="Integer" type="post">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+		/* StoreOrderDao.reqRefusal */
+		INSERT INTO ORDR_CHG_MST (
+			ORDR_ID
+			,ORDR_USR_ID
+			,STORE_ID
+			,TID
+			,CNT_PRDT
+			,SUM_PRICE
+			,RMK_CD
+			,RMK
+			,CREATE_DT
+			,CREATE_ID		
+		)
+		SELECT 
+			   M.ORDR_ID ,
+		       M.ORDR_USR_ID ,
+		       M.STORE_ID ,
+		       P.TID ,
+		       COUNT(M.O_ID) ,
+		       SUM(M.SUM_PRICE) ,
+		       #{canReson} ,
+		       #{canRmk} ,
+		       NOW() ,
+		       #{usrId} 
+		  FROM ORDR_DTL M , 
+		       ORDR_PAY P 
+		 WHERE M.ORDR_ID 		= P.ORDR_ID  
+				AND M.ORDR_ID	= #{ordrId} 
+				AND M.STORE_ID 	= #{storeId} 
+				AND M.O_ID IN
+				<iterate property="oId" open="(" conjunction="," close=")">
+					 #oId[]#
+				</iterate>
+		   GROUP BY M.ORDR_ID,
+		       		M.ORDR_USR_ID,
+		       		M.STORE_ID
+	</insert>
+	
+	<update id="StoreOrderDao.setOrderChg">
+		/* StoreOrderDao.setOrderChg */
+		UPDATE ORDR_DTL SET
+			STTUS 				= #{aSttus}
+			,CHG_ID 				= #{chgId}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STORE_ID 	= #{storeId}
+			AND ORDR_ID		= #{ordrId}  
+			AND O_ID IN
+			<iterate property="oId" open="(" conjunction="," close=")">
+				 #oId[]#
+			</iterate>
+	</update>
+
+	<!-- 주문 정보 리스트 조회 -->
+	<select id="StoreOrderDao.getOrdrListChk" parameterType="hashMap" resultType="hashMap">
+	  	/* StoreOrderDao.getOrdrListChk */
+		SELECT 
+				D.O_ID
+			   ,D.ORDR_ID
+		       ,D.QY
+		       ,D.SUM_PRICE
+		       ,D.PRDT_CD
+		       ,D.PRDT_DTL_CD
+		       ,D.STORE_ID
+		       ,D.PRDT_NM
+		       ,D.STNDRD
+		       ,D.STTUS
+		       ,D.CREATE_DT
+       		   ,D.DELY_ID
+       		   ,D.DELY_CMP
+			   ,D.DELY_CMP_NM
+			   ,D.INVOICE	
+		       ,SM.STTUS AS S_STTUS
+			   ,M.PAYMETHOD
+			   ,M.OID
+			   ,M.TID
+      		   ,IFNULL(P.O_ID, 0) AS CHK
+		  FROM
+		  		 ORDR_MST M 
+		  	   , ORDR_STR_MST SM
+		  	   , ORDR_DTL D 
+		       LEFT JOIN ORDR_DTL P
+		       ON D.ORDR_ID = P.ORDR_ID
+		       AND D.O_ID = P.O_ID
+			  <dynamic prepend="AND P.O_ID IN">
+					<iterate property="oId" open="(" conjunction="," close=")">
+						 #oId[]#
+					</iterate>
+			  </dynamic>
+		 WHERE  D.ORDR_ID  = M.ORDR_ID
+			   AND D.ORDR_ID  = SM.ORDR_ID
+			   AND D.STORE_ID 	= SM.STORE_ID
+			   AND D.STORE_ID 	= #{storeId}
+			   AND D.ORDR_ID IN 
+						              (SELECT DISTINCT ORDR_ID 
+						                FROM ORDR_DTL 
+						               WHERE STORE_ID 	= #{storeId}
+						               AND O_ID IN
+										<iterate property="oId" open="(" conjunction="," close=")">
+											 #oId[]#
+										</iterate>
+						              ) 
+				AND D.DELETE_DT IS NULL
+		ORDER BY D.STORE_ID, D.ORDR_ID, D.STTUS DESC 
+	</select>
+
+	<insert id="StoreOrderDao.saveOrdrRmk">
+			/* StoreOrderDao.saveOrdrRmk*/
+		  INSERT
+		  INTO   CONTACT_BOARD
+		         (
+					BBS_ID
+					,RELATE_CD
+					,TITLE
+					,CONTENT
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+					#{bbsId}
+					,#{relateCd}
+					,#{title}
+					,#{content}
+					,NOW()
+					,#{usrId}
+		         )
+	</insert>	
+	
+	<update id="StoreOrderDao.orderRmkSave">
+		/* StoreOrderDao.orderRmkSave */
+		UPDATE ORDR_DTL SET
+			RMK 					= #{sRMK}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STORE_ID 	= #{storeId}
+			AND O_ID 			= #{oId}
+	</update>	
+	
+</sqlMap>
+       

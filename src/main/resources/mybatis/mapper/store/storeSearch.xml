@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="storeSearchDao">
+	<sql id="StoreSearchDao.OrdrBody">
+		SELECT   
+			   D.ORDR_ID AS sMordrId ,
+		       D.ORDR_DT AS sMordrDt ,
+		       D.O_ID AS sDoId ,
+               U.USR_NM AS sMordrUsr,
+		       SM.TOT_PRICE AS sMprice,
+		       SM.DEVY_FEE AS sMdvFee,
+		       SM.SUM_PRICE AS sMsPrice,
+		       SM.CNT_PRDT AS sMcntPrdt,
+		       D.PRDT_DTL_CD AS sDprdtCd,
+               D.PRDT_NM AS sDprdtNm,
+               D.MAKR_NM AS sDmakrNm,
+               D.STNDRD AS sDstndrd,
+		       D.TOT_PRICE AS sDtotPrice,
+		       D.PUR_PRICE AS sDpurPrice,
+		       D.QY AS sDqy,
+		       D.SUM_PRICE AS sDsumPrice,
+		       D.STTUS AS sDsttus, 
+		       IF ( D.STTUS = 1, IF( DATE(NOW()) > DATE(D.ORDR_DT + INTERVAL 1 DAY), 1, 0 ), 0 ) AS OR_O_1,
+		       M.ZONE_TP AS sZoneTp,
+		       D.RMK AS sRMK, 
+		       (SELECT 
+		       		GROUP_CONCAT(C.CONTENT ORDER BY C.ARTICLE_ID DESC SEPARATOR '>')
+		         FROM CONTACT_BOARD C 
+		        WHERE D.ORDR_ID = C.RELATE_CD 
+		              AND C.BBS_ID = 'ORD' 
+		              AND C.USE_YN='Y'
+		       )AS sChk
+		       ,(SELECT DLVY_TP FROM PRDT_MST WHERE PRDT_CD = D.PRDT_CD) AS DLVY_TP
+		  FROM ORDR_STR_MST SM, 
+          	   ORDR_MST M ,	 
+		       ORDR_DTL D  ,
+               USER_INFO U 
+		 WHERE   SM.STORE_ID 	= D.STORE_ID 
+		       AND SM.ORDR_ID 		= D.ORDR_ID 
+		       AND SM.ORDR_ID 		= M.ORDR_ID 
+               AND SM.ORDR_USR_ID = U.USR_ID 
+		       AND SM.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+		       AND SM.DELETE_DT 	IS NULL 
+		       AND D.DELETE_DT 	IS NULL 
+	</sql>
+	
+
+	<sql id="StoreSearchDao.OrdrBody2">
+		SELECT   
+			   D.ORDR_ID AS sMordrId ,
+		       D.ORDR_DT AS sMordrDt ,
+		       D.O_ID AS sDoId ,
+               U.USR_NM AS sMordrUsr,
+		       SM.TOT_PRICE AS sMprice,
+		       SM.DEVY_FEE AS sMdvFee,
+		       SM.SUM_PRICE AS sMsPrice,
+		       SM.CNT_PRDT AS sMcntPrdt,
+
+		       D.PRDT_DTL_CD AS sDprdtCd,
+               D.PRDT_NM AS sDprdtNm,
+               D.MAKR_NM AS sDmakrNm,
+               D.STNDRD AS sDstndrd,
+		       D.TOT_PRICE AS sDtotPrice,
+		       D.QY AS sDqy,
+		       D.SUM_PRICE AS sDsumPrice,
+		       D.STTUS AS sDsttus,
+		       
+		       D.RECEIPT_DT AS sDreceiptDt ,
+		       D.DELY_DT AS sDdelyDt ,
+		       D.DELY_CMP AS sDdlvyCmp ,
+			   D.INVOICE AS sDinvoice ,
+			   D.DELY_COMP_DT AS sDdelyCompDt ,
+			   D.ORDT_COMP_DT AS sOrderCompDt ,
+			   D.CAL_DT AS sCalDt ,
+			   D.CAL_YN AS sCalYn ,
+		       
+			   M.PAYMETHOD AS sPaym ,
+			   M.ADDR_NM AS sMaddrNm, 
+		       M.RECV_NM AS sMrecvNm, 
+		       M.ZONE_CODE AS sMZoneCode, 
+		       M.ZIP_CODE AS sMZipCode, 
+		       M.ADDRESS AS sMaddr, 
+		       M.ADDRESS_DETAIL AS sMaddrDtl, 
+		       REPLACE(M.TEL_NO,'-','') AS sMtel, 
+		       M.TEL_NO AS sOtel, 
+		       M.RMK AS sMrmk,
+		       IF(D.STTUS = 2, IF( DATE(NOW()) > DATE(D.RECEIPT_DT + INTERVAL 1 DAY), 1, 0 ), 0 ) AS OR_O_2 ,
+		       D.RMK AS sRMK, 
+		       (SELECT 
+		       		GROUP_CONCAT(C.CONTENT ORDER BY C.ARTICLE_ID DESC SEPARATOR '>')
+		         FROM CONTACT_BOARD C 
+		        WHERE D.ORDR_ID = C.RELATE_CD 
+		              AND C.BBS_ID = 'ORD' 
+		              AND C.USE_YN='Y'
+		       )AS sChk 
+		       ,PM.DLVY_TP AS DLVY_TP
+			   ,PD.OUT_UNIT
+		       ,PD.OUT_AMT
+		  FROM ORDR_STR_MST SM, 
+		       ORDR_MST M, 
+               USER_INFO U, 
+		       ORDR_DTL D 
+		LEFT JOIN PRDT_DTL PD
+			ON	 PD.PRDT_DTL_CD 	= D.PRDT_DTL_CD
+		LEFT JOIN PRDT_MST PM
+			ON	 PD.PRDT_CD 			= PM.PRDT_CD
+		 WHERE   SM.STORE_ID 	= D.STORE_ID 
+		       AND SM.ORDR_ID 		= D.ORDR_ID 
+		       AND SM.ORDR_ID 		= M.ORDR_ID 
+               AND M.ORDR_USR_ID = U.USR_ID 
+		       AND M.USE_YN 		= 'Y'
+		       AND SM.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+		       AND M.DELETE_DT 	IS NULL 
+		       AND SM.DELETE_DT 	IS NULL 
+		       AND D.DELETE_DT 	IS NULL 
+	</sql>	
+	
+	<sql id="StoreSearchDao.OrdrWhere">
+		AND SM.STORE_ID = #{storeId}
+		<isEmpty property="allSsttus">
+			<isNotEqual property="isAll" compareValue="Y" prepend="AND">
+		       	D.STTUS NOT IN ('0','7','8') 
+			</isNotEqual>
+			<isNotEmpty property="sDt" prepend="AND">
+				DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+			</isNotEmpty>
+			<isNotEmpty property="eDt" prepend="AND">
+				DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+			</isNotEmpty>
+			<isNotEmpty property="sttus" prepend="AND">
+		       	D.STTUS = #{sttus}
+			</isNotEmpty>
+			<isNotEmpty property="sValue" prepend="AND">
+		       	(
+		       				D.ORDR_ID LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.PRDT_DTL_CD  LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.PRDT_NM  LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.MAKR_NM  LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.STNDRD  LIKE CONCAT('%',#{sValue},'%')
+		       	)
+			</isNotEmpty>
+			<if test='delayStatus == "D1"'>
+				AND DATE(NOW()) > DATE(D.ORDR_DT + INTERVAL 1 DAY)		
+			</if>
+		</isEmpty>
+		<if test='allSsttus != ""'>
+			AND DATE(D.ORDR_DT)  = DATE(#{tDt})
+			AND D.STTUS NOT IN ('0','7') 
+		</if>
+	</sql>
+	
+	<sql id="StoreSearchDao.OrdrWhere2">
+		AND SM.STORE_ID = #{storeId}
+		<isEmpty property="allSsttus">
+			<isNotEmpty property="sDt" prepend="AND">
+				DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+			</isNotEmpty>
+			<isNotEmpty property="eDt" prepend="AND">
+				DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+			</isNotEmpty>
+			<if test='sttus != ""'>
+				AND 
+				<choose>
+					<when test='sttus == "4"'>
+					D.STTUS IN ('4','9')
+					</when>
+					<otherwise>
+					D.STTUS = #{sttus}
+					</otherwise>
+				</choose>
+			</if>
+			<isNotEmpty property="sValue" prepend="AND">
+		       	(
+		       				D.ORDR_ID LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.PRDT_DTL_CD  LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.PRDT_NM  LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.MAKR_NM  LIKE CONCAT('%',#{sValue},'%')
+		       		OR 	D.STNDRD  LIKE CONCAT('%',#{sValue},'%')
+		       	)
+			</isNotEmpty>
+			<isNotEmpty property="sOrdrId" prepend="AND">
+					D.ORDR_ID = #{sOrdrId}
+			</isNotEmpty>
+		</isEmpty>
+		<isNotEmpty property="allSsttus">
+			AND DATE(D.DELY_DT)  = DATE(#{tDt})
+			AND D.STTUS NOT IN ('0','7') 
+		</isNotEmpty>
+	</sql>
+	
+	<select id="StoreSearchDao.getOrderList" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getOrderList */
+		<include refid="StoreSearchDao.OrdrBody"/> 
+		<include refid="StoreSearchDao.OrdrWhere"/> 
+		ORDER BY D.ORDR_ID, D.STTUS,  D.O_ID
+	</select>
+
+	<select id="StoreSearchDao.getReceiptList" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getReceiptList */
+		<include refid="StoreSearchDao.OrdrBody2"/> 
+		<include refid="StoreSearchDao.OrdrWhere2"/>
+		<isNotEqual property="isAll" compareValue="Y" prepend="AND">
+	       	D.STTUS IN ('2','51','71') 
+		</isNotEqual>
+		<if test='delayStatus == "D2"'>
+			AND DATE(NOW()) > DATE(D.RECEIPT_DT + INTERVAL 1 DAY)		
+		</if>
+		ORDER BY D.ORDR_ID DESC, D.STTUS,  D.O_ID
+	</select>
+
+	<select id="StoreSearchDao.getDlvyList" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getDlvyList */
+		<include refid="StoreSearchDao.OrdrBody2"/> 
+		<include refid="StoreSearchDao.OrdrWhere2"/> 
+		<isNotEqual property="isAll" compareValue="Y" prepend="AND">
+	       	D.STTUS IN ('3','4','51','9') 
+		</isNotEqual>
+		ORDER BY D.ORDR_ID DESC, D.STTUS,  D.O_ID
+	</select>
+	
+	<select id="StoreSearchDao.getPrdtList" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getPrdtList */
+		SELECT 
+			   PM.PRDT_CD, 
+			   PM.STORE_ID, 
+			   PM.CATEG_CD, 
+		       PM.PRDT_NM AS sPrdtNm, 
+		       PM.MAKR_NM AS sMakerNm, 
+		       PM.MAKR_CD, 
+		       CONCAT('/upload',PM.PRDT_IMG) AS sPImg,  
+		       (SELECT CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME) 
+		         FROM BOARD_FILE 
+		        WHERE BBS_ID ='PRDT_SUB' 
+		              AND ARTICLE_ID = PM.ORG_PRDT_CD 
+		     	ORDER BY FILE_ID LIMIT 0,1 
+		       ) AS sEImg0, 
+		       (SELECT CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME) 
+		         FROM BOARD_FILE 
+		        WHERE BBS_ID ='PRDT_SUB' 
+		              AND ARTICLE_ID = PM.ORG_PRDT_CD 
+		     	ORDER BY FILE_ID LIMIT 1,1 
+		       ) AS sEImg1, 
+		       (SELECT CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME) 
+		         FROM BOARD_FILE 
+		        WHERE BBS_ID ='PRDT_SUB' 
+		              AND ARTICLE_ID = PM.ORG_PRDT_CD 
+		     	ORDER BY FILE_ID LIMIT 2,1 
+		       ) AS sEImg2, 
+		       (SELECT CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME) 
+		         FROM BOARD_FILE 
+		        WHERE BBS_ID ='PRDT_SUB' 
+		              AND ARTICLE_ID = PM.ORG_PRDT_CD 
+		     	ORDER BY FILE_ID LIMIT 3,1 
+		       ) AS sEImg3, 
+		       PM.EXTRA_IMG_AT, 
+		       PM.EXTRA_IMG_NO,  
+		       PM.PRDT_INFO, 
+		       PM.PRDT_DTL_INFO AS sPrdtDtlInfo, 
+		       PM.DLVY_TP AS sDlvyTp, 
+		       PM.DLVY_FEE_TP, 
+		       PM.PKG_TP AS sPkgTp, 
+		       PM.DLVY_FEE AS sDlvyFee, 
+		       PD.SOLDOUT_AT, 
+		       PD.SOLDOUT_DT, 
+		       PD.RE_SALE_DT, 
+		       PM.USE_YN, 
+		       PM.VIEW_CNT,
+		       PD.SEL_CNT AS sScnt,
+		       PD.PRDT_DTL_CD ,  
+			   PD.OUT_AMT,
+			   PD.OUT_UNIT,
+		       PD.STNDRD AS sStndrd, 
+		       PD.MODEL_NM AS sModelNm, 
+		       PD.SEL_PRICE AS sPrice, 
+		       PD.INVT_AMT AS sAmt, 
+		       CONCAT(
+		       	       	CATEG.LEV1_NM, 	'-',  
+		       	       	CATEG.LEV2_NM,	'-', 
+		    		   	CATEG.LEV3_NM,	'-',  
+		       			CATEG.LEV4_NM, 	'-', 
+		       			CATEG.LEV5_NM
+		       	       	) AS sCteg
+		  FROM PRDT_MST PM, 
+		       PRDT_DTL PD,
+						       (SELECT C.LEV1_CD, 
+						              C.LEV1_NM, 
+						              C.LEV2_CD, 
+						              C.LEV2_NM, 
+						              C.LEV3_CD, 
+						              C.LEV3_NM, 
+						              C.LEV4_CD, 
+						              C.LEV4_NM, 
+						              C.LEV5_CD, 
+						              C.LEV5_NM 
+						         FROM 
+						              (SELECT T1.CATEG_CD AS LEV1_CD, 
+						                     T1.CATEG_NM AS LEV1_NM, 
+						                     T2.CATEG_CD AS LEV2_CD, 
+						                     T2.CATEG_NM AS LEV2_NM, 
+						                     T3.CATEG_CD AS LEV3_CD, 
+						                     T3.CATEG_NM AS LEV3_NM, 
+						                     T4.CATEG_CD AS LEV4_CD, 
+						                     T4.CATEG_NM AS LEV4_NM, 
+						                     T5.CATEG_CD AS LEV5_CD, 
+						                     T5.CATEG_NM AS LEV5_NM, 
+						                     T5.PRODUCT_CNT AS LEV5_CNT 
+						                FROM CATEG_INFO AS T1 
+						                   LEFT JOIN CATEG_INFO AS T2 
+						                       ON T2.P_CATEG_CD = T1.CATEG_CD 
+						                   LEFT JOIN CATEG_INFO AS T3 
+						                       ON T3.P_CATEG_CD = T2.CATEG_CD 
+						                   LEFT JOIN CATEG_INFO AS T4 
+						                       ON T4.P_CATEG_CD = T3.CATEG_CD 
+						                   LEFT JOIN CATEG_INFO AS T5 
+						                       ON T5.P_CATEG_CD = T4.CATEG_CD 
+						               WHERE 1 = 1 
+						              )AS C 
+						       )AS CATEG  
+			 WHERE PM.PRDT_CD 	= PD.PRDT_CD 
+			       AND PM.STORE_ID = PD.STORE_ID 
+					<isNotEmpty property="storeId">
+			       		AND PM.STORE_ID = #{storeId}
+			        </isNotEmpty>
+					<isNotEmpty property="sValue">
+						AND(			
+										PM.PRDT_NM LIKE CONCAT('%',#{sValue},'%')
+								OR		PM.MAKR_NM LIKE CONCAT('%',#{sValue},'%')
+								OR		PD.STNDRD LIKE CONCAT('%',#{sValue},'%')
+								OR		PD.MODEL_NM LIKE CONCAT('%',#{sValue},'%')
+						)
+					</isNotEmpty>
+			       AND PM.CATEG_CD = CATEG.LEV5_CD  
+			       AND PM.PRDT_TP 	= 'S' 
+			       <if test='sSus == "1"'>
+				       AND PM.USE_YN = 'Y' 
+				       AND PD.USE_YN = 'Y' 
+				       AND PD.SOLDOUT_AT = 'N' 
+			       </if>
+			       <if test='sSus == "5"'>
+				       AND PD.USE_YN = 'Y' 
+				       AND PD.SOLDOUT_AT = 'Y' 
+			       </if>
+			       <if test='sSus == "2"'>
+				       AND PM.USE_YN = 'N' 
+				       AND PD.USE_YN = 'N' 
+			       </if>
+			       AND PM.DELETE_DT IS NULL 
+			       AND PD.DELETE_DT IS NULL 
+			ORDER BY PM.PRDT_NM, PD.STNDRD 
+	</select>
+	
+	<select id="StoreSearchDao.getOrdrRmk" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getOrdrRmk */
+		SELECT 
+			C.ARTICLE_ID AS sArtCd ,  
+			C.CONTENT AS sCont ,
+			C.CREATE_DT AS sCdt ,
+			U.USR_NM  AS sUsrNm 
+		FROM CONTACT_BOARD C, USER_INFO U, ORDR_STR_MST O
+		WHERE C.BBS_ID 			= #{BBS_ID}
+			AND C.CREATE_ID 	= U.USR_ID
+			AND O.ORDR_ID  		= #{ordrId}
+			AND O.STORE_ID		= #{storeId}
+			AND C.RELATE_CD 	= O.ORDR_ID
+		ORDER BY C.CREATE_DT DESC	
+	</select>		
+	
+	<select id="StoreSearchDao.getMagamSum" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getMagamSum */
+		SELECT S.STORE_NM, 
+		       (SELECT
+		       		 DTL_CD_NM 
+		         FROM CMM_CODE_DTL 
+		        WHERE CL_CD = '1001' 
+		          AND DTL_CD = S.BANK 
+		       )AS BANK , 
+		       S.ACNUT_NO , 
+		       S.ACNTR ,
+		       M.TAR_DT , 
+		       M.STORE_ID , 
+		       M.MAGAM_TP , 
+		       M.MAGAM_RATE , 
+		       M.PRDT_AMT , 
+		       M.DEVY_AMT , 
+		       M.ORDR_FEE , 
+		       M.TOT_AMT , 
+		       M.TAX_FEE , 
+		       M.TAX_AMT , 
+		       DATE(CONCAT(M.TAR_DT,'01'))AS FIRST_DT, 
+		       LAST_DAY(DATE(CONCAT(M.TAR_DT,'01'))) AS LAST_DT, 
+       		   DATE(CONCAT(M.TAR_DT,'08'))+ INTERVAL 1 MONTH AS COMP_DT , 
+		       DATE(CONCAT(M.TAR_DT,'10'))+ INTERVAL 1 MONTH AS LIMIT_DT , 
+		       DATE(NOW()) AS SYS_DT , 
+		       SUM(IF(D.CAL_DT = M.TAR_DT AND DATE_FORMAT(D.ORDR_DT,'%Y%m') <![CDATA[<]]> M.TAR_DT, D.SUM_PRICE, 0))AS A , 
+		       SUM(IF(D.CAL_DT = M.TAR_DT AND DATE_FORMAT(D.ORDR_DT,'%Y%m') = M.TAR_DT, D.SUM_PRICE, 0))AS B , 
+		       SUM(IF(D.CAL_DT <![CDATA[>]]> M.TAR_DT AND DATE_FORMAT(D.ORDR_DT,'%Y%m') = M.TAR_DT, D.SUM_PRICE, 0))AS C 
+		  FROM MA_PURCHASE M, 
+		       STORE_INFO S , 
+		       ORDR_DTL D 
+		 WHERE M.STORE_ID = D.STORE_ID 
+			   AND M.STORE_ID = #{storeId} 
+		       AND M.STORE_ID = S.STORE_ID  
+		       AND M.CAL_YN = 'N' 
+		       AND D.USE_YN ='Y' 
+		       AND D.CAL_DT <![CDATA[>=]]> DATE_FORMAT(DATE(CONCAT(M.TAR_DT,'01'))- INTERVAL 1 MONTH,'%Y%m') 
+		       AND D.CAL_DT <![CDATA[<=]]> DATE_FORMAT(DATE(CONCAT(M.TAR_DT,'01'))+ INTERVAL 1 MONTH,'%Y%m') 
+		GROUP BY M.TAR_DT
+		ORDER BY M.TAR_DT DESC    
+	</select>		
+	
+	<select id="StoreSearchDao.getMagamMng" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getMagamMng */
+			SELECT S.STORE_ID ,
+				   FN_DECRYPT(S.CMP_BIZ_NO) AS BIZ_NO,
+			       S.STORE_NM ,
+			       S.MAGAM_TP ,
+			       S.MAGAM_DEVY ,
+			       S.MAGAM_RATE AS S,
+			       A.PRDT_AMT AS A ,
+			       A.DEVY_AMT AS DEVY,
+			       A.DEVY_AMT AS B,
+			       A.ORDR_FEE AS Q,
+			       A.TOT_AMT AS F,
+				   A.TAX_FEE AS T1,
+				   A.TAX_AMT AS T2,
+				   A.TAXBILL_AMT
+			  FROM STORE_INFO S , MA_PURCHASE A
+			 WHERE A.TAR_DT 	= #{mon}
+			 	AND A.CAL_YN 	= 'N'	
+			 	AND S.STORE_ID 	= A.STORE_ID
+			 	AND S.STORE_ID = #{storeId} 
+	</select>	
+	
+	<select id="StoreSearchDao.getMagamDtl" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getMagamDtl */
+			SELECT D.O_ID , 
+			       D.USE_YN , 
+			       D.STTUS , 
+			       D.CAL_DT , 
+			       D.STORE_ID , 
+			       D.ORDR_USR_ID , 
+			       U.USR_NM , 
+			       D.ORDR_ID , 
+			       D.TOT_PRICE , 
+			       D.QY , 
+			       D.SUM_PRICE, 
+			       D.PRDT_NM , 
+			       D.MAKR_NM , 
+			       D.STNDRD , 
+			       D.PRDT_CD , 
+			       D.ORDR_DT , 
+			       D.RECEIPT_DT , 
+			       D.DELY_DT , 
+			       D.DELY_COMP_DT , 
+			       D.ORDT_COMP_DT , 
+			       D.CANCEL_DT, 
+			       CASE WHEN D.STTUS = '9' AND DATE(D.ORDR_DT) <![CDATA[<]]> DATE(CONCAT(#{mon},'01')) THEN '1' 
+			       		   WHEN D.CAL_DT = DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m') THEN '2' 
+			       ELSE '0' END AS GUBUN 
+			  FROM ORDR_DTL D, 
+			       USER_INFO U 
+			 WHERE D.STORE_ID = #{storeId}
+			   	 AND ( 
+			         D.CAL_DT = #{mon}
+			         OR
+			         (
+					         D.CAL_DT = DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m') 
+				       AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+				       AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))		         
+			         )
+			       ) 
+			       AND D.ORDR_USR_ID = U.USR_ID 
+			       AND D.USE_YN = 'Y' 
+				   AND D.DELETE_DT IS NULL 
+			ORDER BY D.CAL_DT , D.ORDR_DT  	
+	</select>	
+	
+	<select id="StoreSearchDao.getMagamDevy" parameterType="hashMap" resultType="hashMap">
+		/* StoreSearchDao.getMagamDevy */
+			SELECT M.ORDR_ID , 
+			       CASE WHEN MAX(D.CAL_DT) = #{mon} AND DATE(D.ORDR_DT) <![CDATA[<]]>  DATE(CONCAT(#{mon},'01')) THEN '1' 
+			       		   WHEN MAX(D.CAL_DT) <![CDATA[>]]> #{mon} THEN '2' 
+			       		   ELSE '0' END GUBUN , 
+			       MAX(D.CAL_DT) AS MON, 
+			       MAX(M.DEVY_FEE) AS DEVY_FEE, 
+			       MAX(M.TOT_PRICE) AS TOT_PRICE
+			  FROM ORDR_DTL D, 
+			       ORDR_STR_MST M 
+			 WHERE D.STORE_ID = #{storeId}
+			       AND ( 
+			         D.CAL_DT = #{mon}
+			         OR
+			         (
+					         D.CAL_DT = DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m') 
+				       AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+				       AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))		         
+			         )
+			       ) 
+			       AND D.ORDR_ID = M.ORDR_ID 
+			       AND D.USE_YN = 'Y' 
+			       AND D.DELETE_DT IS NULL 
+			   GROUP BY D.ORDR_ID 
+			ORDER BY MAX(D.CAL_DT), D.ORDR_DT	
+	</select>	
+	
+	
+</sqlMap>
+       

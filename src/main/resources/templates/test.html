@@ -3,6 +3,7 @@
   lang="ko"
   xmlns="http://www.w3.org/1999/xhtml"
   xmlns:th="http://www.thymeleaf.org"
+  layout:decorate="~{common/layouts/shop_pc_main}"
 >
   <head>
     <meta charset="UTF-8" />
@@ -11,6 +12,11 @@
     <title>test</title>
   </head>
   <body>
-    zzz
+
+    <th:block layout:fragment="content">
+      zzz : [[${host}]]
+      <th:block th:text="${userSession}"></th:block>
+
+    </th:block>
   </body>
 </html>

@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.front.dao.FrontCalculateDao">
+	<update id="setTruncMagam">
+		/* FrontCalculateDao.setTruncMagam */
+		TRUNCATE TMP_MAGAM 
+	</update>
+	
+	
+	<insert id="setMagamTmpList">
+			/* FrontCalculateDao.setMagamTmpList */
+		  INSERT
+		  INTO   TMP_MAGAM
+			(	
+					ORDR_ID
+					,ORDR_DT
+					,CANCEL_DT
+					,COMP_DT
+					,ORDR_AMT
+					,CANCEL_AMT
+					,MAGAM_DT
+					,CREATE_DT
+					,CREATE_ID
+			)	
+			SELECT 
+				   P.ORDR_ID ,
+			       MAX(D.ORDR_DT) AS ORDR_DT ,
+			       MAX(D.CANCEL_DT) AS CANCEL_DT ,
+			       MAX(D.ORDT_COMP_DT) AS ORDT_COMP_DT ,
+			       P.TOTPRICE ,
+			       P.REFPRICE ,
+				   CASE WHEN D.USE_YN = 'N' THEN #{mon}
+                        WHEN D.ORDT_COMP_DT IS NULL THEN DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m')
+                        WHEN DATE(MAX(IFNULL(D.ORDT_COMP_DT,NOW()))) > LAST_DAY(DATE(CONCAT(#{mon},'01'))) THEN DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m')
+                   ELSE #{mon}
+                   END AS MAGAM,          
+				   NOW(),
+				   #{usrId}
+			  FROM ORDR_PAY P, 
+			       ORDR_DTL D,
+               	   USER_INFO U 
+			 WHERE P.ORDR_ID = D.ORDR_ID 
+			       AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+			       AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))
+			       AND D.ORDR_USR_ID = U.USR_ID  
+			       AND P.DELETE_DT IS NULL 
+			       AND D.DELETE_DT IS NULL 
+			   GROUP BY P.ORDR_ID
+			   ORDER BY D.ORDR_DT
+	</insert>
+
+	<update id="setMagamDt">
+			/* FrontCalculateDao.setMagamDt */
+			UPDATE ORDR_DTL D SET
+			D.CAL_DT = 
+							(
+								CASE WHEN D.USE_YN = 'N' AND DATE(D.CANCEL_DT) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) THEN #{mon}
+								WHEN D.USE_YN = 'Y' AND D.STTUS = '9' AND DATE(D.ORDT_COMP_DT) <![CDATA[<=]]> DATE(DATE(CONCAT(#{mon},'08'))+INTERVAL 1 MONTH) THEN #{mon}
+								ELSE DATE_FORMAT(DATE(CONCAT(#{mon},'01'))+ INTERVAL 1 MONTH,'%Y%m')
+								END
+							) 
+			WHERE DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(CONCAT(#{mon},'01')) 
+			AND DATE(D.ORDR_DT) <![CDATA[<=]]>  LAST_DAY(DATE(CONCAT(#{mon},'01')))
+			AND D.DELETE_DT IS NULL 
+			AND D.CAL_DT IS NULL	
+			AND D.CAL_YN = 'N'
+	</update>	
+	
+	
+	
+	<update id="setStrMagam">
+			/* FrontCalculateDao.setStrMagam */
+			UPDATE ORDR_DTL SET 
+				CAL_YN = 'I'
+		    WHERE CAL_DT = #{mon}
+		        AND CAL_YN = 'N' 
+		        AND DELETE_DT IS NULL 
+	</update>	
+	
+	<insert id="insStrMagam">
+			/* FrontCalculateDao.insStrMagam */
+		INSERT 
+		  INTO MA_PURCHASE 
+		       ( 
+		         TAR_DT , 
+		         STORE_ID , 
+		         MAGAM_TP , 
+		         MAGAM_RATE , 
+		         PRDT_AMT , 
+		         DEVY_AMT , 
+		         ORDR_FEE , 
+		         TOT_AMT , 
+		         TAX_FEE , 
+		         TAX_AMT , 
+		         CREATE_DT , 
+		         CREATE_ID 
+		       ) 
+		SELECT  #{mon} , 
+		       S.STORE_ID , 
+		       S.MAGAM_TP , 
+		       S.MAGAM_RATE, 
+		       SUM(A.SUM_9), 
+		       IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE)) , 
+		       ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) , 
+		       SUM(A.SUM_9) - ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) + IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE)) , 
+		       ROUND((SUM(A.SUM_9) - ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) + IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE))) / 1.1 * 0.1) , 
+		       ROUND((SUM(A.SUM_9) - ROUND(SUM(A.SUM_9) * (S.MAGAM_RATE/100)) + IF(S.MAGAM_DEVY = 0, 0, SUM(M.DEVY_FEE))) / 1.1 ) , 
+		       NOW() , 
+		       #{usrId} 
+		  FROM STORE_INFO S , 
+		       (SELECT D.STORE_ID , 
+		              D.ORDR_ID , 
+		              SUM(D.SUM_PRICE) AS SUM_9 
+		         FROM ORDR_DTL D 
+		        WHERE D.CAL_DT = #{mon} 
+		              AND D.CAL_YN = 'N' 
+		              AND D.STTUS ='9' 
+		              AND D.DELETE_DT IS NULL 
+		          GROUP BY D.STORE_ID, 
+		              D.ORDR_ID 
+		       )AS A 
+		     LEFT JOIN ORDR_STR_MST M 
+		         ON A.ORDR_ID = M.ORDR_ID 
+		       AND A.STORE_ID = M.STORE_ID 
+		       AND M.STTUS = '9' 
+		 WHERE S.STORE_ID = A.STORE_ID 	
+	</insert>
+	
+	<insert id="insTaxBill">
+			/* FrontCalculateDao.insTaxBill */
+		INSERT 
+		  INTO MA_TAXBILL 
+		       ( 
+					TAR_DT
+					,STORE_ID
+					,CONF_NO
+					,CRTE_DT
+					,CONF_DT
+					,SEND_DT
+					,BIZ_NO
+					,BIZ_NO2
+					,COMP_NM
+					,RPRS_NM
+					,EMAIL
+					,SUM_P
+					,TOT_P
+					,TAX_P
+					,PRDT_DT
+					,PRDT_NM
+					,PRDT_ST
+					,PRDT_QY
+					,PRDT_PR
+					,PRDT_TOT
+					,PRDT_TAX
+					,CREATE_DT
+					,CREATE_ID
+				) VALUES (
+					#{TAR_DT}
+					,(SELECT 
+								MIN(STORE_ID) 
+						FROM STORE_INFO 
+						WHERE CMP_BIZ_NO = FN_ENCRYPT(#{BIZ_NO})
+							AND DELETE_DT IS NULL
+							AND CONFM_ID IS NOT NULL
+					)
+					,#{CONF_NO}
+					,REPLACE(#{CRTE_DT},'-','')
+					,REPLACE(#{CONF_DT},'-','')
+					,REPLACE(#{SEND_DT},'-','')
+					,FN_ENCRYPT(#{BIZ_NO})	
+					,FN_ENCRYPT(#{BIZ_NO2})	
+					,#{COMP_NM}
+					,#{RPRS_NM}
+					,#{EMAIL}
+					,#{SUM_P}
+					,#{TOT_P}
+					,#{TAX_P}
+					,REPLACE(#{PRDT_DT},'-','')
+					,#{PRDT_NM}
+					,#{PRDT_ST}
+					,#{PRDT_QY}
+					,#{PRDT_PR}
+					,#{PRDT_TOT}
+					,#{PRDT_TAX}
+					,NOW()
+					,#{usrId}
+		       )
+	</insert>	
+
+	<update id="setStrTaxBill">
+			/* FrontCalculateDao.setStrTaxBill */
+			UPDATE MA_PURCHASE M SET
+			M.TAXBILL_AMT 		=  (SELECT 
+														SUM(SUM_P) 
+									         FROM MA_TAXBILL 
+									        WHERE TAR_DT = #{TAR_DT} 
+									            AND M.STORE_ID = STORE_ID 
+									        	AND DELETE_DT IS NULL
+									       )
+			,M.UPDATE_DT			= NOW()
+			,M.UPDATE_ID			= #{usrId}
+			WHERE  M.TAR_DT 	= #{TAR_DT}
+				AND M.STORE_ID IN (
+					SELECT 
+							DISTINCT 
+							STORE_ID
+					FROM MA_TAXBILL
+					WHERE TAR_DT = #{TAR_DT}
+						AND DELETE_DT IS NULL
+				)
+	</update>	
+	
+	<insert id="insSalesData">
+			/* FrontCalculateDao.insSalesData */
+			INSERT 
+				  INTO MA_INIPAY 
+				       ( 
+				         TAR_DT ,
+				         PAY_TP ,
+				         MA_TP ,
+				         OID ,
+				         TID ,
+				         PRICE ,
+				         CREATE_DT ,
+				         CREATE_ID 
+				       ) 
+				SELECT #{mon} , 
+				       A.PAYMETHOD , 
+				       A.GUBUN, 
+				       A.OID , 
+				       A.TID , 
+				       A.PRICE, 
+				       NOW(), 
+				       #{usrId} 
+				  FROM 
+				       (SELECT DATE_FORMAT ( IF(P.PAYMETHOD = 'VBank', CONCAT(P.TRANS_DATE,P.TRANS_TIME ), CONCAT(P.APPLDATE,P.APPLTIME )),'%Y/%m/%d %T') AS DT , 
+				              'A' AS GUBUN,  
+				              P.PAYMETHOD , 
+				              P.ORDR_ID , 
+				              P.OID , 
+				              P.TID , 
+				              P.SUM_PRICE AS PRICE 
+				         FROM ORDR_PAY P 
+				        WHERE P.TOTPRICE + P.REFPRICE > 0 
+				              AND P.DELETE_DT IS NULL 
+				              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+				              AND IF(P.PAYMETHOD = 'VBank', P.TRANS_DATE, P.APPLDATE) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+				             UNION ALL 
+				       SELECT DATE_FORMAT (R.CANCEL_DT,'%Y/%m/%d %T') AS DT , 
+				              'C' AS GUBUN, 
+				              P.PAYMETHOD , 
+				              P.ORDR_ID , 
+				              P.OID , 
+				              P.TID , 
+				              -P.REFPRICE AS PRICE 
+				         FROM ORDR_PAY P , 
+				              ORDR_DTL R 
+				        WHERE P.ORDR_ID = R.ORDR_ID 
+				              AND P.TOTPRICE + P.REFPRICE > 0 
+				              AND P.REFPRICE > 0 
+				              AND P.DELETE_DT IS NULL 
+				              AND DATE(R.CANCEL_DT) <![CDATA[>=]]> DATE(CONCAT(#{mon},'01')) 
+				              AND DATE(R.CANCEL_DT) <![CDATA[<=]]> LAST_DAY(DATE(CONCAT(#{mon},'01'))) 
+				          GROUP BY P.ORDR_ID 
+				       )A 
+				ORDER BY A.PAYMETHOD, 
+				       A.OID, 
+				       A.DT, 
+				       A.GUBUN	
+	</insert>
+	
+	<insert id="insSalesSUm">
+			/* FrontCalculateDao.insSalesSUm */
+				INSERT 
+				  INTO MA_SALES 
+				       ( 
+				         TAR_DT ,
+				         PAY_TP ,
+				         MA_TP ,
+				         MA_TOT ,
+				         MA_FEE ,
+				         MA_SUM ,
+				         MA_INC ,
+				         CREATE_DT ,
+				         CREATE_ID 
+				       )   
+				SELECT TAR_DT , 
+				       PAY_TP , 
+				       MA_TP , 
+				       SUM(PRICE) , 
+				       SUM(INI_FEE) , 
+				       SUM(CAL_SUM) , 
+				       SUM(INC_SUM) , 
+				       NOW() , 
+				       #{usrId} 
+				  FROM MA_INIPAY 
+				 WHERE TAR_DT = #{mon} 
+				       AND DELETE_DT IS NULL 
+				   GROUP BY TAR_DT, 
+				       PAY_TP, 
+				       MA_TP	
+	</insert>
+
+	<update id="delSalesData">
+			/* FrontCalculateDao.delSalesData */
+			DELETE 
+			FROM MA_INIPAY 
+			WHERE TAR_DT = #{mon}  
+	</update>		
+	
+	<update id="delSalesSUm">
+			/* FrontCalculateDao.delSalesSUm */
+			DELETE 
+			FROM MA_SALES 
+			WHERE TAR_DT = #{mon}  
+	</update>		
+	
+	<update id="setIniBill">
+			/* FrontCalculateDao.setIniBill */
+			UPDATE MA_INIPAY SET
+				INCOME_DT 	= REPLACE(#{INC_DT},'-','')
+				,INI_FEE 		= #{INI_FEE}
+				,INC_SUM 		= #{INC_SUM}
+				,CAL_SUM 		= #{CAL_SUM}
+				,UPDATE_DT	= NOW()
+				,UPDATE_ID		= #{usrId} 
+			WHERE OID 		= #{OID}
+				AND MA_TP 	= #{MA_TP}
+				AND TAR_DT 	= #{TAR_DT}
+	</update>		
+	
+	<update id="setIniBillSum">
+			/* FrontCalculateDao.setIniBillSum */
+			UPDATE MA_SALES M SET
+				M.MA_FEE			= (
+										 SELECT
+										 		SUM(INI_FEE)
+										 	FROM MA_INIPAY
+										 WHERE TAR_DT 	= #{TAR_DT}
+										 	AND PAY_TP 	= M.PAY_TP
+											AND MA_TP		= M.MA_TP
+											AND DELETE_DT IS NULL
+									)
+				,M.MA_SUM			= (
+										 SELECT
+										 		SUM(CAL_SUM)
+										 	FROM MA_INIPAY
+										 WHERE TAR_DT 	= #{TAR_DT}
+										 	AND PAY_TP 	= M.PAY_TP
+											AND MA_TP		= M.MA_TP
+											AND DELETE_DT IS NULL
+									)
+				,M.MA_INC			= (
+										 SELECT
+										 		SUM(INC_SUM)
+										 	FROM MA_INIPAY
+										 WHERE TAR_DT 	= #{TAR_DT}
+										 	AND PAY_TP 	= M.PAY_TP
+											AND MA_TP		= M.MA_TP
+											AND DELETE_DT IS NULL
+									) 
+				,M.UPDATE_DT		= NOW()
+				,M.UPDATE_ID		= #{usrId} 
+			WHERE M.TAR_DT		= #{TAR_DT}
+	</update>		
+</mapper>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="StoreJoin">
+        
+    <!-- 사업자 번호 사용금지, 중복 사용 여부 체크-->
+    <select id="StoreJoinDao.checkBusiNo" parameterType="hashMap" resultType="string">
+    	/* StoreJoinDao.checkBusiNo */
+		SELECT 
+		  CASE WHEN (SELECT COUNT(1)
+							FROM STORE_INFO
+							WHERE CMP_BIZ_NO = FN_ENCRYPT(#{busiNo})
+						) > 0 THEN 'CODE1' 
+		       WHEN (SELECT COUNT(1) 
+		    					FROM MNG_LIST
+		    					WHERE CL_CD = 'CH002'
+		    					AND USE_YN ='Y'
+		    					AND DTL_CD = FN_ENCRYPT(#{busiNo})
+				    ) > 0 THEN 'CODE2'
+		       ELSE 'CODE0'
+		  END AS CHKID 
+		FROM DUAL
+    </select> 
+    
+    <!-- 상점 등록 처리 (sStep2.jsp) -->
+    <insert id="StoreJoinDao.shopInsert">
+    	<selectKey keyProperty="storeId" resultType="java.lang.String">
+    		SELECT IFNULL(MAX(STORE_ID), 40000000) + 1 AS storeId FROM STORE_INFO
+    	</selectKey>
+    	
+    	/*StoreJoinDao.shopInsert*/
+		INSERT INTO STORE_INFO(
+			STORE_ID	
+			,CMP_BIZ_NO	
+			,CMP_NM	
+			,RPRSNTV_NM	
+			,BIZCND	
+			,INDUTY	
+			,TEL_NO	
+			,FAX_NO	
+			,ZIP_CD	
+			,SIGUNGU_CD	
+			,ADRES	
+			,ADRES_DTL	
+			,STORE_NM	
+			,CHARGER_DEPT	
+			,CHARGER_NM	
+			,CHARGER_TEL_NO	 
+			,ATCH_FILE_NO	 
+			,CREATE_DT	
+			,CREATE_ID	
+		) VALUES (
+			#{storeId}	
+			,FN_ENCRYPT(#{busiNo})	
+			,#{cmpNm}	
+			,#{prsNm}	
+			,#{bizCnd}	
+			,#{induty}	
+			,#{telNum}	
+			,#{faxNum}	
+			,#{zoneCode}	
+			,#{sigunguCode}	
+			,#{address}	
+			,#{dtlAddress}	
+			,#{storeNm}	
+			,#{deptNm}	
+			,#{usrNm}	
+			,#{mobileNo}	 
+			,#{storeId}
+			,now()	
+			,#{storeId}
+		)
+    </insert>
+    
+    <!-- 상점 임시 등록 처리 (sStep2.jsp) -->
+    <insert id="StoreJoinDao.shopTmpInsert">
+    	<selectKey keyProperty="storeId" resultType="java.lang.String">
+    		SELECT IFNULL(MAX(STORE_ID), 40000003) + 1 AS storeId FROM TMP_STORE_INFO
+    	</selectKey>
+    	
+    	/*StoreJoinDao.shopTmpInsert*/
+		INSERT INTO TMP_STORE_INFO(
+			STORE_ID	
+			,CMP_BIZ_NO	
+			,CMP_NM	
+			,CHARGER_NM	
+			,CHARGER_TEL_NO	 
+			,CHARGER_EMAIL
+			,ATCH_FILE_NO	 
+			,CREATE_DT	
+			,CREATE_ID	
+		) VALUES (
+			#{storeId}	
+			,FN_ENCRYPT(#{busiNo})	
+			,#{cmpNm}	
+			,#{usrNm}	
+			,#{mobileNo}	 
+			,#{email}	 
+			,#{storeId}
+			,now()	
+			,#{storeId}
+		)
+    </insert>
+    
+    <!-- 상점 등록 처리 (sStep2.jsp) -->
+    <insert id="StoreJoinDao.shopAdminInsert">
+    	/*StoreJoinDao.shopAdminInsert*/
+		INSERT INTO STORE_ADMIN(
+			STORE_ID 
+			,USR_ID
+			,CREATE_DT
+			,CREATE_ID
+		) VALUES (
+			#{storeId}	
+			,#{usrId} 
+			,now()	
+			,#{usrId} 
+		)
+    </insert>
+
+    <!-- 패스워드 변경 완료 -->
+	<update id="StoreJoinDao.setLoginPw">
+		/* StoreJoinDao.setLoginPw */
+		UPDATE USER_INFO SET
+			USR_PW 			= SHA1(#{shaRePw})
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+			,PW_LAST_MOD_DT = DATE_FORMAT(now(), '%Y%m%d')
+		WHERE USR_ID 		= #{usrId}
+			AND USR_PW 		= SHA1(#{shaPw})
+	</update>
+
+</sqlMap>

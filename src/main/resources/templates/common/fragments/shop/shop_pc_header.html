@@ -7,10 +7,7 @@
     }
   </style>
 
-  <link
-    rel="stylesheet"
-    href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"
-  />
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" />
   <script type="text/javascript" src="/js/jquery-ui.js"></script>
   <script type="text/javascript">
     var type = "'";
@@ -109,10 +106,10 @@
           },
         })
         .autocomplete("instance")._renderItem = function (ul, item) {
-        return $("<li>")
-          .append("<div>" + item.label + "</div>")
-          .appendTo(ul);
-      };
+          return $("<li>")
+            .append("<div>" + item.label + "</div>")
+            .appendTo(ul);
+        };
 
       _BT.setOnEnter("mValue", "main_search_btn");
       _BT.setOnEnter("mName", "main_search_btn");
@@ -139,20 +136,13 @@
     <form id="sFrm" name="sFrm">
       <div class="top">
         <h1>
-          <a
-            href="javascript:;"
-            onclick="_BT.moveUrl(_BT.SHOP.URL.Common.Main);"
-          >
+          <a href="javascript:;" onclick="_BT.moveUrl(_BT.SHOP.URL.Common.Main);">
             <img src="/img/logo.png" alt="로고" />
           </a>
         </h1>
         <div class="main_search">
           <span class="search_content01">
-            <input class="main_input_search01" id="mValue" name="mValue"
-            type="text" style="color: #14429A;" placeholder=" 이제 산업 부품은
-            대화공업에서 구매할 때!!" maxlength="30" value="<c:out
-              value="${query.mValue}"
-            />"/>
+            <input class="main_input_search01" id="mValue" name="mValue" type="text"style="color: #14429A;" placeholder=" 이제 산업 부품은 대화공업에서 구매할 때!!" maxlength="30" th:value="${query!=null?query.mValue:''}" />
             <a href="javascript:;" id="main_search_btn" class="main_search_btn">
               <img src="/img/common/icon.png" />
             </a>
@@ -162,103 +152,52 @@
           </span>
         </div>
         <div class="main_top_menu" style="text-align: right">
-          <c:choose>
-            <c:when test="${empty userSession}">
-              <!--비로그인시 나와야될메뉴-->
-              <span
-                class="icon07"
-                onclick="_BT.moveUrl(_BT.SHOP.URL.Common.goLogin);"
-                >로그인</span
-              >
-              <span
-                class="icon09"
-                onclick="_BT.moveUrl(_BT.SHOP.URL.Join.bStep1);"
-                >회원가입</span
-              >
-              <span
-                class="icon02"
-                onclick="_BT.moveUrl(_BT.SHOP.URL.Helpdesk.FAQ);"
-                >고객센터</span
-              >
-              <!--
+          <th:block th:unless="${session.userSession}">
+            <!--비로그인시 나와야될메뉴-->
+            <span class="icon07" onclick="_BT.moveUrl(_BT.SHOP.URL.Common.goLogin);">로그인</span>
+            <span class="icon09" onclick="_BT.moveUrl(_BT.SHOP.URL.Join.bStep1);">회원가입</span>
+            <span class="icon02" onclick="_BT.moveUrl(_BT.SHOP.URL.Helpdesk.FAQ);">고객센터</span>
+            <!--
             <span class="icon01" onclick="_BT.moveUrl(_BT.STORE.URL.Common.Main);">상점관리</span>
             -->
-              <!--비로그인시 나와야될메뉴-->
-            </c:when>
-            <c:otherwise>
-              <!--로그인시 나와야될메뉴-->
-              <span
-                class="icon06"
-                onclick="_BT.moveUrl(_BT.SHOP.URL.Common.Logout);"
-                >로그아웃</span
-              >
-              <span
-                class="icon04"
-                onclick="_BT.moveUrl(_BT.SHOP.URL.Order.cart);"
-                >장바구니</span
-              >
-              <span
-                class="icon05"
-                onclick="_BT.moveUrl(_BT.SHOP.URL.User.Info);"
-                >내정보</span
-              >
-              <!--
+          </th:block>
+          <th:block th:if="${session.userSession}">
+            <!--로그인시 나와야될메뉴-->
+            <span class="icon06" onclick="_BT.moveUrl(_BT.SHOP.URL.Common.Logout);">로그아웃</span>
+            <span class="icon04" onclick="_BT.moveUrl(_BT.SHOP.URL.Order.cart);">장바구니</span>
+            <span class="icon05" onclick="_BT.moveUrl(_BT.SHOP.URL.User.Info);">내정보</span>
+            <!--
             <span class="icon03" onclick="_BT.openPopup( _BT.SHOP.URL.User.PopAlarm,'PopAlarm', '400', '700', true, true);">알림</span>
             -->
-              <span
-                class="icon02"
-                onclick="_BT.moveUrl(_BT.SHOP.URL.Helpdesk.FAQ);"
-                >고객센터</span
-              >
+            <span class="icon02" onclick="_BT.moveUrl(_BT.SHOP.URL.Helpdesk.FAQ);">고객센터</span>
+            <th:block th:if="${session.userSession.usrTp == 'S'}">
+              <span class="icon01" onclick="_BT.moveUrl(_BT.SHOP.URL.Common.sMain);">상점관리</span>
+            </th:block>
+            <th:block th:if="${session.userSession.usrTp == 'A'}">
+              <span class="icon01" onclick="_BT.moveUrl(_BT.SHOP.URL.Common.fMain);">관리자</span>
+            </th:block>
+          </th:block>
 
-              <c:if test="${userSession.usrTp eq 'S'}">
-                <span
-                  class="icon01"
-                  onclick="_BT.moveUrl(_BT.SHOP.URL.Common.sMain);"
-                  >상점관리</span
-                >
-              </c:if>
-              <c:if test="${userSession.usrTp eq 'A'}">
-                <span
-                  class="icon01"
-                  onclick="_BT.moveUrl(_BT.SHOP.URL.Common.fMain);"
-                  >관리자</span
-                >
-              </c:if>
-              <!--로그인시 나와야될메뉴-->
-            </c:otherwise>
-          </c:choose>
         </div>
         <div id="searchBar" class="main_search" style="margin-top: 4px">
           <span class="search_content_dtl">
-            <input type="text" id="mName" name="mName" placeholder=" 품명"
-            class="input_style11" maxlength="20" value="<c:out
-              value="${query.mName}"
-            />"/> <input type="text" id="mStndrd" name="mStndrd" placeholder="
-            규격" class="input_style11 marginleft_5" maxlength="30"
-            value="<c:out value="${query.mStndrd}" />"/> <input type="text"
-            id="mModel" name="mModel" placeholder=" 모델명" class="input_style11
-            marginleft_5" maxlength="20" value="<c:out
-              value="${query.mModel}"
-            />"/> <input type="text" id="mCode" name="mCode" placeholder="
-            대화코드" class="input_style11 marginleft_5" maxlength="10"
-            style="color: #3f51b5; border: 2px solid #3f51b5; font-weight:
-            bolder;" value="<c:out value="${query.mCode}" />"/>
+            <input type="text" id="mName" name="mName" placeholder=" 품명" class="input_style11" maxlength="20" th:value="${query!=null?query.mName:''}" />
+            <input type="text" id="mStndrd" name="mStndrd" placeholder="규격" class="input_style11 marginleft_5" maxlength="30" th:value="${query!=null?query.mStndrd:''}" />
+            <input type="text" id="mModel" name="mModel" placeholder=" 모델명" class="input_style11 marginleft_5" maxlength="20" th:value="${query!=null?query.mModel:''}" />
+            <input type="text" id="mCode" name="mCode" placeholder="대화코드" class="input_style11 marginleft_5" maxlength="10" style="color: #3f51b5; border: 2px solid #3f51b5; font-weight: bolder;" th:value="${query!=null?query.mCode:''}" />
           </span>
 
-          <c:if test="${!empty userSession}">
-            <span
-              style="
+          <th:block th:if="${session.userSession}">
+            <span style="
                 float: right;
                 font-size: 14px;
                 color: #3f51b5;
                 padding-top: 10px;
-              "
-            >
-              <span style="font-weight: bold">${userSession.usrNm}님</span>
+              ">
+              <span style="font-weight: bold" th:text="${session.userSession.usrNm}"></span>
               환영 합니다.
             </span>
-          </c:if>
+          </th:block>
         </div>
       </div>
     </form>
@@ -266,52 +205,19 @@
   <!-- HEADER -->
   <div class="gnb">
     <div class="wid_no_chg">
-      <a
-        href="javascript:;"
-        onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D1);"
-        class="Type01 menus menus01"
-        data-type="D1"
-      >
-        직결나사</a
-      >
-      <a
-        href="javascript:;"
-        onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D2);"
-        class="Type01 menus menus01"
-        data-type="D2"
-      >
-        고내식성직결나사</a
-      >
-      <a
-        href="javascript:;"
-        onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D3);"
-        class="Type01 menus menus01"
-        data-type="D3"
-      >
-        스텐나사</a
-      >
-      <a
-        href="javascript:;"
-        onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D4);"
-        class="Type01 menus menus01"
-        data-type="D4"
-      >
+      <a href="javascript:;" onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D1);" class="Type01 menus menus01" data-type="D1">
+        직결나사</a>
+      <a href="javascript:;" onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D2);" class="Type01 menus menus01" data-type="D2">
+        고내식성직결나사</a>
+      <a href="javascript:;" onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D3);" class="Type01 menus menus01" data-type="D3">
+        스텐나사</a>
+      <a href="javascript:;" onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D4);" class="Type01 menus menus01" data-type="D4">
         TYPE17®
       </a>
-      <a
-        href="javascript:;"
-        onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D5);"
-        class="Type01 menus menus01"
-        data-type="D5"
-      >
+      <a href="javascript:;" onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D5);" class="Type01 menus menus01" data-type="D5">
         블라인드 리벳
       </a>
-      <a
-        href="javascript:;"
-        onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D6);"
-        class="Type01 menus menus01"
-        data-type="D6"
-      >
+      <a href="javascript:;" onclick="_BT.moveUrl(_BT.SHOP.URL.Menus.D6);" class="Type01 menus menus01" data-type="D6">
         태핑나사 등
       </a>
     </div>

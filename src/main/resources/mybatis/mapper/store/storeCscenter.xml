@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="StoreCscenterDao">
+
+	<!-- 상점정보 -->
+	<select id="StoreCscenterDao.getStoreInfo" parameterType="hashMap" resultType="hashMap">
+			/* StoreCscenterDao.getStoreInfo */
+			SELECT 
+				STORE_ID
+				,FN_DECRYPT(CMP_BIZ_NO) AS CMP_BIZ_NO
+				,CMP_NM
+				,RPRSNTV_NM
+				,BIZCND
+				,INDUTY
+				,TEL_NO
+				,FAX_NO
+				,ZIP_CD
+				,SIGUNGU_CD
+				,ADRES
+				,ADRES_DTL
+				,TEX_EMAIL
+				,BANK
+				,ACNUT_NO
+				,ACNTR
+				,MOU_TP
+				,SHOW_TP
+				,STORE_NM
+				,CHARGER_DEPT
+				,CHARGER_NM
+				,CHARGER_TEL_NO
+				,CHARGER_EMAIL
+				,APPN_RTN_HDRY
+				,HDRY
+				,DLVY_FEE
+				,FREE_DLVY
+				,FREE_AMT
+				,RTN_FEE
+				,ECHG_FEE
+				,EXTRA_FEE_TP
+				,T_ZONE1
+				,T_ZONE2
+				,T_ZONE3
+				,H_ZONE1
+				,H_ZONE2
+				,H_ZONE3
+				,RTN_ZIP_CD
+				,RTN_ADRES
+				,RTN_ADRES_DTL
+				,ATCH_FILE_NO
+				,STTUS
+				,RMK
+				,CONFM_DT
+				,CONFM_ID
+				,CREATE_DT
+				,CREATE_ID
+				,UPDATE_DT
+				,UPDATE_ID
+		FROM STORE_INFO
+		WHERE STORE_ID = #{storeId}
+	</select>	
+	<update id="StoreCscenterDao.setStoreInfo">
+		/* StoreCscenterDao.setStoreInfo */
+		UPDATE STORE_INFO SET
+				STORE_NM 				= #{prsNm}
+				,CHARGER_DEPT 		= #{prsNm}
+				,SHOW_TP 				= #{showTp}
+				,CHARGER_NM			= #{usrNm}
+				,CHARGER_TEL_NO	= #{mobile}
+				,DLVY_FEE				= IF(#{dlvyFee} = '', 	0, #{dlvyFee})
+				,FREE_DLVY				= #{freeDlvy}
+				,FREE_AMT				= IF(#{freeAmt} = '', 0, #{freeAmt})
+				,RTN_FEE				= IF(#{rtnFee} = '', 0, #{rtnFee})
+				,ECHG_FEE				= IF(#{echgFee} = '', 0, #{echgFee})
+				,EXTRA_FEE_TP		= #{extraFeeTp}
+				,T_ZONE1				= IF(#{T_ZONE1} = '', 0, #{T_ZONE1})
+				,T_ZONE2				= IF(#{T_ZONE2} = '', 0, #{T_ZONE2})
+				,H_ZONE1				= IF(#{H_ZONE1} = '', 0, #{H_ZONE1})
+				,H_ZONE2				= IF(#{H_ZONE2} = '', 0, #{H_ZONE2})
+				,APPN_RTN_HDRY		= #{appnRtnHdry}
+				,HDRY					= #{hdry}
+				,RTN_ZIP_CD			= #{rtnZipCd}
+				,RTN_ADRES			= #{rtnAdres}
+				,RTN_ADRES_DTL		= #{rtnAdresDtl}
+				,BANK						= #{bank}
+				,ACNTR					= #{acntr}
+				,ACNUT_NO				= #{acnutNo}
+				,TEX_EMAIL				= #{texEmail}
+				,UPDATE_DT			= NOW()
+				,UPDATE_ID				= #{usrId}
+		 WHERE STORE_ID 			= #{storeId}	
+	</update>
+</sqlMap>
+       

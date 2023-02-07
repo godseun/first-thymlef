@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.front.dao.FrontSetupDao">
+  	<insert id="setCodeMst">
+    	<selectKey keyProperty="sCd" resultType="string">
+    		SELECT IF(#{sCd} = 'NEW', IFNULL(MAX(CL_CD), 1000) + 1,#{sCd}) AS sCd FROM CMM_CODE
+    	</selectKey>
+			/* FrontSetupDao.setCodeMst */
+    
+		  INSERT
+		  INTO   CMM_CODE
+		         (
+						CL_CD
+						,CL_CD_NM
+						,CL_CD_DESC
+						,USE_YN
+						,CREATE_DT
+						,CREATE_ID
+
+		         )
+		         VALUES
+		         (
+			         #{sCd}
+						,#{sCdNm}
+						,#{sCdDesc}
+						,#{sUseYN}
+						,NOW()
+						,#{sCid}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				CL_CD_NM 		= #{sCdNm}
+				,CL_CD_DESC 	= #{sCdDesc}
+				,USE_YN 			= #{sUseYN}
+				,UPDATE_DT 		= NOW()
+				,UPDATE_ID 		= #{sCid}
+	</insert>
+  
+  	<insert id="setCodeDtl">
+			/* FrontSetupDao.setCodeDtl */
+		  INSERT
+		  INTO   CMM_CODE_DTL
+		         (
+						CL_CD
+						,DTL_CD
+						,DTL_CD_NM
+						,DTL_CD_DESC
+						,SORT_ORDR
+						,VIEW_YN
+						,USE_YN
+						,RMK
+						,CREATE_DT
+						,CREATE_ID
+		         )
+		         VALUES
+		         (
+						#{sCd}
+						,#{sDtlcd}
+						,#{sCdNm}
+						,#{sCdDesc}
+						,#{sOrdr}
+						,#{sViewYN}
+						,#{sUseYN}
+						,#{sRmk}
+						,NOW()
+						,#{sCid}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				DTL_CD_NM		= #{sCdNm}
+				,DTL_CD_DESC 	= #{sCdDesc}
+				,SORT_ORDR		= #{sOrdr}
+				,VIEW_YN			= #{sViewYN}
+				,USE_YN				= #{sUseYN}
+				,RMK					= #{sRmk}
+				,UPDATE_DT		= NOW()
+				,UPDATE_ID		= #{sCid}
+	</insert>
+	
+	<insert id="setMakerCd">
+    	<selectKey keyProperty="sMkCd" resultType="string">
+    		SELECT IF(#{sMkCd} = 'NEW', IFNULL(MAX(MAKR_CD), 1000) + 1,#{sMkCd}) AS sMkCd FROM MAKER_INFO
+    	</selectKey>
+			/* FrontSetupDao.setMakerCd */
+		  INSERT
+		  INTO   MAKER_INFO
+		         (
+						MAKR_CD
+						,MAKR_NM
+						,MAKR_ETC_NM
+						,CREATE_DT
+						,CREATE_ID
+
+		         )
+		         VALUES
+		         (
+			         	#{sMkCd}
+						,#{sMkNm}
+						,#{sMkEtcNm}
+						,NOW()
+						,#{sCid}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				MAKR_NM 			= #{sMkNm}
+				,MAKR_ETC_NM	= #{sMkEtcNm}
+				,USE_YN 			= #{sUseYN}
+				,UPDATE_DT 		= NOW()
+				,UPDATE_ID 		= #{sCid}
+	</insert>
+	
+	<update id="setAdminMng">
+		/* FrontSetupDao.setAdminMng */
+		UPDATE USER_INFO SET
+			USR_TP 			= #{sUsrTp}
+			,STORE_ID 		= #{sLv}
+			,UPDATE_DT 	= NOW()
+			,UPDATE_ID 	= #{usrId}
+		WHERE USR_ID 	= #{sUsrId}
+	</update>
+</mapper>

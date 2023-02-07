@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.shop.dao.ShopUserDao">
+    
+    <!-- 단방향암호화 : PASSWORD(#{data}) -->
+    <!-- 양방향암호화 : FN_ENCRYPT / HEX(AES_ENCRYPT(#{data}, MD5(#{data}))) -->
+    <!-- 양방향복호화 : FN_DECRYPT / AES_DECRYPT(UNHEX(data), MD5(#{data})) -->
+
+	<sql id="body">
+		SELECT
+			UI.USR_ID
+			, UI.USR_NM
+			, UI.STORE_ID
+			, UI.EMAIL
+			, UI.MOBILE
+			, UI.JOIN_USR_ID
+			, UI.JOIN_ROUTE
+			, UI.USR_TP
+			, UI.USR_LV
+			, UI.SMS_NOTI_AGRE_AT
+			, UI.SMS_AD_AGRE_AT
+			, UI.EMAIL_AD_AGRE_AT			
+			, UI.CNT_PW_ERROR
+			, UI.PW_LAST_MOD_DT
+			, UI.LAST_LOGIN_DT	
+			, UI.AUTO_TAXBILL	
+			, FN_DECRYPT(SI.CMP_BIZ_NO) AS CMP_BIZ_NO
+			, SI.ERP_LV 
+			, SI.CMP_NM 
+			, SI.STORE_NM
+			, SI.CHARGER_DEPT
+			, SI.CHARGER_NM
+			, SI.CHARGER_TEL_NO
+			, SI.CHARGER_EMAIL
+			, CASE WHEN 
+					SI.TEX_EMAIL IS NULL OR 
+					SI.ACNUT_NO IS NULL OR 
+					SI.FREE_AMT IS NULL 
+				THEN 'YES'
+				ELSE 'NO'
+				END AS EXTRA_INFO
+			,SHA1(#{shaPw}) AS KEYIN_PW
+			,UI.USR_PW 
+		FROM
+			USER_INFO UI 
+		LEFT JOIN 
+			STORE_INFO SI
+		ON 	
+			UI.STORE_ID = SI.STORE_ID
+		WHERE 
+				UI.DELETE_DT IS NULL
+		AND 
+				UI.WITHD_DT IS NULL
+	</sql>
+	<sql id="where">  
+			AND UI.EMAIL = #{email}
+	</sql>
+	<sql id="where2">
+			AND UI.EMAIL = #{email}
+			AND UI.JOIN_USR_ID = #{joinUsrId}
+	</sql>
+
+	<!-- 유저 상세(일반회원) -->
+    <select id="view" parameterType="hashMap" resultType="hashMap">
+    	/*ShopUserDao.view*/
+			<include refid="body"></include>
+			<include refid="where"></include>
+    </select>
+    
+    <!-- 유저 상세(SNS 회원) -->
+    <select id="view2" parameterType="hashMap" resultType="hashMap">
+    	/*ShopUserDao.view2*/
+		<include refid="body"/>
+		<include refid="where2"/>
+    </select>
+    
+    <select id="getInfo" parameterType="hashMap" resultType="hashMap">
+    	/*ShopUserDao.getInfo*/ 
+		SELECT
+			UI.USR_ID
+			, UI.USR_NM
+			, UI.EMAIL
+			, UI.MOBILE
+			, UI.AUTO_TAXBILL
+			, DATE(UI.JOIN_DT) AS JOIN_DT
+			, UT.CMP_NM
+			, UT.CMP_BIZ_NO
+			, UT.RPRSNTV_NM
+			, UT.BIZCND
+			, UT.INDUTY
+			, UT.ADDRESS
+			, UT.TAX_EMAIL
+		FROM
+			USER_INFO UI 
+		LEFT JOIN 
+			USER_TAXBILL UT
+		ON 	
+			UI.USR_ID = UT.USR_ID
+		WHERE 
+				UI.DELETE_DT IS NULL
+		AND 
+				UI.WITHD_DT IS NULL  	
+    	AND
+    			UI.USR_ID = #{usrId}
+    </select>
+    
+	 <!-- 로그인 정보 처리 -->
+    <update id="updateLoginInfo">
+    	/*ShopUserDao.updateLoginInfo*/
+		UPDATE 
+			USER_INFO 
+		SET
+		<if  test='isLogin == "N"'>
+			CNT_PW_ERROR 	= (CNT_PW_ERROR) + 1 
+			,USR_LV = IF(CNT_PW_ERROR = 4, 6, USR_LV)
+		</if>
+		<if  test='isLogin == "Y"'>
+			CNT_PW_ERROR = 0
+			,LAST_LOGIN_DT = NOW()
+		</if> 
+		WHERE
+			EMAIL = #{email}
+    </update>
+    
+	<!-- 비밀번호 변경 처리 -->
+    <update id="updatePw">
+    	/* ShopUserDao.updatePw */
+		UPDATE 
+			USER_INFO 
+		SET
+			USR_PW 					= SHA1(#{shaRePw})
+			, USR_LV 					= IF(USR_LV = 6, 1, USR_LV)
+			, CNT_PW_ERROR 		= 0
+			, PW_LAST_MOD_DT 	=  DATE_FORMAT(NOW(),'%Y%m%d')
+		WHERE
+			MOBILE = #{authMobileNum}
+    </update>
+    
+	<!-- 비밀번호 변경 처리 -->
+    <update id="updatePw2">
+    	/* ShopUserDao.updatePw2 */
+		UPDATE 
+			USER_INFO 
+		SET
+			USR_PW 					= SHA1(#{shaRePw})
+			, USR_LV 					= IF(USR_LV = 6, 1, USR_LV)
+			, CNT_PW_ERROR 		= 0
+			, PW_LAST_MOD_DT 	=  DATE_FORMAT(NOW(),'%Y%m%d')
+		WHERE
+			EMAIL = FN_DECRYPT(#{id})
+    </update>
+    
+	<sql id="addrBody">
+			SELECT 
+				@RN:=@RN+1 AS ROWNUM,
+				USR_ID,
+				ADDR_ID,
+				BASE_ADDR_YN,
+				ADDR_NM,
+				RECV_NM,
+				TEL_NO_1,
+				ZONE_TP,
+				ZONE_CODE,
+				ZIP_CODE,
+				SIGUNGU_CD,
+				ADDRESS,
+				ADDRESS_DETAIL
+			FROM   	USER_ADDR, 
+							(SELECT @RN:=0) AS R
+			WHERE  	USE_YN = 'Y'
+    </sql>
+    
+	<sql id="addrWhere">  
+			AND USR_ID = #{usrId}
+	</sql>
+	
+	<!-- 배송지 정보 리스트 조회 -->
+   <select id="getAddrList" parameterType="hashMap" resultType="hashMap">
+    	/*ShopUserDao.getAddrList*/
+		<include refid="addrBody"/>
+		<include refid="addrWhere"/>
+		ORDER BY BASE_ADDR_YN DESC, ADDR_ID
+   </select>
+    
+	<!-- 배송지 정보 조회 -->
+   <select id="getAddr" parameterType="hashMap" resultType="hashMap">
+    	/*ShopUserDao.getAddr*/
+    	SELECT 
+    		ADDR.* 
+    	FROM (
+			<include refid="addrBody"/>
+			<include refid="addrWhere"/>
+			ORDER BY BASE_ADDR_YN DESC, ADDR_ID
+		) AS ADDR
+		WHERE ROWNUM = 1
+   </select>
+	    
+	 <!-- 기본배송지 정보 해제 -->
+    <update id="setBaseAddr">
+    		/*ShopUserDao.setBaseAddr*/
+			UPDATE 
+				USER_ADDR 
+			SET
+		 		BASE_ADDR_YN = 'N'
+			WHERE
+				USR_ID = #{usrId}
+			AND
+		 		BASE_ADDR_YN = 'Y'
+    </update>
+    
+	 <!-- 기본배송지 정보 등록 -->
+    <insert id="addAddr">
+    	<selectKey keyProperty="usrSeq" resultType="string">
+    		SELECT IFNULL(MAX(ADDR_ID), 0) + 1 AS usrSeq FROM USER_ADDR 
+    		WHERE USR_ID = #{usrId}
+    	</selectKey>
+    
+    		/*ShopUserDao.addAddr*/
+		  INSERT
+		  INTO   USER_ADDR
+		         (
+							USR_ID,
+							ADDR_ID,
+							BASE_ADDR_YN,
+							ADDR_NM,
+							RECV_NM,
+							TEL_NO_1, 
+							ZONE_TP,
+							ZONE_CODE,
+							ZIP_CODE,
+							SIGUNGU_CD,
+							ADDRESS,
+							ADDRESS_DETAIL,
+							CREATE_DT,
+							CREATE_ID
+		         )
+		         VALUES
+		         (
+							#{usrId} ,
+							<choose>
+								<when test="seq == ''">
+								#{usrSeq},
+								</when>
+								<otherwise>
+								#{seq},
+								</otherwise>
+							</choose>
+							#{baseAddrYn},
+							#{addrNm},
+							#{receiver},
+							#{mobileNo}, 
+							IFNULL((SELECT SORT_ORDR FROM CMM_CODE_DTL WHERE CL_CD = '1013' AND DTL_CD = #{zoneCode}),0),
+							#{zoneCode},
+							#{zipCode},
+							#{sigunguCode},
+							#{address},
+							#{dtlAddress},
+		               NOW(),
+		               #{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				BASE_ADDR_YN 	= #{baseAddrYn},
+				ADDR_NM 			= #{addrNm},
+				RECV_NM 			= #{receiver},
+				TEL_NO_1 			= #{mobileNo}, 
+				ZONE_TP 			= IFNULL((SELECT SORT_ORDR FROM CMM_CODE_DTL WHERE CL_CD = '1013' AND DTL_CD = #{zoneCode}),0), 
+				ZONE_CODE 		= #{zoneCode}, 
+				ZIP_CODE 			= #{zipCode}, 
+				SIGUNGU_CD 		= #{sigunguCode}, 
+				ADDRESS 			= #{address}, 
+				ADDRESS_DETAIL	= #{dtlAddress}, 
+				UPDATE_DT 		= NOW(), 
+				UPDATE_ID 			= #{usrId}
+    </insert>
+    
+	 <!-- 기본배송지 정보 삭제 -->
+	<update id="delAddr" >
+		  /*ShopUserDao.delAddr*/
+			UPDATE 
+				USER_ADDR 
+			SET
+		 		USE_YN = 'N',
+		 		DELETE_DT = NOW(),
+				DELETE_ID = #{usrId}
+			WHERE
+				USR_ID = #{usrId}
+		  
+				<if test="ADDR_ID != null">
+					AND ADDR_ID IN
+					<foreach collection="array" item="ADDR_ID" open="(" close=")" separator=",">
+						#{ADDR_ID}
+					</foreach>
+				</if>
+
+	</update>	    
+        
+	<select id="getalarm" parameterType="hashMap" resultType="hashMap">
+	 	/*ShopUserDao.getalarm*/
+	 	SELECT 
+	 		EMAIL 						AS EMAIL,
+	 		MOBILE 						AS MOBILE,
+	 		DATE(JOIN_DT)			AS JOIN_DT,
+	 		USR_NM 						AS USR_NM,
+	 		SMS_NOTI_AGRE_AT 	AS SMS_NOT,
+			SMS_AD_AGRE_AT  		AS SMS_AD,
+		    EMAIL_AD_AGRE_AT  	AS EMAIL_AD
+		FROM USER_INFO 
+		WHERE USR_ID = #{usrId}
+	</select>
+
+	<update id="setAlarm" >
+		  /* ShopUserDao.setAlarm */
+			UPDATE 
+				USER_INFO 
+			SET
+				SMS_NOTI_AGRE_AT 	= #{SMS_NOT} ,
+				SMS_AD_AGRE_AT		= #{SMS_AD} ,
+				EMAIL_AD_AGRE_AT 		= #{EMAIL_AD} ,
+				UPDATE_DT 				= NOW() , 
+				UPDATE_ID 					= #{usrId}
+			WHERE
+				USR_ID = #{usrId}
+	</update>
+
+	<update id="chgInfo" >
+		  /* ShopUserDao.chgInfo */
+			UPDATE 
+				USER_INFO 
+			SET
+				MOBILE 				= IF(#{mobileNo} = '', MOBILE, #{mobileNo}) ,
+				USR_NM				= IF(#{usrNm} = '', USR_NM, #{usrNm}),
+				AUTO_TAXBILL		= #{aTaxBill},
+				UPDATE_DT			= NOW() , 
+				UPDATE_ID			= #{usrId}
+			WHERE
+				USR_ID 				= #{usrId}
+	</update>
+   
+	<insert id="addFav">
+		/* ShopUserDao.addFav */
+		INSERT 
+		  INTO USER_FAV 
+		       ( 
+		         USR_ID , 
+		         PRDT_CD , 
+		         PRDT_DTL_CD , 
+		         STORE_ID , 
+		         CREATE_DT , 
+		         CREATE_ID 
+		       ) 
+		SELECT 
+			   #{usrId} , 
+		       D.PRDT_CD , 
+		       D.PRDT_DTL_CD , 
+		       D.STORE_ID , 
+		       NOW() , 
+		       #{usrId} 
+		  FROM PRDT_DTL D 
+		 WHERE D.PRDT_CD = #{PRDT_CD} 
+		     AND D.PRDT_DTL_CD = #{PRDT_DTL_CD}
+		     AND (D.PRDT_CD, D.PRDT_DTL_CD) NOT IN (
+			     		SELECT 
+			     			PRDT_CD, PRDT_DTL_CD
+			     		FROM  USER_FAV
+			     		WHERE PRDT_CD = #{PRDT_CD}  
+			     		    AND PRDT_DTL_CD = #{PRDT_DTL_CD}
+		     		) 
+	</insert>
+   
+    <select id="getFavList" parameterType="hashMap" resultType="hashMap">
+    	/* ShopUserDao.getFavList */
+			SELECT 
+				UC.USR_ID , 
+				UC.PRDT_CD , 
+				UC.PRDT_DTL_CD , 
+				PD.STORE_ID , 
+				PM.PRDT_NM , 
+				PM.MAKR_NM , 
+				PD.STNDRD , 
+				PM.PRDT_TP, 
+				PD.INVT_AMT, 
+				PD.RE_SALE_DT, 
+				PD.SEL_PRICE , 
+			   	PD.OUT_AMT,
+			   	PD.OUT_UNIT,
+				PM.DLVY_TP, 
+				PM.DLVY_FEE_TP , 
+				PM.DLVY_FEE , 
+				PM.PRDT_IMG, 
+				CASE WHEN PM.DLVY_TP = 'T' AND ( PM.DLVY_FEE_TP != '2' AND PM.DLVY_FEE_TP != '3' ) THEN 1 ELSE 0 END AS DLVY_MEG, 
+				SI.STORE_NM, 
+				SI.FREE_DLVY, 
+				SI.FREE_AMT 
+			FROM 
+					USER_FAV UC,
+			       	PRDT_MST PM,
+			       	PRDT_DTL PD,
+                	STORE_INFO SI
+			WHERE  UC.PRDT_CD     		= PM.PRDT_CD
+				AND  PM.PRDT_CD     		= PD.PRDT_CD
+				AND  UC.PRDT_CD     		= PD.PRDT_CD
+				AND  UC.PRDT_DTL_CD		= PD.PRDT_DTL_CD
+         		AND  PM.STORE_ID			= SI.STORE_ID
+				AND UC.USR_ID 				= #{usrId} 
+    </select>
+       
+	<insert id="delFav">
+		/* ShopUserDao.delFav */
+		DELETE  
+		  FROM USER_FAV 
+		 WHERE USR_ID =  #{usrId} 
+		 	 AND PRDT_CD = #{PRDT_CD} 
+		     AND PRDT_DTL_CD = #{PRDT_DTL_CD} 
+	</insert>
+    
+	<insert id="setTaxInfo">
+    		/*ShopUserDao.setTaxInfo*/
+		  INSERT
+		  INTO   USER_TAXBILL
+		         (
+					USR_ID
+					,CMP_NM
+					,CMP_BIZ_NO
+					,RPRSNTV_NM
+					,BIZCND
+					,INDUTY
+					,ADDRESS
+					,TAX_EMAIL
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{usrId}
+					,#{cmpNm}
+					,#{busiNo}
+					,#{prsNm}
+					,#{bizCnd}
+					,#{induty}
+					,#{address}
+					,#{taxEmail}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				CMP_NM			 		= #{cmpNm},
+				CMP_BIZ_NO 			= #{busiNo},
+				RPRSNTV_NM 			= #{prsNm},
+				BIZCND 					= #{bizCnd},
+				INDUTY		 			= #{induty},
+				ADDRESS	 			= #{address},
+				TAX_EMAIL	 			= #{taxEmail},
+				UPDATE_DT 			= NOW(), 
+				UPDATE_ID 				= #{usrId}
+    </insert>
+    
+
+	<update id="dropOut" >
+		  /* ShopUserDao.dropOut */
+			UPDATE 
+				USER_INFO 
+			SET
+				EMAIL				= CONCAT('D_', EMAIL)
+				,MOBILE				= CONCAT('9', RIGHT(MOBILE,12))
+				,JOIN_USR_ID		= NULL
+				,USE_YN				= 'N'
+				,DELETE_DT		= NOW()  
+				,DELETE_ID			= #{usrId}
+				,WITHD_TYPE		= #{rmkChk}
+				,WITHD_REASON = #{rmk}			
+			WHERE
+				USR_ID 				= #{usrId}
+	</update>
+    
+</mapper>

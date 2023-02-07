@@ -1,0 +1,873 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.front.dao.FrontProductDao">
+ 	<sql id="insertPrdtMstHistBody">
+		  INSERT
+		  INTO  PRDT_MST_HIST	
+		         (
+					PRDT_CD
+					,STORE_ID
+					,CATEG_CD
+					,PRDT_NM
+					,PRDT_ETC_NM
+					,PRDT_TP
+					,MAKR_NM
+					,MAKR_CD
+					,ORG_PLCE
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,PRDT_IMG
+					,EXTRA_IMG_AT
+					,EXTRA_IMG_NO
+					,EBOOK_IMG_AT
+					,EBOOK_IMG_NO
+					,CTL_IMG_AT
+					,CTL_IMG_NO
+					,MOVE_AT
+					,ST_CARE_AT
+					,MNF_AT
+					,PRDT_INFO
+					,PRDT_NOTICE_TP
+					,DLVY_TP
+					,DLVY_FEE_TP
+					,PKG_TP
+					,DLVY_FEE
+					,PRDT_MD
+					,AD_YN
+					,EXT_INFO_TIT_1
+					,EXT_INFO_VAL_1
+					,EXT_INFO_TIT_2
+					,EXT_INFO_VAL_2
+					,EXT_INFO_TIT_3
+					,EXT_INFO_VAL_3
+					,EXT_INFO_TIT_4
+					,EXT_INFO_VAL_4
+					,EXT_INFO_TIT_5
+					,EXT_INFO_VAL_5
+					,EXT_INFO_TIT_6
+					,EXT_INFO_VAL_6
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+	    	 )
+			SELECT 
+					PRDT_CD
+					,STORE_ID
+					,CATEG_CD
+					,PRDT_NM
+					,PRDT_ETC_NM
+					,PRDT_TP
+					,MAKR_NM
+					,MAKR_CD
+					,ORG_PLCE
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,PRDT_IMG
+					,EXTRA_IMG_AT
+					,EXTRA_IMG_NO
+					,EBOOK_IMG_AT
+					,EBOOK_IMG_NO
+					,CTL_IMG_AT
+					,CTL_IMG_NO
+					,MOVE_AT
+					,ST_CARE_AT
+					,MNF_AT
+					,PRDT_INFO
+					,PRDT_NOTICE_TP
+					,DLVY_TP
+					,DLVY_FEE_TP
+					,PKG_TP
+					,DLVY_FEE
+					,PRDT_MD
+					,AD_YN
+					,EXT_INFO_TIT_1
+					,EXT_INFO_VAL_1
+					,EXT_INFO_TIT_2
+					,EXT_INFO_VAL_2
+					,EXT_INFO_TIT_3
+					,EXT_INFO_VAL_3
+					,EXT_INFO_TIT_4
+					,EXT_INFO_VAL_4
+					,EXT_INFO_TIT_5
+					,EXT_INFO_VAL_5
+					,EXT_INFO_TIT_6
+					,EXT_INFO_VAL_6
+					,USE_YN
+					,NOW()
+					,#{usrId}	
+			FROM PRDT_MST
+  	</sql>
+
+ 	<sql id="insertPrdtDtlHistBody">
+		  INSERT
+		  INTO  PRDT_DTL_HIST	
+		         (
+					PRDT_CD
+					,STORE_ID
+					,PRDT_DTL_CD
+					,PRDT_TP
+					,MAIN_STD_AT
+					,BARCODE
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,STNDRD
+					,MODEL_NM
+					,RSRVMNEY
+					,INVT_AMT
+					,SEL_PRICE
+					,PUR_PRICE
+					,OUT_AMT
+					,OUT_UNIT
+					,PUR_SUPPLY
+					,SALE_PRICE
+					,SOLDOUT_AT
+					,SOLDOUT_DT
+					,RE_SALE_DT
+					,USE_YN
+					,SEL_CNT
+					,CREATE_DT
+					,CREATE_ID
+	    	 )
+			SELECT 
+					PRDT_CD
+					,STORE_ID
+					,PRDT_DTL_CD
+					,PRDT_TP
+					,MAIN_STD_AT
+					,BARCODE
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,STNDRD
+					,MODEL_NM
+					,RSRVMNEY
+					,INVT_AMT
+					,SEL_PRICE
+					,PUR_PRICE
+					,OUT_AMT
+					,OUT_UNIT
+					,PUR_SUPPLY
+					,SALE_PRICE
+					,SOLDOUT_AT
+					,SOLDOUT_DT
+					,RE_SALE_DT
+					,USE_YN
+					,SEL_CNT
+					,NOW()
+					,#{usrId}	
+			FROM PRDT_DTL
+  	</sql>
+	
+	<update id="setTmpPrdt">
+			/* FrontProductDao.setTmpPrdt */
+			UPDATE TMP_PRDT_INFO SET
+				PRDT_NM 			= #{sPrdtNm}
+				,STNDRD				= #{sStndrd}
+				,MAKR_CD			= #{sMakerCd}
+				,MAKR_NM			= #{sMakerNm}
+				,MODEL_NM			= #{sModelNm}
+				,PRDT_DTL_INFO 	= #{sPrdtDtlInfo}
+				,CONFM_YN			= IF(#{sSttus} = '3', 'Y', 'N')
+				,CONFM_DT			= IF(#{sSttus} = '3', DATE_FORMAT(NOW(), '%Y%m%d'), NULL)
+				,CONFM_ID			= IF(#{sSttus} = '3', #{sConId}, NULL)
+				,CONFM_RMK		= #{sConRMK}
+				,STTUS				= #{sSttus}
+				,CATEG_CD1		= #{ca1}
+				,CATEG_CD2		= #{ca2}
+				,CATEG_CD3		= #{ca3}
+				,CATEG_CD4		= #{ca4}
+				,CATEG_CD5		= #{ca5}
+				,UPDATE_DT		= NOW()
+				,UPDATE_ID			= #{sConId}
+			WHERE 	PRDT_CD 	= #{sPrdtCd}
+	</update>
+	
+  	<insert id="setPrdtDtl">
+		/* FrontProductDao.setPrdtDtl */
+	  	  INSERT
+		  INTO   PRDT_DTL
+		         (
+					PRDT_CD
+					,PRDT_TP
+					,STORE_ID
+					,PRDT_DTL_CD
+					,MAIN_STD_AT
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,STNDRD
+					,MODEL_NM
+					,INVT_AMT
+					,SEL_PRICE
+					,PUR_SUPPLY
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         SELECT 
+		         	CONCAT('ST9', PRDT_CD)
+					,'S'
+					, STORE_ID		         
+		         	, CONCAT('ST9', PRDT_CD)
+		         	, 'Y'
+		         	, PRDT_CD
+		         	, 'PT'
+		         	, #{sStndrd}
+		         	, #{sModelNm}
+		         	, INVT_AMT
+		         	, SEL_PRICE
+		         	, 'PT'
+					, 'N'
+					, NOW()
+		         	, CREATE_ID
+		         FROM TMP_PRDT_INFO
+				WHERE 	PRDT_CD 	= #{sPrdtCd}
+  	</insert>
+  	
+  	<insert id="setPrdtMst">
+		/* FrontProductDao.setPrdtMst */
+	  	  INSERT
+		  INTO   PRDT_MST
+		         (
+					PRDT_CD
+					,STORE_ID
+					,CATEG_CD
+					,PRDT_NM
+					,PRDT_TP
+					,MAKR_NM
+					,MAKR_CD
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,PRDT_IMG
+					,EXTRA_IMG_AT
+					,EXTRA_IMG_NO
+					,EBOOK_IMG_AT
+					,CTL_IMG_AT
+					,PRDT_DTL_INFO
+					,PRDT_NOTICE_TP
+					,DLVY_TP
+					,DLVY_FEE_TP
+					,PKG_TP
+					,DLVY_FEE
+					,PRDT_MD
+					,USE_YN
+					,CONFM_YN
+					,CONFM_DT
+					,CONFM_ID
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         SELECT 
+					CONCAT('ST9', A.PRDT_CD)
+					,A.STORE_ID		
+					,#{ca5}
+					,#{sPrdtNm}
+					,'S'
+					,#{sMakerNm}
+					,#{sMakerCd}
+					,A.PRDT_CD
+					,'PT'
+					,(SELECT CONCAT(FILE_PATH,FILE_SAVE_NAME)
+				       FROM    BOARD_FILE
+				       WHERE   BBS_ID     ='PRDT_MAIN'
+				       AND     ARTICLE_ID = A.PRDT_CD
+				       )
+					,A.EXTRA_IMG_AT
+					,A.EXTRA_IMG_NO
+					,'N'
+					,'N'
+					,#{sPrdtDtlInfo}
+					,A.PRDT_NOTICE_TP
+					,A.DLVY_TP
+					,A.DLVY_FEE_TP
+					,A.PKG_TP
+					,A.DLVY_FEE
+					,#{sConId}
+					,'N'
+					,'Y'
+					,DATE_FORMAT(NOW(), '%Y%m%d')
+					,#{sConId}
+					, NOW()
+		         	, A.CREATE_ID
+		         FROM TMP_PRDT_INFO A
+				WHERE 	A.PRDT_CD 	= #{sPrdtCd}
+  	</insert>
+  	
+   	<insert id="saveMovieInfo">
+    	<selectKey keyProperty="sPrmId" resultType="string">
+    		SELECT IF(#{sPrmId} = 'NEW' OR #{sPrmId} = '', IFNULL(MAX(PROMO_ID), 8000000) + 1,#{sPrmId}) AS sPrmId FROM PROMO_BOARD  
+    		WHERE PROMO_ID <![CDATA[>=]]> 8000000
+    		AND PROMO_ID <![CDATA[<]]> 9000000
+    	</selectKey>
+			/* FrontSite.setPromo */
+		  INSERT
+		  INTO   PROMO_BOARD
+		         (
+					PROMO_ID
+					,BBS_ID
+					,ARTICLE_ID
+					,PROMO_TP
+					,TITLE
+					,CATEG_CD
+					,PRDT_CD
+					,BGCOLOR
+					,URL
+					,WIDTH
+					,HEIGHT
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{sPrmId}
+					,#{sBbsId}
+					,#{sArtCd}
+					,#{sPrmTp}
+					,#{sTitle}
+					,#{caPm}
+					,#{sPrdtCd}
+					,#{sBgCr}
+					,IF(#{sUrl} = '' , NULL , #{sUrl})
+					,IF(#{sWidth} = '', 0, #{sWidth})
+					,IF(#{sHeight} = '', 0, #{sHeight})
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				BBS_ID			= #{sBbsId}
+				,PROMO_TP			= #{sPrmTp}
+				,TITLE				= #{sTitle}
+				,CATEG_CD			= #{caPm}
+				,PRDT_CD			= #{sPrdtCd}
+				,BGCOLOR			= #{sBgCr}
+				,URL					= IF(#{sUrl} = '' , NULL , #{sUrl})
+				,WIDTH				= IF(#{sWidth} = '', 0, #{sWidth})
+				,HEIGHT				= IF(#{sHeight} = '', 0, #{sHeight})
+				,USE_YN				= IF(#{sStatus} = 'D', 'N', 'Y')
+				,UPDATE_DT 		= NOW()
+				,UPDATE_ID 		= #{usrId}			
+	</insert>
+	
+	<update id="setMovieInfo">
+			/* FrontProductDao.setMovieInfo */
+			UPDATE PRDT_MST SET
+				MOVE_AT 			= IF (
+													(
+													 SELECT COUNT(1) FROM PROMO_BOARD P
+													 WHERE P.URL IS NOT NULL  
+													       AND P.PRDT_CD 	= #{sPrdtCd}
+													       AND P.BBS_ID 		= 'PMV'  
+													       AND P.USE_YN 		= 'Y'  
+													) = 0
+													,'N'
+													,'Y'
+   	 		 									)
+				,UPDATE_DT		= NOW()
+				,UPDATE_ID			= #{usrId}
+			WHERE 	PRDT_CD 	= #{sPrdtCd}
+	</update>	
+		
+	<update id="setImgDtl">
+			/* FrontProductDao.setImgDtl */
+			UPDATE PRDT_MST SET
+				CTL_IMG_AT 		= IF(
+													#{fileSize} = 0
+													,'N'
+													,'Y'
+												)
+				,CTL_IMG_NO		= IF(
+													#{fileSize} = 0
+													,NULL
+													,PRDT_CD
+												)
+				,UPDATE_DT		= NOW()
+				,UPDATE_ID			= #{usrId}
+			WHERE 	PRDT_CD 	= #{PRDT_CD}
+	</update>
+		
+	<update id="savePrdtInfoMst">
+		/*FrontProductDao.savePrdtInfoMst*/
+		  INSERT
+		  INTO   PRDT_MST
+		         (
+					PRDT_CD
+					,STORE_ID
+					,CATEG_CD
+					,PRDT_NM
+					,PRDT_ETC_NM
+					,PRDT_TP
+					,MAKR_NM
+					,MAKR_CD
+					,ORG_PLCE
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,PRDT_IMG
+					,EXTRA_IMG_AT
+					,EXTRA_IMG_NO
+					,EBOOK_IMG_AT
+					,EBOOK_IMG_NO
+					,CTL_IMG_AT
+					,CTL_IMG_NO
+					,MOVE_AT
+					,ST_CARE_AT
+					,MNF_AT
+					,PRDT_INFO
+					,PRDT_NOTICE_TP
+					,DLVY_TP
+					,DLVY_FEE_TP
+					,PKG_TP
+					,DLVY_FEE
+					,PRDT_MD
+					,AD_YN
+					,V_MD_AT
+					,EXT_INFO_TIT_1
+					,EXT_INFO_VAL_1
+					,EXT_INFO_TIT_2
+					,EXT_INFO_VAL_2
+					,EXT_INFO_TIT_3
+					,EXT_INFO_VAL_3
+					,EXT_INFO_TIT_4
+					,EXT_INFO_VAL_4
+					,EXT_INFO_TIT_5
+					,EXT_INFO_VAL_5
+					,EXT_INFO_TIT_6
+					,EXT_INFO_VAL_6
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{PRDT_CD}
+					,#{STORE_ID}
+					,#{CATEG_CD}
+					,#{PRDT_NM}
+					,IF(#{PRDT_ETC_NM}='',NULL,#{PRDT_ETC_NM})
+					,'J'
+					,#{MAKR_NM}
+					,#{MAKR_CD}
+					,#{ORG_PLCE}
+					,#{ORG_PRDT_CD}
+					,#{ORG_CMP_CD}
+					,#{PRDT_IMG}
+					,#{EXTRA_IMG_AT}
+					,#{EXTRA_IMG_NO}
+					,#{EBOOK_IMG_AT}
+					,#{EBOOK_IMG_NO}
+					,#{CTL_IMG_AT}
+					,#{CTL_IMG_NO}
+					,#{MOVE_AT}
+					,#{ST_CARE_AT}
+					,#{MNF_AT}
+					,#{PRDT_INFO}
+					,'1'
+					,'T'
+					,'1'
+					,'1'
+					,#{DLVY_FEE}
+					,#{PRDT_MD}
+					,#{AD_YN}
+					,IF(LEFT(#{PRDT_CD}, 3)='ST7','Y','N')
+					,#{EXT_INFO_TIT_1}
+					,#{EXT_INFO_VAL_1}
+					,#{EXT_INFO_TIT_2}
+					,#{EXT_INFO_VAL_2}
+					,#{EXT_INFO_TIT_3}
+					,#{EXT_INFO_VAL_3}
+					,#{EXT_INFO_TIT_4}
+					,#{EXT_INFO_VAL_4}
+					,#{EXT_INFO_TIT_5}
+					,#{EXT_INFO_VAL_5}
+					,#{EXT_INFO_TIT_6}
+					,#{EXT_INFO_VAL_6}
+					,#{USE_YN}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				CATEG_CD 				= #{CATEG_CD}
+				,PRDT_NM 				= #{PRDT_NM}
+				,PRDT_ETC_NM 		= #{PRDT_ETC_NM}
+				,MAKR_NM 				= #{MAKR_NM}
+				,MAKR_CD 				= #{MAKR_CD}
+				,ORG_PLCE 				= #{ORG_PLCE}
+				,ORG_PRDT_CD 		= #{ORG_PRDT_CD}
+				,ORG_CMP_CD 			= #{ORG_CMP_CD}
+				,PRDT_IMG 				= #{PRDT_IMG}
+				,EXTRA_IMG_AT 		= #{EXTRA_IMG_AT}
+				,EXTRA_IMG_NO 		= #{EXTRA_IMG_NO}
+				,EBOOK_IMG_AT 		= #{EBOOK_IMG_AT}
+				,EBOOK_IMG_NO 		= #{EBOOK_IMG_NO}
+				,CTL_IMG_AT 			= #{CTL_IMG_AT}
+				,CTL_IMG_NO 			= #{CTL_IMG_NO}
+				,MOVE_AT 				= #{MOVE_AT}
+				,ST_CARE_AT			= #{ST_CARE_AT}
+				,MNF_AT 				= #{MNF_AT}
+				,PRDT_INFO 			= #{PRDT_INFO}
+<!-- 				
+				,PRDT_NOTICE_TP 	= #{PRDT_NOTICE_TP}
+				,DLVY_TP 				= #{DLVY_TP}
+				,DLVY_FEE_TP 		= #{DLVY_FEE_TP}
+				,PKG_TP 				= #{PKG_TP}
+ -->				
+				,DLVY_FEE 				= #{DLVY_FEE}
+				,PRDT_MD 				= #{PRDT_MD}
+				,AD_YN 					= #{AD_YN}
+				,V_MD_AT				= IF(LEFT(#{PRDT_CD}, 3)='ST7','Y','N')
+				,EXT_INFO_TIT_1 	= #{EXT_INFO_TIT_1}
+				,EXT_INFO_VAL_1 	= #{EXT_INFO_VAL_1}
+				,EXT_INFO_TIT_2 	= #{EXT_INFO_TIT_2}
+				,EXT_INFO_VAL_2 	= #{EXT_INFO_VAL_2}
+				,EXT_INFO_TIT_3 	= #{EXT_INFO_TIT_3}
+				,EXT_INFO_VAL_3 	= #{EXT_INFO_VAL_3}
+				,EXT_INFO_TIT_4 	= #{EXT_INFO_TIT_4}
+				,EXT_INFO_VAL_4 	= #{EXT_INFO_VAL_4}
+				,EXT_INFO_TIT_5 	= #{EXT_INFO_TIT_5}
+				,EXT_INFO_VAL_5 	= #{EXT_INFO_VAL_5}
+				,EXT_INFO_TIT_6 	= #{EXT_INFO_TIT_6}
+				,EXT_INFO_VAL_6 	= #{EXT_INFO_VAL_6}
+				,USE_YN 				= #{USE_YN}
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+	</update>
+	
+	<update id="savePrdtInfoDtl">	
+		/* FrontProductDao.savePrdtInfoDtl */
+		  INSERT
+		  INTO   PRDT_DTL
+		         (
+					PRDT_CD
+					,STORE_ID
+					,PRDT_DTL_CD
+					,PRDT_TP
+					,MAIN_STD_AT
+					,BARCODE
+					,ORG_PRDT_CD
+					,ORG_CMP_CD
+					,STNDRD 
+					,PRDT_IMG
+					,MODEL_NM
+					,INVT_AMT
+					,SEL_PRICE
+					,PUR_PRICE
+					,OUT_AMT
+					,OUT_UNIT
+					,PUR_SUPPLY
+					,SOLDOUT_AT
+					,SOLDOUT_DT
+					,RE_SALE_DT
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{PRDT_CD}
+					,#{STORE_ID}
+					,#{PRDT_DTL_CD}
+					,'J'
+					,IF(#{PRDT_CD} = #{PRDT_DTL_CD},'Y','N')
+					,#{BARCODE}
+					,#{ORG_PRDT_CD}
+					,#{ORG_CMP_CD}
+					,#{STNDRD}
+					,#{PRDT_IMG}
+					,#{MODEL_NM}
+					,#{INVT_AMT}
+					,#{SEL_PRICE}
+					,#{PUR_PRICE}
+					,#{OUT_AMT}
+					,#{OUT_UNIT}
+					,#{PUR_SUPPLY}
+					,#{SOLDOUT_AT}
+					,#{SOLDOUT_DT}
+					,#{RE_SALE_DT}
+					,#{USE_YN}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+		  		MAIN_STD_AT			= IF(#{PRDT_CD} = #{PRDT_DTL_CD},'Y','N')
+				,BARCODE				= #{BARCODE}
+				,ORG_PRDT_CD		= #{ORG_PRDT_CD}
+				,ORG_CMP_CD			= #{ORG_CMP_CD}
+				,STNDRD					= #{STNDRD}
+				,PRDT_IMG				= #{PRDT_IMG}
+				,MODEL_NM				= #{MODEL_NM}
+				,INVT_AMT				= #{INVT_AMT}
+				,SEL_PRICE				= #{SEL_PRICE}
+				,PUR_PRICE				= #{PUR_PRICE}
+				,OUT_AMT				= #{OUT_AMT}
+				,OUT_UNIT				= #{OUT_UNIT}
+				,PUR_SUPPLY			= #{PUR_SUPPLY}
+				,SOLDOUT_AT			= #{SOLDOUT_AT}
+				,SOLDOUT_DT			= IF(#{SOLDOUT_AT}= 'Y' AND SOLDOUT_DT IS NULL, DATE_FORMAT(NOW(),'%Y%m%d'), SOLDOUT_DT )
+				,RE_SALE_DT			= IF(#{SOLDOUT_AT}= 'Y', #{RE_SALE_DT}, '')
+				,USE_YN 				= #{USE_YN}
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+	</update>
+	
+  	<insert id="insertPrdtMstHist">
+		/* FrontProductDao.insertPrdtMstHist */
+		<include refid="insertPrdtMstHistBody"/>
+		
+		WHERE PRDT_CD 		= #{PRDT_CD}
+			AND STORE_ID 	= #{STORE_ID}
+  	</insert>
+  	
+  	<insert id="insertPrdtDtlHist">
+		/* FrontProductDao.insertPrdtDtlHist */
+		<include refid="insertPrdtDtlHistBody"/>
+		WHERE PRDT_CD 			= #{PRDT_CD}
+			AND STORE_ID 		= #{STORE_ID}
+			AND PRDT_DTL_CD 	= #{PRDT_DTL_CD}
+  	</insert> 
+  	
+  	<insert id="insertPrdtMstHistArry">
+		/* FrontProductDao.insertPrdtMstHistArry */
+		<include refid="insertPrdtMstHistBody"/>
+		WHERE PRDT_CD IN 
+			<foreach collection="array" item="PRDT_CD" open="(" close=")" separator=",">
+				#{PRDT_CD}
+			</foreach>
+  	</insert>
+  		
+  	<insert id="insertPrdtDtlHistArry">
+		/* FrontProductDao.insertPrdtDtlHistArry */
+		<include refid="insertPrdtDtlHistBody"/>
+		WHERE PRDT_DTL_CD IN 
+			<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+				#{PRDT_DTL_CD}
+			</foreach>
+  	</insert> 	
+  		
+	<update id="setSoldOut">
+			/* FrontProductDao.setSoldOut */
+			UPDATE PRDT_DTL SET
+				SOLDOUT_AT			= 'Y'
+				,SOLDOUT_DT			= DATE_FORMAT(NOW(),'%Y%m%d')
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+			WHERE PRDT_DTL_CD IN 
+			<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+				#{PRDT_DTL_CD}
+			</foreach>
+			AND SOLDOUT_AT		= 'N'
+	</update>
+	
+	<update id="setNoSale">
+			/* FrontProductDao.setNoSale */
+			UPDATE PRDT_DTL SET
+				USE_YN					= 'N'
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+			WHERE PRDT_DTL_CD IN 
+			<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+				#{PRDT_DTL_CD}
+			</foreach>
+			AND USE_YN				= 'Y'
+	</update>
+	
+	<update id="setOnSale">
+			/* FrontProductDao.setOnSale */
+			UPDATE PRDT_DTL SET
+				USE_YN					= 'Y'
+				,SOLDOUT_AT			= 'N'
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+			WHERE PRDT_DTL_CD IN 
+			<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+				#{PRDT_DTL_CD}
+			</foreach>
+			AND (
+					USE_YN					= 'N'
+				OR SOLDOUT_AT			= 'Y'
+				)
+	</update>
+
+  	<insert id="saveItemPkgMst">
+    	<selectKey keyProperty="sPrmId" resultType="string">
+    		SELECT IF(#{sPrmId} = 'NEW' OR #{sPrmId} = '', IFNULL(MAX(PROMO_ID), 3000000) + 1,#{sPrmId}) AS sPrmId FROM PROMO_BOARD  
+    		WHERE PROMO_ID <![CDATA[>=]]> 3000000
+    		AND PROMO_ID <![CDATA[<]]> 4000000
+    	</selectKey>
+			/* FrontProductDao.saveItemPkgMst */
+		  INSERT
+		  INTO   PROMO_BOARD
+		         (
+					PROMO_ID
+					,ARTICLE_ID
+					,BBS_ID
+					,TITLE
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{sPrmId}
+					,#{sPrmId}
+					,#{sBbsId}
+					,#{sTitle}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				TITLE				= #{sTitle}
+				,USE_YN			= #{sUseYN}
+				,UPDATE_DT	= NOW()
+				,UPDATE_ID 	= #{usrId}			
+	</insert>	
+	<delete id="delItemPkg">
+			/* FrontProductDao.delItemPkg */
+			DELETE 
+			FROM PROMO_PRDUCT
+			WHERE PROMO_ID = #{sPrmId}
+	</delete>
+	
+	<insert id="setSalePromo">	
+    	<selectKey keyProperty="sArtCd" resultType="string">
+    		SELECT IF(#{sArtCd} = 'NEW' OR #{sArtCd} = '', IFNULL(MAX(ARTICLE_ID), 1000000) + 1,#{sArtCd}) AS sArtCd FROM BOARD 
+    		WHERE ARTICLE_ID <![CDATA[>=]]> 1000000
+    		AND ARTICLE_ID <![CDATA[<]]> 2000000
+    	</selectKey>
+    	
+			/* FrontProductDao.setSalePromo */
+		  INSERT
+		  INTO   BOARD
+		         (
+					ARTICLE_ID
+					,BBS_ID
+					,BBS_TP
+					,TITLE
+					,CONTENT
+					,BBS_STRT_DT
+					,BBS_END_DT
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{sArtCd}
+					,#{sBbsId}
+					,#{sBbsTp}
+					,#{sTitle}
+					,#{sTitle}
+					,#{sSdt}
+					,#{sEdt}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				UPDATE_DT 		= NOW()
+				,UPDATE_ID 		= #{usrId}			
+				,TITLE				= #{sTitle}
+				,CONTENT			= #{sTitle}
+				,BBS_STRT_DT		= #{sSdt}
+				,BBS_END_DT		= #{sEdt}
+				,USE_YN				= #{sUseYN}
+	</insert>
+	
+	<update id="setPrdtPrice">
+			/* FrontProductDao.setPrdtPrice */
+			UPDATE PRDT_DTL SET
+				SALE_PRICE				= #{SALE_PRICE}
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+		WHERE PRDT_CD 				= #{PRDT_CD}
+			AND STORE_ID 			= #{STORE_ID}
+			AND PRDT_DTL_CD 		= #{PRDT_DTL_CD}
+	</update>
+	
+  	<insert id="setSalePrdt">
+			/* FrontProductDao.setSalePrdt */
+		  INSERT
+		  INTO   PROMO_PRDUCT
+		         (
+					PROMO_ID
+					,ARTICLE_ID
+					,PRDT_DTL_CD
+					,PRDT_CD
+					,CATEG_CD
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+					#{sArtCd}
+					,#{sArtCd}
+					,#{PRDT_DTL_CD}
+					,#{PRDT_CD}
+					,#{CATEG_CD}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				PRDT_CD		= #{PRDT_CD}
+				,CATEG_CD		= #{CATEG_CD}
+				,UPDATE_DT	= NOW()
+				,UPDATE_ID	  	= #{usrId}
+	</insert>
+	
+	<delete id="delSalePrdt">
+			/* FrontProductDao.delSalePrdt */
+			DELETE 
+			FROM PROMO_PRDUCT
+			WHERE PROMO_ID 		= #{sArtCd}
+				AND ARTICLE_ID 		= #{sArtCd}
+				AND PRDT_DTL_CD 	= #{PRDT_DTL_CD}
+	</delete>
+	
+	<update id="delSalePromo">
+			/* FrontProductDao.delSalePromo */
+			UPDATE PRDT_DTL SET
+				SALE_PRICE				= 0
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+		WHERE PRDT_DTL_CD	IN (
+												SELECT 
+													PRDT_DTL_CD
+											  	FROM PROMO_PRDUCT
+											   WHERE  ARTICLE_ID = #{sArtCd}
+											)
+	</update>
+	
+  	<insert id="saveItemSetMst">
+    	<selectKey keyProperty="sPrmId" resultType="string">
+    		SELECT IF(#{sPrmId} = 'NEW' OR #{sPrmId} = '', IFNULL(MAX(PROMO_ID), 7000000) + 1,#{sPrmId}) AS sPrmId FROM PROMO_BOARD  
+    		WHERE PROMO_ID <![CDATA[>=]]> 7000000
+    		AND PROMO_ID <![CDATA[<]]> 8000000
+    	</selectKey>
+			/* FrontProductDao.saveItemSetMst */
+		  INSERT
+		  INTO   PROMO_BOARD
+		         (
+					PROMO_ID
+					,ARTICLE_ID
+					,BBS_ID
+					,TITLE
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{sPrmId}
+					,#{sPrmId}
+					,#{sBbsId}
+					,#{sTitle}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				TITLE				= #{sTitle}
+				,USE_YN			= #{sUseYN}
+				,UPDATE_DT	= NOW()
+				,UPDATE_ID 	= #{usrId}			
+	</insert>	
+</mapper>

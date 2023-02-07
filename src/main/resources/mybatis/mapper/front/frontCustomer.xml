@@ -1,0 +1,918 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.front.dao.FrontCustomerDao">
+
+  	<insert id="saveSheetCont">
+    	<selectKey keyProperty="sArtCd" resultType="string">
+    		SELECT IF(#{sArtCd} = '0' OR #{sArtCd} = '', IFNULL(MAX(ARTICLE_ID), 0) + 1,#{sArtCd}) AS sArtCd FROM CONTACT_BOARD
+    	</selectKey>
+			/* FrontCustomerDao.saveSheetCont */
+		  INSERT
+		  INTO   CONTACT_BOARD
+		         (
+					ARTICLE_ID
+					,BBS_ID
+					,BBS_TP
+					,TITLE
+					,CONTENT
+					,WRITER
+					,PHONE
+					,CREATE_DT
+					,CREATE_ID
+					,ANSWER_TP
+					,ANSWER
+					,ANSWER_DT
+					,ANSWER_ID
+		         )
+		         VALUES
+		         (
+					#{sArtCd}
+					,#{sBbsId}
+					,#{sBbsTp}
+					,#{sTitle}
+					,#{sCont}
+					,#{sWrite}
+					,#{sPhone}
+					,NOW()
+					,#{usrId}
+					,#{sAtp}
+					,#{sACont}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE
+				ANSWER_TP			= #{sAtp}
+				,ANSWER				= #{sACont}
+				,ANSWER_DT			= NOW()
+				,ANSWER_ID			= #{usrId}
+	</insert>
+		
+	<update id="confirmStore">
+			/* FrontCustomerDao.confirmStore */
+		UPDATE STORE_INFO SET 
+			STTUS 			= #{sSttus}
+			,RMK				= #{sRmk}
+			,CONFM_DT		= IF(#{sSttus} = '1', NOW(), 	NULL )
+			,CONFM_ID		= IF(#{sSttus} = '1', #{usrId},	NULL )
+			,UPDATE_DT	= IF(#{sSttus} = '1', NOW(),	NULL )
+			,UPDATE_ID		= IF(#{sSttus} = '1', #{usrId},	NULL ) 
+		WHERE 
+			STORE_ID 		= #{sStoreId}
+		AND 
+			STTUS  			= '0'
+	</update>
+	
+	<update id="saveStore">
+			/* FrontCustomerDao.saveStore */
+		UPDATE STORE_INFO SET 
+			MOU_TP				= #{sMouTp}
+			,ERP_LV				= #{sErpLv}
+			,CMP_BIZ_NO		= FN_ENCRYPT(#{sCmpBizNo})
+			,CMP_NM			= #{sCmpNm}
+			,RPRSNTV_NM		= #{sRprsntvNm}
+			,BIZCND				= #{sBizcnd}
+			,INDUTY				= #{sInduty}
+			,TEL_NO				= #{sTelNo}
+			,FAX_NO				= #{sFaxNo}
+			,ZIP_CD				= #{sZipCd}
+			,ADRES				= #{sAdres}
+			,ADRES_DTL		= #{sAdresDtl}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE STORE_ID 	= #{sStoreId}
+	</update>
+	
+	<update id="confirmUser">
+			/* FrontCustomerDao.confirmUser */
+		UPDATE USER_INFO SET 
+			USE_YN 			= 'Y'
+			,USR_LV			= '1'
+			,UPDATE_DT	= NOW()
+			,UPDATE_ID		= #{usrId}
+		WHERE 
+			STORE_ID 		= #{sStoreId}
+		AND 
+			STTUS  			= '0'
+	</update>
+	
+	<update id="setUsrLv">
+			/* FrontCustomerDao.setUsrLv */
+		UPDATE USER_INFO SET 
+			USR_LV			= #{sUsrLv}
+			,UPDATE_DT	= NOW()
+			,UPDATE_ID		= #{usrId}
+		WHERE 
+			USR_ID 			= #{sUsrId}
+		AND 
+			USE_YN  		= 'Y'
+		AND 
+			USR_LV  			!= '0'
+	</update>
+	
+	<update id="saveContMsg">
+			/* FrontCustomerDao.saveContMsg */
+		UPDATE CONTACT_BOARD SET 
+			ANSWER_TP 		= #{sAtp}
+			,ANSWER			= #{sACont}
+			,USE_YN 			= IF(#{sDcb} = '1','N','Y')
+			,ANSWER_DT		= NOW()
+			,ANSWER_ID		= #{usrId}
+		WHERE 
+			ARTICLE_ID 		= #{sArtCd}
+	</update>
+	
+	<select id="getBbsDashBoard" parameterType="hashMap" resultType="hashMap">
+		/* FrontCustomerDao.getBbsDashBoard */
+		SELECT 
+			 SUM(IF(BBS_ID = 'GST',1,0)) AS CNT_GST
+			,SUM(IF(BBS_ID = 'GST',IF(DATE(NOW()) > DATE(CREATE_DT + INTERVAL 2 DAY), 1, 0 ),0)) AS CNT_GST_O
+			,SUM(IF(BBS_ID = 'MOU',1,0)) AS CNT_MOU
+			,SUM(IF(BBS_ID = 'MOU',IF(DATE(NOW()) > DATE(CREATE_DT + INTERVAL 2 DAY), 1, 0 ),0)) AS CNT_MOU_O
+			,SUM(IF(BBS_ID = 'PDT',1,0)) AS CNT_PDT
+			,SUM(IF(BBS_ID = 'PDT',IF(DATE(NOW()) > DATE(CREATE_DT + INTERVAL 2 DAY), 1, 0 ),0)) AS CNT_PDT_O
+			,SUM(IF(BBS_ID = 'USR',1,0)) AS CNT_USR
+			,SUM(IF(BBS_ID = 'USR',IF(DATE(NOW()) > DATE(CREATE_DT + INTERVAL 2 DAY), 1, 0 ),0)) AS CNT_USR_O
+		FROM CONTACT_BOARD
+		WHERE DATE(CREATE_DT + INTERVAL 1 MONTH) > NOW()
+			AND BBS_ID IN ('GST', 'MOU', 'PDT', 'USR') 
+			AND ANSWER_ID IS NULL	
+	</select>
+	
+	<update id="setEst">
+			/* FrontCustomerDao.setEst*/
+		UPDATE ESTIMATE_MST SET 
+			UPDATE_DT				=	NOW()
+			,UPDATE_ID				= #{usrId}
+			<if test='type == "save"'>
+				,REC_RMK			= #{REC_RMK}
+			</if>
+			<if test='type == "deny"'>
+				,STTUS 				= #{aSttus} 
+				,REC_RMK			= #{REC_RMK}
+			</if>
+			<if test='type == "receipt"'>
+				,STTUS 				= #{aSttus} 
+				,REC_DT				= NOW()
+				,REC_ID				= #{usrId}
+				,REC_RMK			= #{REC_RMK}
+			</if>
+		WHERE USE_YN 			= 'Y'
+			AND EST_ID			= #{EST_ID}
+			<if test='type == "receipt"'>
+	       		AND  STTUS IN ('1', '7')
+	       </if>
+	</update>
+
+	<update id="replyEst">
+			/* FrontCustomerDao.replyEst*/
+		UPDATE ESTIMATE_MST SET 
+			STTUS 					= #{aSttus} 
+			,SUM_P					= (#{SUM_P} + #{D_FEE})
+			,TAX_P					= ROUND( (#{SUM_P} + #{D_FEE}) / 1.1 * 0.1)
+			,TOT_P					= ROUND( (#{SUM_P} + #{D_FEE}) / 1.1 ) 
+			,DISC						= #{DISC}
+			,D_FEE					= #{D_FEE}
+			,EST_P					= IF(
+												#{DISC} = 0
+												,(#{SUM_P} + #{D_FEE})
+												, TRUNCATE(((#{SUM_P} + #{D_FEE}) * (1-(#{DISC}/100))) ,-3)
+												)
+			,CONF_DT				= NOW()
+			,CONF_ID				= #{usrId}
+			,REC_RMK				= #{REC_RMK}
+			,UPDATE_DT			=	NOW()
+			,UPDATE_ID				= #{usrId}
+		WHERE USE_YN 			= 'Y'
+			AND EST_ID			= #{EST_ID}
+	       	AND STTUS 			= '2'
+	</update>
+	
+	<update id="setEstPrdt">
+			/* FrontCustomerDao.setEstPrdt */
+		UPDATE ESTIMATE_PRDT SET 
+			PERIOD				= #{PERIOD}
+			,REC_RMK			= #{REC_RMK}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE 
+			EST_ID 				= #{EST_ID}
+		AND
+			PRDT_DTL_CD 		= #{PRDT_DTL_CD}
+	</update>
+
+  	<insert id="reqCRM">
+    	<selectKey keyProperty="crmId" resultType="string">
+    		SELECT IFNULL(MAX(CRM_ID), 10000000) + 1 AS crmId FROM CRM_MST
+    	</selectKey>
+		/* FrontCustomerDao.reqCRM */
+		INSERT
+		  INTO   CRM_MST
+		         (
+		         	CRM_ID
+					,JOB_TP
+					,REQ_TP
+					,STTUS
+					,PHONE1
+					,REQ_DT
+					,REQ_ID
+					<if test='recYn == "1"'>
+						,REC_DT
+						,REC_ID
+					</if>
+					<if test='confYn == "1"'>
+						,CONF_DT
+						,CONF_ID
+					</if>
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+		         	#{crmId}
+					,#{jobTp}
+					,#{reqTp}
+					,IF(
+						#{confYn} = '1'
+						, 9
+						, IF(#{recYn} = '1', 2 , 1)
+					)
+					,REPLACE(#{mobile},'-','')
+					,NOW()
+					,#{usrId}
+					<if test='recYn == "1"'>
+						,NOW()
+						,#{usrId}
+					</if>
+					<if test='confYn == "1"'>
+						,NOW()
+						,#{usrId}
+					</if>
+					,NOW()
+					,#{usrId}
+		         )
+	</insert>
+
+  	<insert id="insCrmDTL">
+		/* FrontCustomerDao.insCrmDTL */
+		INSERT
+		  INTO CRM_DTL
+		         (
+					CRM_ID
+					,STTUS
+					,RMK
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+		         	#{crmId}
+					,#{sttus}
+					,#{rmk}
+					,NOW()
+					,#{usrId}
+		         )
+	</insert>
+	
+	<update id="setSttusCRM">
+			/* FrontCustomerDao.confirmUser */
+		UPDATE CRM_MST SET 
+			STTUS 			= #{sttus}
+			,UPDATE_DT	= NOW()
+			,UPDATE_ID		= #{usrId}
+			<if test='sttus == "2"'>
+				,REC_DT		= NOW()
+				,REC_ID		= #{usrId}
+			</if>
+			<if test='sttus == "9"'>
+				,CONF_DT	= NOW()
+				,CONF_ID	= #{usrId}
+			</if>
+		WHERE 
+			CRM_ID 			= #{crmId}
+		AND 
+			USE_YN  		= 'Y'
+	</update>
+
+	<insert id="setTaxInfo">
+    		/*FrontCustomerDao.setTaxInfo*/
+		  INSERT
+		  INTO   USER_TAXBILL
+		         (
+					USR_ID
+					,CMP_NM
+					,CMP_BIZ_NO
+					,RPRSNTV_NM
+					,BIZCND
+					,INDUTY
+					,ADDRESS
+					,TAX_EMAIL
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{tUsrId}
+					,#{cmpNm}
+					,#{busiNo}
+					,#{prsNm}
+					,#{bizCnd}
+					,#{induty}
+					,#{address}
+					,#{taxEmail}
+					,NOW()
+					,#{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				CMP_NM			 		= #{cmpNm},
+				CMP_BIZ_NO 			= #{busiNo},
+				RPRSNTV_NM 			= #{prsNm},
+				BIZCND 					= #{bizCnd},
+				INDUTY		 			= #{induty},
+				ADDRESS	 			= #{address},
+				TAX_EMAIL	 			= #{taxEmail},
+				UPDATE_DT 			= NOW(), 
+				UPDATE_ID 				= #{usrId}
+    </insert>
+    
+	<insert id="setNoti">
+    		/*FrontCustomerDao.setNoti*/
+		  INSERT
+		  INTO   CRM_NOTI
+		         (
+					JOB_TP
+					,PHONE
+					,RELATE_CD
+					,RMK
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{jobTp}
+					,REPLACE(#{mobile},'-','')
+					,#{relateCd}
+					,#{rmk}
+					,NOW()
+					,#{usrId}         
+		         )
+    </insert>
+	
+	<update id="repNoti">
+		/* FrontCustomerDao.repNoti */
+		UPDATE CRM_NOTI SET 
+			STTUS 			= #{aSttus}
+			,UPDATE_DT	= NOW()
+			,UPDATE_ID		= #{usrId}
+		WHERE STTUS 	= '1' 
+			AND CRM_ID IN	 
+		<foreach collection="array" item="crm_id" open="(" close=")" separator=",">
+			#{crm_id}
+		</foreach>
+	</update>
+	
+	<insert id="setCrmUsr">
+    		/*FrontCustomerDao.setCrmUsr*/
+		  INSERT
+		  INTO   CRM_USR
+		         (
+					PHONE
+					,USR_NM
+					,USR_ID
+					,PHONE2
+					,USR_LV
+					,CREATE_DT
+		         )
+		         VALUES
+		         (
+					#{PHONE}
+					,IF(#{USR_NM} = '' 
+						,(SELECT USR_NM FROM USER_INFO WHERE REPLACE(MOBILE,'-','') = REPLACE(#{PHONE},'-','') LIMIT 0,1)
+						,#{USR_NM}
+					 )
+					,IF(#{USR_ID} = '' 
+						,(SELECT USR_ID FROM USER_INFO WHERE REPLACE(MOBILE,'-','') = REPLACE(#{PHONE},'-','') LIMIT 0,1)
+						,#{USR_ID}
+					 )
+					,#{PHONE2}
+					,#{USR_LV}
+					,NOW()
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				USR_NM			 		= IF(#{USR_NM} = '' 
+													,(SELECT USR_NM FROM USER_INFO WHERE REPLACE(MOBILE,'-','') = REPLACE(#{PHONE},'-','') OR REPLACE(MOBILE,'-','') = REPLACE(#{PHONE2},'-','') LIMIT 0,1)
+													,#{USR_NM}
+												 )
+				,USR_ID 					= IF(#{USR_ID} = '' 
+													,(SELECT USR_ID FROM USER_INFO WHERE REPLACE(MOBILE,'-','') = REPLACE(#{PHONE},'-','') OR REPLACE(MOBILE,'-','') = REPLACE(#{PHONE2},'-','') LIMIT 0,1)
+													,#{USR_ID}
+												 )
+				,PHONE2 				= #{PHONE2}
+				,USR_LV 					= #{USR_LV}
+				,UPDATE_DT 			= NOW() 
+				,UPDATE_ID 			= #{usrId}
+    </insert>
+	
+	<insert id="setMissCall">
+    		/*FrontCustomerDao.setMissCall*/
+		  INSERT
+		  INTO   CRM_MISSCALL
+		         (
+					PHONE
+					,CALL_DT
+		         )
+		         VALUES
+		         (
+					#{mobile}
+					,NOW()
+		         )
+    </insert>
+	
+	<update id="setReply">
+			/* FrontCustomerDao.setReply */
+		UPDATE CRM_MISSCALL SET 
+			STTUS 			= #{STTUS}
+			,CONF_DT		= NOW()
+			,CONF_ID		= #{usrId}
+		WHERE 
+			CALL_ID 			= #{CALL_ID}
+	</update>
+
+  	<insert id="setArsUsr">
+    	<selectKey keyProperty="usrId" resultType="string">
+    		SELECT 
+    				IFNULL(
+    							MAX(USR_ID), 
+    							(SELECT IFNULL(MAX(USR_ID), 70000000) + 1 FROM USER_INFO WHERE USR_ID LIKE '7%')           
+    						)  AS usrId 
+    		  FROM USER_INFO 
+    		WHERE REPLACE(MOBILE,'-','') = REPLACE(#{mobileNo},'-','') 
+    		    AND USE_YN = 'Y'
+    		    AND USR_ID LIKE '7%'
+    	</selectKey>
+			/* FrontCustomerDao.setArsUsr */
+			INSERT INTO 
+			USER_INFO(
+				USR_ID
+				,USR_PW
+				,USR_NM
+				,EMAIL
+				,MOBILE
+				,JOIN_USR_ID
+				,JOIN_ROUTE
+				,JOIN_DT
+				,USR_TP
+				,USR_LV
+				,USE_YN
+				,SMS_NOTI_AGRE_AT
+				,SMS_AD_AGRE_AT
+				,EMAIL_AD_AGRE_AT
+				,PW_LAST_MOD_DT
+				,CREATE_DT
+				,CREATE_ID
+	
+			) VALUES (
+				 #{usrId}
+				,SHA1(#{shaPw})
+				,#{usrNm}
+				,IF(#{email} = '', 'ars@selltool.kr', #{email}) 
+				,#{mobileNo}
+				,IF(#{mobile} = '', REPLACE(#{mobileNo},'-',''), REPLACE(#mobile{#,'-',''))}				,'9'
+				,DATE_FORMAT(now(), '%Y%m%d')
+				,'T'
+				,'1'
+				,'Y'
+				,'Y'
+				,'N'
+				,'N'
+				,DATE_FORMAT(NOW(), '%Y%m%d')
+				,NOW()
+				,#{mngId}
+			)
+		  ON DUPLICATE KEY
+		  UPDATE
+			EMAIL			= IF(#{email} = '', 'ars@selltool.kr', #{email}) 
+			,USR_NM			= #{usrNm}
+			,UPDATE_DT	= NOW()
+			,UPDATE_ID		= #{mngId}
+	</insert>
+
+    
+	<sql id="addrBody">
+			SELECT 
+				@RN:=@RN+1 AS ROWNUM,
+				USR_ID,
+				ADDR_ID,
+				BASE_ADDR_YN,
+				ADDR_NM,
+				RECV_NM,
+				TEL_NO_1,
+				ZONE_TP,
+				ZONE_CODE,
+				ZIP_CODE,
+				SIGUNGU_CD,
+				ADDRESS,
+				ADDRESS_DETAIL
+			FROM   	USER_ADDR, 
+							(SELECT @RN:=0) AS R
+			WHERE  	USE_YN = 'Y'
+    </sql>
+    
+	<sql id="addrWhere">  
+			AND USR_ID = #{usrId}
+	</sql>
+	
+	<!-- 배송지 정보 리스트 조회 -->
+   <select id="getAddrList" parameterType="hashMap" resultType="hashMap">
+    	/*FrontCustomerDao.getAddrList*/
+		<include refid="addrBody"/>
+		<include refid="addrWhere"/>
+		ORDER BY BASE_ADDR_YN DESC, ADDR_ID
+   </select>	
+	
+	 <!-- 기본배송지 정보 해제 -->
+    <update id="setBaseAddr">
+    		/*FrontCustomerDao.setBaseAddr*/
+			UPDATE 
+				USER_ADDR 
+			SET
+		 		BASE_ADDR_YN = 'N'
+			WHERE
+				USR_ID = #{usrId}
+			AND
+		 		BASE_ADDR_YN = 'Y'
+    </update>
+    
+	 <!-- 기본배송지 정보 등록 -->
+    <insert id="addAddr">
+    	<selectKey keyProperty="usrSeq" resultType="string">
+    		SELECT IFNULL(MAX(ADDR_ID), 0) + 1 AS usrSeq FROM USER_ADDR 
+    		WHERE USR_ID = #{usrId}
+    	</selectKey>
+    
+    		/*FrontCustomerDao.addAddr*/
+		  INSERT
+		  INTO   USER_ADDR
+		         (
+							USR_ID,
+							ADDR_ID,
+							BASE_ADDR_YN,
+							ADDR_NM,
+							RECV_NM,
+							TEL_NO_1, 
+							ZONE_TP,
+							ZONE_CODE,
+							ZIP_CODE,
+							SIGUNGU_CD,
+							ADDRESS,
+							ADDRESS_DETAIL,
+							CREATE_DT,
+							CREATE_ID
+		         )
+		         VALUES
+		         (
+							#{usrId} ,
+							<isEmpty property="seq">
+								#{usrSeq},
+							</isEmpty>
+							<isNotEmpty property="seq">
+								#{seq},
+							</isNotEmpty>
+							#{baseAddrYn},
+							#{addrNm},
+							#{receiver},
+							#{mobileNo}, 
+							IFNULL((SELECT SORT_ORDR FROM CMM_CODE_DTL WHERE CL_CD = '1013' AND DTL_CD = #{zoneCode}),0),
+							#{zoneCode},
+							#{zipCode},
+							#{sigunguCode},
+							#{address},
+							#{dtlAddress},
+		               NOW(),
+		               #{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE 
+				BASE_ADDR_YN 	= #{baseAddrYn},
+				ADDR_NM 			= #{addrNm},
+				RECV_NM 			= #{receiver},
+				TEL_NO_1 			= #{mobileNo}, 
+				ZONE_TP 			= IFNULL((SELECT SORT_ORDR FROM CMM_CODE_DTL WHERE CL_CD = '1013' AND DTL_CD = #{zoneCode}),0), 
+				ZONE_CODE 		= #{zoneCode}, 
+				ZIP_CODE 			= #{zipCode}, 
+				SIGUNGU_CD 		= #{sigunguCode}, 
+				ADDRESS 			= #{address}, 
+				ADDRESS_DETAIL	= #{dtlAddress}, 
+				UPDATE_DT 		= NOW(), 
+				UPDATE_ID 			= #{usrId}
+    </insert>
+    
+	 <!-- 기본배송지 정보 삭제 -->
+	<update id="delAddr" >
+		  /*FrontCustomerDao.delAddr*/
+			UPDATE 
+				USER_ADDR 
+			SET
+		 		USE_YN = 'N',
+		 		DELETE_DT = NOW(),
+				DELETE_ID = #{usrId}
+			WHERE
+				USR_ID = #{usrId}
+			<if test='ADDR_ID != null'>
+				AND ADDR_ID IN 
+				<foreach collection="array" item="ADDR_ID" open="(" close=")" separator=",">
+					#{ADDR_ID}
+				</foreach>
+			</if>
+	</update>	    
+
+	<!-- 장바구니에 물건 담기 / 같은 상품일경우 수량 업데이트 -->
+	<update id="addCart">
+		/*FrontCustomerDao.addCart*/
+		  INSERT
+		  INTO   USER_CART
+		         (
+		                USR_ID ,
+		                PRDT_CD ,
+		                PRDT_DTL_CD ,
+		                QY ,
+		                CREATE_DT ,
+		                CREATE_ID
+		         )
+		         VALUES
+		         (
+		                #{usrId} ,
+		                #{PRDT_CD},
+		                #{PRDT_DTL_CD},
+		                #{QY} ,
+		                NOW(),
+		                #{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE QY = IF( 
+		  						(QY + #{QY}) > (SELECT INVT_AMT FROM PRDT_DTL WHERE PRDT_DTL_CD = #{PRDT_DTL_CD})  
+		  						, (SELECT INVT_AMT FROM PRDT_DTL WHERE PRDT_DTL_CD = #{PRDT_DTL_CD})  
+		  						, (QY + #{QY})
+		  					),
+		  UPDATE_DT = NOW(), 
+		  UPDATE_ID = #{usrId}
+	</update>	
+
+	<update id="uptCart">
+		/*FrontCustomerDao.uptCart*/
+		UPDATE  USER_CART SET
+			  QY 						= #{QY}, 
+			  UPDATE_DT 			= NOW(), 
+			  UPDATE_ID 			= #{confId}
+		WHERE USR_ID 			= #{usrId}
+			AND PRDT_CD 			= #{PRDT_CD}
+			AND PRDT_DTL_CD 	= #{PRDT_DTL_CD}
+	</update>	
+	
+	<!-- 장바구니에서 해당 상품 삭제전 히스토리 백업 -->
+	<update id="delCartHist" >
+		  /*FrontCustomerDao.delCartHist*/
+		  INSERT
+		  INTO   USER_CART_HIST
+		         (
+		                USR_ID,
+		                PRDT_CD,
+		                PRDT_DTL_CD,
+		                QY,
+		                CREATE_DT,
+		                DELETE_DT
+		         )
+		  SELECT 
+		  			USR_ID,
+		         PRDT_CD,
+		         PRDT_DTL_CD,
+		         QY,
+		         CREATE_DT,
+		         NOW()
+		  FROM   USER_CART
+		  WHERE  USR_ID = #{usrId} 
+			<if test='PRDT_DTL_CD != null'>
+					AND PRDT_DTL_CD IN 
+					<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+						#{PRDT_DTL_CD}
+					</foreach>
+			</if>
+			
+	</update>	
+	
+	<!-- 장바구니에서 해당 상품 삭제 -->
+	<delete id="delCart" >
+		  /*FrontCustomerDao.delCart*/
+		  DELETE 
+		  FROM USER_CART
+		  WHERE  USR_ID = #{usrId} 
+			<if test='PRDT_DTL_CD != null'>
+					AND PRDT_DTL_CD IN 
+					<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+						#{PRDT_DTL_CD}
+					</foreach>
+			</if>
+	</delete>		
+
+	
+	<!-- 장바구니 리스트 -->
+	<sql id="CartBody">
+			SELECT 
+				UC.USR_ID , 
+				UC.PRDT_CD , 
+				UC.PRDT_DTL_CD , 
+				PD.STORE_ID , 
+				PM.CATEG_CD , 
+				PM.PRDT_NM , 
+				PM.MAKR_NM , 
+				PD.STNDRD , 
+			    PD.OUT_AMT,
+			    PD.OUT_UNIT,
+				PM.PRDT_TP, 
+				UC.QY , 
+				PD.INVT_AMT, 
+       			PD.SOLDOUT_AT,
+				PD.RE_SALE_DT, 
+				PD.SEL_PRICE , 
+				PD.SALE_PRICE , 
+				PD.PUR_PRICE , 
+				(UC.QY * IF(PD.SALE_PRICE = 0, PD.SEL_PRICE, PD.SALE_PRICE)) AS TOT_PRICE , 
+				PM.DLVY_TP, 
+				PM.DLVY_FEE_TP , 
+				PM.DLVY_FEE , 
+				PM.PRDT_IMG, 
+				CASE WHEN PM.DLVY_TP = 'T' AND ( PM.DLVY_FEE_TP != '2' AND PM.DLVY_FEE_TP != '3' ) THEN 1 ELSE 0 END AS DLVY_MEG, 
+				SI.STORE_NM, 
+				SI.FREE_DLVY, 
+				SI.FREE_AMT,
+				SI.EXTRA_FEE_TP,
+				SI.T_ZONE1,
+				SI.T_ZONE2,
+				SI.T_ZONE3 
+			FROM 
+					USER_CART UC,
+			       	PRDT_MST PM,
+			       	PRDT_DTL PD,
+                	STORE_INFO SI
+			WHERE  UC.PRDT_CD     		= PM.PRDT_CD
+				AND  PM.PRDT_CD     		= PD.PRDT_CD
+				AND  UC.PRDT_CD     		= PD.PRDT_CD
+				AND  UC.PRDT_DTL_CD		= PD.PRDT_DTL_CD
+         		AND  PM.STORE_ID			= SI.STORE_ID
+	</sql>
+
+	<sql id="CartWhere">
+		AND UC.USR_ID = #{usrId} 
+	</sql>
+
+	<sql id="CartChkWhere">
+		AND UC.USR_ID = #{usrId} 
+		<if test='PRDT_DTL_CD != null'>
+				AND UC.PRDT_DTL_CD IN
+				<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+					#{PRDT_DTL_CD}
+				</foreach>
+		</if>
+	</sql>
+
+	<select id="getUsrCart" parameterType="hashMap" resultType="hashMap">
+		/*FrontCustomerDao.getUsrCart*/
+		<include refid="CartBody"/>
+		<include refid="CartWhere"/>
+		ORDER BY PM.PRDT_TP, PD.STORE_ID, DLVY_MEG DESC, UC.PRDT_CD, UC.PRDT_DTL_CD, PM.DLVY_TP
+	</select>
+	
+	<select id="getCartChk" parameterType="hashMap" resultType="hashMap">
+		/*FrontCustomerDao.getCartChk*/
+		<include refid="CartBody"/>
+		<include refid="CartChkWhere"/>
+		ORDER BY PM.PRDT_TP, PD.STORE_ID, DLVY_MEG DESC, UC.PRDT_CD, UC.PRDT_DTL_CD, PM.DLVY_TP
+	</select>
+
+	<select id="chkZoneTp" parameterType="hashMap" resultType="hashMap">
+		/* FrontCustomerDao.chkZoneTp */
+		SELECT 
+			IFNULL(
+						(SELECT MAX(ZONE_TP) FROM USER_ADDR WHERE USR_ID = #{usrId} AND ZIP_CODE = #{zipCode})
+						,0
+					)AS ZONE_TP 
+       FROM DUAL
+	</select>	
+	
+	<insert id="setTmpOrderMst">
+    	<selectKey keyProperty="ordrId" resultType="string">
+    		SELECT IF(#{ordrId} = 0, IFNULL(MAX(ORDR_ID), 100000) + 1, #{ordrId}) AS ordrId FROM TMP_ORDER_MST
+    	</selectKey>
+			/* FrontCustomerDao.setTmpOrderMst */
+		  INSERT
+		  INTO   TMP_ORDER_MST
+		         (
+					ORDR_ID
+					,ORDR_USR_ID
+					,STORE_ID
+					,TOT_PRICE
+					,DEVY_FEE
+					,SUM_PRICE
+					,QY
+					,ADDR_NM
+					,RECV_NM
+					,ZONE_TP
+					,ZONE_CODE
+					,ZIP_CODE
+					,ADDRESS
+					,ADDRESS_DETAIL
+					,TEL_NO
+					,TAX_BILL
+					,RMK
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{ordrId}
+					,#{usrId}
+					,#{STORE_ID}
+					,#{TOT_PRICE}
+					,#{DEVY_FEE}
+					,#{SUM_PRICE}
+					,#{QY}
+					,#{addrNm}
+					,#{receiver}
+					,#{ZONE_TP}
+					,#{zoneCode}
+					,#{zipCode}
+					,#{address}
+					,#{dtlAddress}
+					,#{mobileNo}
+					,#{aTaxBill}
+					,#{rmk}
+					,NOW()
+					,#{confId}
+		         )
+	</insert>	
+
+	<insert id="setTmpOrderDtl">
+			/* FrontCustomerDao.setTmpOrderDtl */
+		  INSERT
+		  INTO   TMP_ORDER_DTL
+			(	
+				ORDR_ID
+				,ORDR_USR_ID
+				,PRDT_TP
+				,PRDT_CD
+				,STORE_ID
+				,PRDT_DTL_CD
+				,TOT_PRICE
+				,PUR_PRICE 
+				,QY
+				,SUM_PRICE
+				,CREATE_DT
+				,CREATE_ID
+			)	
+			SELECT 
+		         	#{ordrId}
+					,#{usrId}
+		         	,A.PRDT_TP
+		         	,A.PRDT_CD
+		         	,A.STORE_ID
+		         	,A.PRDT_DTL_CD
+		         	,IF(A.SALE_PRICE = 0, A.SEL_PRICE, A.SALE_PRICE)
+		         	,A.PUR_PRICE
+		         	,A.QY
+		         	,(A.QY * IF(A.SALE_PRICE = 0, A.SEL_PRICE, A.SALE_PRICE))
+					,NOW()
+					,#{confId}
+			FROM(
+				<include refid="CartBody"/>
+				<include refid="CartChkWhere"/>
+				ORDER BY PM.PRDT_TP, PD.STORE_ID, DLVY_MEG DESC, UC.PRDT_CD, UC.PRDT_DTL_CD, PM.DLVY_TP
+		 	) AS A
+	</insert>	
+	
+	<insert id="setTmpOrderPay">
+    	<selectKey keyProperty="oid" resultType="string">
+    		SELECT CONCAT(#{mid},'_',DATE_FORMAT(NOW(),'%Y%m%d%H%i%S'),#{ordrId}) AS oid FROM DUAL
+    	</selectKey>
+			/* FrontCustomerDao.setTmpOrderPay */
+		  INSERT
+		  INTO   TMP_ORDER_PAY
+		         (
+					ORDR_ID
+					,SUM_PRICE
+					,OID
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{ordrId}
+					,#{SUM_PRICE}
+					,#{oid}
+					,NOW()
+					,#{confId}
+		         )
+	</insert>
+</mapper>

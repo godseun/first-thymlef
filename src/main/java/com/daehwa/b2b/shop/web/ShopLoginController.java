@@ -29,7 +29,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class ShopLoginController {
 
   private static final Logger logger = LoggerFactory.getLogger(
-      ShopLoginController.class);
+    ShopLoginController.class
+  );
 
   @Autowired
   private ShopSearchService shopSearchService;
@@ -46,60 +47,64 @@ public class ShopLoginController {
 
   @RequestMapping(value = "/main")
   public String main(
-      SitePreference sitePreference,
-      Device device,
-      Model model,
-      @RequestParam Map<String, Object> param) throws Exception {
+    SitePreference sitePreference,
+    Device device,
+    Model model,
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     logger.info("SitePreference : " + sitePreference);
     logger.info("Device : " + device);
     logger.info("param : " + param);
     model.addAttribute("banners", shopSearchService.getBanner(param));
     logger.info("1111 : ");
 
-    String platformPrefix = "";
     if ("MOBILE".equals(sitePreference + "")) {
       model.addAttribute("mPprdt", shopSearchService.getTagList(param));
       model.addAttribute("tsPprdt", shopSearchService.getTSList(param));
-      platformPrefix = platformPrefix + "mobile";
     } else {
       logger.info("222 : ");
       model.addAttribute("mdPprdt", shopSearchService.getMainList(param));
       logger.info("333 : ");
-      platformPrefix = platformPrefix + "pc";
     }
     logger.info("4444 : ");
-    return platformPrefix + "/shop/main";
+    return CommonUtil.getPlatformPrefix(sitePreference) + "/shop/main";
   }
 
   /**
    * shop 이용약관
    */
   @RequestMapping(value = "/provision")
-  public String prologue(Model model, @RequestParam Map<String, Object> param)
-      throws Exception {
+  public String prologue(
+    Model model,
+    @RequestParam Map<String, Object> param,
+    SitePreference sitePreference
+  ) throws Exception {
     model.addAttribute("pageParm", param);
-    return "/shop/provision";
+    return CommonUtil.getPlatformPrefix(sitePreference) + "/shop/provision";
   }
 
   /**
    * 패스워드 변경 페이지 유효성
    */
   @RequestMapping(value = "/chgPw")
-  public String chgPw(Model model, @RequestParam Map<String, Object> param)
-      throws Exception {
+  public String chgPw(
+    Model model,
+    @RequestParam Map<String, Object> param,
+    SitePreference sitePreference
+  ) throws Exception {
     String result = shopUserService.chkUrl(param);
     param.put("chk", result);
     model.addAttribute("pageParm", param);
-    return "/shop/chgPw";
+    return CommonUtil.getPlatformPrefix(sitePreference) + "/shop/chgPw";
   }
 
   /**
    * shop 로그인 페이지 이동
    */
   @RequestMapping(value = "/login", method = RequestMethod.GET)
-  public String login() throws Exception {
+  public String login(SitePreference sitePreference) throws Exception {
     logger.info("login");
-    return "/shop/login";
+    return CommonUtil.getPlatformPrefix(sitePreference) + "/shop/login";
   }
 
   /**
@@ -107,7 +112,8 @@ public class ShopLoginController {
    */
   @RequestMapping(value = "/loginAuthNo", method = RequestMethod.POST)
   public @ResponseBody Map<String, Object> ajaxSendAuthNo(
-      @RequestParam Map<String, Object> param) throws Exception {
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     CommonUtil.log(logger, param, "sendAuthNo");
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
@@ -130,7 +136,8 @@ public class ShopLoginController {
    */
   @RequestMapping(value = "/setLoginPw", method = RequestMethod.POST)
   public @ResponseBody Map<String, Object> setLoginPw(
-      @RequestParam Map<String, Object> param) throws Exception {
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     CommonUtil.log(logger, param, "setLoginPw");
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
@@ -153,7 +160,8 @@ public class ShopLoginController {
    */
   @RequestMapping(value = "/setLoginPw2", method = RequestMethod.POST)
   public @ResponseBody Map<String, Object> setLoginPw2(
-      @RequestParam Map<String, Object> param) throws Exception {
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     CommonUtil.log(logger, param, "setLoginPw2");
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
@@ -172,7 +180,8 @@ public class ShopLoginController {
    */
   @RequestMapping(value = "/setLoginEmail", method = RequestMethod.POST)
   public @ResponseBody Map<String, Object> setLoginEmail(
-      @RequestParam Map<String, Object> param) throws Exception {
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     CommonUtil.log(logger, param, "setLoginEmail");
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
 
@@ -196,9 +205,10 @@ public class ShopLoginController {
    */
   @RequestMapping(value = "/doLogin", method = RequestMethod.POST)
   public @ResponseBody Map<String, Object> doLogin(
-      Device device,
-      HttpServletRequest request,
-      @RequestParam Map<String, Object> param) throws Exception {
+    Device device,
+    HttpServletRequest request,
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     CommonUtil.log(logger, param, "do login");
 
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
@@ -214,22 +224,25 @@ public class ShopLoginController {
         param.put("isLogin", "N");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "이메일 또는 비밀번호가 일치 하지 않습니다.\n\n비밀번호 5회 오류시 비밀번호 변경 후 이용 가능 합니다.");
+          "msg",
+          "이메일 또는 비밀번호가 일치 하지 않습니다.\n\n비밀번호 5회 오류시 비밀번호 변경 후 이용 가능 합니다."
+        );
         // 2 - 패스워드 입력 오류 횟수 초과.
       } else if ("6".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "비밀번호 입력오류 횟수 초과 입니다.\n\n비밀번호 변경 후 이용 가능 합니다.");
+          "msg",
+          "비밀번호 입력오류 횟수 초과 입니다.\n\n비밀번호 변경 후 이용 가능 합니다."
+        );
         // 3 - 패스워드 틀림.
       } else if (!(user.get("KEYIN_PW") + "").equals(user.get("USR_PW") + "")) {
         param.put("isLogin", "N");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "이메일 또는 비밀번호가 일치 하지 않습니다.\n\n비밀번호 5회 오류시 비밀번호 변경 후 이용 가능 합니다.");
+          "msg",
+          "이메일 또는 비밀번호가 일치 하지 않습니다.\n\n비밀번호 5회 오류시 비밀번호 변경 후 이용 가능 합니다."
+        );
 
         shopUserService.updateLoginInfo(param);
         // 4 - 패스워드 맞음
@@ -237,28 +250,34 @@ public class ShopLoginController {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "미승인 아이디 입니다.관리자 승인후 이용 가능 합니다.");
+          "msg",
+          "미승인 아이디 입니다.관리자 승인후 이용 가능 합니다."
+        );
       } else if ("8".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "이용정지 된 계정입니다.\n\n자세한 사항은 고객센터에 문의 바랍니다.");
+          "msg",
+          "이용정지 된 계정입니다.\n\n자세한 사항은 고객센터에 문의 바랍니다."
+        );
       } else if ("9".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "장기 미사용으로 인한 휴면계정으로 전환되었습니다\n\n재사용 하시려면 고객센터에 문의 바랍니다.");
+          "msg",
+          "장기 미사용으로 인한 휴면계정으로 전환되었습니다\n\n재사용 하시려면 고객센터에 문의 바랍니다."
+        );
       } else {
-        if ("S".equals(user.get("USR_TP") + "") &&
-            "YES".equals(user.get("EXTRA_INFO") + "")) {
+        if (
+          "S".equals(user.get("USR_TP") + "") &&
+          "YES".equals(user.get("EXTRA_INFO") + "")
+        ) {
           user.put("additional_info", "N");
           jsonObject.put("code", "additional_info");
           jsonObject.put(
-              "msg",
-              "거래에 필요한 추가정보를 입력하시기 바랍니다.");
+            "msg",
+            "거래에 필요한 추가정보를 입력하시기 바랍니다."
+          );
         } else {
           user.put("additional_info", "Y");
           jsonObject.put("code", "success");
@@ -274,8 +293,9 @@ public class ShopLoginController {
       e.printStackTrace();
       jsonObject.put("code", "error");
       jsonObject.put(
-          "msg",
-          "로그인 중 오류가 발생하였습니다.\n\n다시 확인 바랍니다.");
+        "msg",
+        "로그인 중 오류가 발생하였습니다.\n\n다시 확인 바랍니다."
+      );
     }
     return jsonObject;
   }
@@ -285,9 +305,10 @@ public class ShopLoginController {
    */
   @RequestMapping(value = "/doSNSLogin", method = RequestMethod.POST)
   public @ResponseBody Map<String, Object> doSNSLogin(
-      Device device,
-      HttpServletRequest request,
-      @RequestParam Map<String, Object> param) throws Exception {
+    Device device,
+    HttpServletRequest request,
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     CommonUtil.log(logger, param, "do SNS Login");
 
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();
@@ -305,32 +326,37 @@ public class ShopLoginController {
 
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "회원정보가 없습니다.회원가입 후 이용 하시기 바랍니다.");
+          "msg",
+          "회원정보가 없습니다.회원가입 후 이용 하시기 바랍니다."
+        );
       } else if ("0".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "미승인 아이디 입니다.관리자 승인후 이용 가능 합니다.");
+          "msg",
+          "미승인 아이디 입니다.관리자 승인후 이용 가능 합니다."
+        );
       } else if ("6".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "비밀번호 입력오류 횟수 초과 입니다.\n\n비밀번호 변경 후 이용 가능 합니다.");
+          "msg",
+          "비밀번호 입력오류 횟수 초과 입니다.\n\n비밀번호 변경 후 이용 가능 합니다."
+        );
       } else if ("8".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "이용정지된 겨정입니다.\n\n재사용 하시려면 고객센터에 문의 바랍니다.");
+          "msg",
+          "이용정지된 겨정입니다.\n\n재사용 하시려면 고객센터에 문의 바랍니다."
+        );
       } else if ("9".equals(user.get("USR_LV") + "")) {
         param.put("isLogin", "Y");
         jsonObject.put("code", "fail");
         jsonObject.put(
-            "msg",
-            "장기 미사용으로 인한 휴면계정으로 전환되었습니다\n\n재사용 하시려면 고객센터에 문의 바랍니다.");
+          "msg",
+          "장기 미사용으로 인한 휴면계정으로 전환되었습니다\n\n재사용 하시려면 고객센터에 문의 바랍니다."
+        );
       } else {
         user.put("additional_info", "Y");
         jsonObject.put("code", "success");
@@ -345,8 +371,9 @@ public class ShopLoginController {
       e.printStackTrace();
       jsonObject.put("code", "error");
       jsonObject.put(
-          "msg",
-          "로그인 중 오류가 발생하였습니다.\n\n다시 확인 바랍니다.");
+        "msg",
+        "로그인 중 오류가 발생하였습니다.\n\n다시 확인 바랍니다."
+      );
     }
     return jsonObject;
   }
@@ -366,7 +393,8 @@ public class ShopLoginController {
    */
   @RequestMapping(value = "/login", method = RequestMethod.POST)
   public @ResponseBody Map<String, Object> doAjaxLogin(
-      @RequestParam Map<String, Object> param) throws Exception {
+    @RequestParam Map<String, Object> param
+  ) throws Exception {
     CommonUtil.log(logger, param, "do ajax login");
 
     Map<String, Object> jsonObject = ClassLoader.loadHashMap();

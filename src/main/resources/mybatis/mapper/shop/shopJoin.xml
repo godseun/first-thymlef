@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.shop.dao.ShopJoinDao">
+    
+    <!-- 이메일 주소 중복 확인-->
+    <select id="cntEmail" parameterType="hashMap" resultType="string">
+    	/* ShopJoinDao.cntEmail */
+    	SELECT COUNT(1) AS CNT
+			FROM USER_INFO 
+		WHERE EMAIL = #{email}
+    </select>   
+    
+    <!-- 아이디 중복 확인 사용금지 아이디 사용 여부 체크-->
+    <select id="chkUsrId" parameterType="hashMap" resultType="string">
+    	/* ShopJoinDao.chkUsrId */
+		SELECT 
+		  CASE WHEN (SELECT COUNT(1)
+							FROM USER_INFO
+							WHERE USR_ID = UPPER(#{usrId}) 
+						) > 0 THEN 'CODE1'
+		       WHEN (SELECT COUNT(1) 
+		    					FROM MNG_LIST
+		    					WHERE CL_CD = 'CH001'
+		    					AND USE_YN ='Y'
+		    					AND DTL_CD LIKE CONCAT('%', UPPER(#{usrId}), '%')
+				    ) > 0 THEN 'CODE2'
+		       ELSE 'CODE0'
+		  END AS CHKID 
+		FROM DUAL
+    </select>   
+    
+    <!-- 사업자 번호 사용금지, 중복 사용 여부 체크-->
+    <select id="checkBusiNo" parameterType="hashMap" resultType="string">
+    	/* ShopJoinDao.checkBusiNo */
+		SELECT 
+		  CASE WHEN (SELECT COUNT(1)
+							FROM STORE_INFO
+							WHERE CMP_BIZ_NO = FN_ENCRYPT(#{busiNo})
+						) > 0 THEN 'CODE1' 
+		       WHEN (SELECT COUNT(1) 
+		    					FROM MNG_LIST
+		    					WHERE CL_CD = 'CH002'
+		    					AND USE_YN ='Y'
+		    					AND DTL_CD = FN_ENCRYPT(#{busiNo})
+				    ) > 0 THEN 'CODE2'
+		       ELSE 'CODE0'
+		  END AS CHKID 
+		FROM DUAL
+    </select>   
+    
+    <!-- 사용자 등록 처리 (bStep3.jsp) -->
+    <insert id="insert">
+    	<selectKey keyProperty="usrId" resultType="string">
+    		SELECT IFNULL(MAX(USR_ID), 80000000) + 1 AS usrId FROM USER_INFO 
+    		WHERE USR_ID > 80000000
+    	</selectKey>
+    	
+    	/*ShopJoinDao.insert*/
+		INSERT INTO USER_INFO(
+			USR_ID
+			,USR_PW
+			,USR_NM
+			,STORE_ID
+			,EMAIL
+			,MOBILE
+			,JOIN_USR_ID
+			,JOIN_ROUTE
+			,JOIN_DT
+			,USR_TP
+			,USR_LV
+			,USE_YN
+			,PROPOSER
+			,SMS_NOTI_AGRE_AT
+			,SMS_AD_AGRE_AT
+			,EMAIL_AD_AGRE_AT
+			,PW_LAST_MOD_DT
+			,CREATE_DT
+			,CREATE_ID
+
+		) VALUES (
+			IFNULL(#{storeId},#{usrId})
+			,SHA1(#{shaPw})
+			,#{usrNm}
+			,#{storeId}
+			,#{email}
+			,#{mobileNo}
+			,#{joinUsrId}
+			,#{joinRoute}
+			,DATE_FORMAT(now(), '%Y%m%d')
+			,#{usrTp}
+			,#{usrLv}
+			,#{useYN}
+			,#{prmCd}
+			,#{smsRcvAgree}
+			,#{adAgreeYN}
+			,#{adAgreeYN}
+			,DATE_FORMAT(now(), '%Y%m%d')
+			,now()
+			,IFNULL(#{storeId},#{usrId})
+		)
+    </insert>
+    
+    <!-- 상점 등록 처리 (sStep2.jsp) -->
+    <insert id="shopInsert">
+    	<selectKey keyProperty="storeId" resultType="string">
+    		SELECT IFNULL(MAX(STORE_ID), 40000000) + 1 AS storeId FROM STORE_INFO
+    	</selectKey>
+    	
+    	/*ShopJoinDao.shopInsert*/
+		INSERT INTO STORE_INFO(
+			STORE_ID	
+			,CMP_BIZ_NO	
+			,CMP_NM	
+			,RPRSNTV_NM	
+			,BIZCND	
+			,INDUTY	
+			,TEL_NO	
+			,FAX_NO	
+			,ZIP_CD	
+			,SIGUNGU_CD	
+			,ADRES	
+			,ADRES_DTL	
+			,STORE_NM	
+			,CHARGER_DEPT	
+			,CHARGER_NM	
+			,CHARGER_TEL_NO	 
+			,ATCH_FILE_NO	 
+			,CREATE_DT	
+			,CREATE_ID	
+		) VALUES (
+			#{storeId}	
+			,FN_ENCRYPT(#{busiNo})	
+			,#{cmpNm}	
+			,#{prsNm}	
+			,#{bizCnd}	
+			,#{induty}	
+			,#{telNum}	
+			,#{faxNum}	
+			,#{zoneCode}	
+			,#{sigunguCode}	
+			,#{address}	
+			,#{dtlAddress}	
+			,#{storeNm}	
+			,#{deptNm}	
+			,#{usrNm}	
+			,#{mobileNo}	 
+			,'uploadFile'	 
+			,now()	
+			,#{storeId}
+		)
+    </insert>
+    
+    <!-- 상점 등록 처리 (sStep2.jsp) -->
+    <insert id="shopAdminInsert">
+    	/*ShopJoinDao.shopAdminInsert*/
+		INSERT INTO STORE_ADMIN(
+			STORE_ID 
+			,USR_ID
+			,CREATE_DT
+			,CREATE_ID
+		) VALUES (
+			#{storeId}	
+			,#{usrId} 
+			,now()	
+			,#{usrId} 
+		)
+    </insert>
+</mapper>

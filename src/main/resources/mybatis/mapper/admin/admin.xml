@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.admin.dao.AdminDao">
+	<select id="getBbsList" parameterType="hashMap" resultType="hashMap">
+			/* AdminDao.getBbsList */
+			SELECT 
+			    B.ARTICLE_ID
+			    ,B.BBS_ID
+			    ,B.BBS_TP
+			    ,B.RELATE_CD
+			    ,B.TITLE
+			    ,B.CONTENT
+			    ,B.WRITER
+			    ,B.PHONE
+			    ,B.CREATE_DT
+			    ,B.CREATE_ID
+			    ,B.ANSWER_TP
+			    ,B.ANSWER
+			    ,B.ANSWER_DT
+			    ,B.ANSWER_ID
+			    ,B.USE_YN
+                ,P.PRDT_IMG
+                ,P.PRDT_NM
+                ,P.MAKR_NM
+                ,P.ORG_PRDT_CD
+		  FROM CONTACT_BOARD B, PRDT_MST P
+		  WHERE B.BBS_ID 	= 'PDT'
+          AND B.RELATE_CD 	= P.PRDT_CD
+          AND P.PRDT_MD 	= #{usrId}
+          ORDER BY B.ANSWER_DT, B.CREATE_DT 
+	</select>
+	
+	<update id="addAns">
+			/* AdminDao.addAns */
+			UPDATE CONTACT_BOARD SET
+				ANSWER_TP 		= '3'
+				,ANSWER			= #{bbsCon}
+				,ANSWER_DT		= NOW()
+				,ANSWER_ID		= #{usrId}
+				,USE_YN				= IF(#{procType} = 'ans', 'Y', 'N')
+			WHERE ARTICLE_ID 	= #{artId}
+				AND BBS_ID 		= 'PDT'
+				AND (SELECT PRDT_MD FROM PRDT_MST WHERE PRDT_CD = RELATE_CD) = #{usrId}
+	</update>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+		
+</mapper>

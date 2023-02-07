@@ -9,12 +9,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
+import org.springframework.mobile.device.site.SitePreference;
 import org.springframework.web.servlet.FlashMap;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
 public class CommonUtil {
 
   public static String serverUrl = "http://localhost:8090";
+
+  public static String getPlatformPrefix(SitePreference sitePreference) {
+    return "MOBILE".equals(sitePreference + "") ? "mobile" : "pc";
+  }
 
   public static boolean isNull(String value) {
     if (value == null) {

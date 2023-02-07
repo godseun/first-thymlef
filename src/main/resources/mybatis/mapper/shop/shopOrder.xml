@@ -1,0 +1,1267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.daehwa.b2b.shop.dao.ShopOrderDao">
+		
+	<!-- 주문 정보 리스트 조회 -->
+	<select id="getOrdrList" parameterType="hashMap" resultType="hashMap">
+	  	/*ShopOrderDao.getOrdrList*/
+		SELECT 
+				D.O_ID
+			   ,D.ORDR_ID
+		       ,D.QY
+		       ,D.SUM_PRICE
+		       ,D.PRDT_CD
+		       ,D.PRDT_DTL_CD
+		       ,D.STORE_ID
+		       ,PM.PRDT_NM
+		       ,PD.STNDRD
+			   ,PD.OUT_AMT
+			   ,PD.OUT_UNIT
+		       ,PM.MAKR_NM
+		       ,PM.PRDT_IMG
+		       ,IF(D.STTUS = '71', 2, D.STTUS) AS STTUS
+       		   ,CD.DTL_CD_NM AS STTUS_TXT
+		       ,D.CREATE_DT
+       		   ,( D.CREATE_DT + INTERVAL 2 DAY) AS LIMIT_DT
+       		   ,D.DELY_ID
+       		   ,D.DELY_CMP
+			   ,D.DELY_CMP_NM
+			   ,D.INVOICE	
+			   ,M.PAYMETHOD	
+			   ,M.TID	
+			   ,M.SEND_RESULT
+       		   ,PM.DLVY_TP
+       		   ,PM.DLVY_FEE
+       		   ,CASE WHEN PM.DLVY_TP = 'T' AND ( PM.DLVY_FEE_TP != '2' AND PM.DLVY_FEE_TP != '3' ) THEN 1 ELSE 0 END AS DLVY_MEG 
+		  FROM ORDR_DTL D, 
+       		   ORDR_MST M, 
+		       PRDT_MST PM, 
+		       PRDT_DTL PD,
+      	 	   CMM_CODE_DTL CD 
+		 WHERE D.ORDR_USR_ID 	= #{usrId}
+       		   AND D.ORDR_ID 		= M.ORDR_ID
+		       AND D.PRDT_CD 		= PM.PRDT_CD 
+		       AND D.STORE_ID 		= PM.STORE_ID 
+		       AND D.PRDT_CD 		= PD.PRDT_CD 
+		       AND D.PRDT_DTL_CD 	= PD.PRDT_DTL_CD 
+		       AND D.STORE_ID 		= PD.STORE_ID  
+		       AND CD.CL_CD 			= '1010'
+		       AND CD.DTL_CD 		= IF(D.STTUS = '71', 2, D.STTUS)
+		       <if test='proc == "ordr"'>
+			       AND D.STTUS IN ('0','1','2','3','4','9','71')
+			       AND D.USE_YN = 'Y'
+		       </if>
+		       <if test='proc == "ordrChg"'>
+			       AND D.STTUS IN ('5','51','52','53','6','61','62','63','7','8')
+		       </if>
+		       <if test='ordrId != ""'>
+		       		AND D.ORDR_ID	= #{ordrId}
+		       </if>
+		       <if test='prdrNm != ""'>
+		       		AND PM.PRDT_NM LIKE CONCAT('%',#{prdrNm},'%')
+		       </if>
+		       <if test='sttus != ""'>
+		       		AND D.STTUS	= #{sttus}
+		       </if>
+				<if test='sDt != ""'>
+					AND DATE(D.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</if> 
+				<if test='eDt != ""'>
+					AND DATE(D.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</if> 
+				<if test='prc == ""'>
+					<if test='eDt == ""'>
+						AND DATE(D.CREATE_DT) <![CDATA[>=]]> DATE(( NOW() - INTERVAL 7 DAY))
+					</if> 
+				</if> 
+				AND D.DELETE_DT IS NULL
+		ORDER BY D.ORDR_ID DESC, D.STORE_ID, PM.DLVY_TP DESC, D.STTUS DESC 
+	</select>
+	
+	<!-- 주문 정보 리스트 조회 -->
+	<select id="getOrdrListChk" parameterType="hashMap" resultType="hashMap">
+	  	/* ShopOrderDao.getOrdrListChk */
+		SELECT 
+				D.O_ID
+			   ,D.ORDR_ID
+		       ,D.QY
+		       ,D.SUM_PRICE
+		       ,D.PRDT_CD
+		       ,D.PRDT_DTL_CD
+		       ,D.STORE_ID
+		       ,PM.PRDT_NM
+		       ,PD.STNDRD
+			   ,PD.OUT_AMT
+			   ,PD.OUT_UNIT
+		       ,PM.MAKR_NM
+		       ,PM.PRDT_IMG
+		       ,D.STTUS
+       		   ,CD.DTL_CD_NM AS STTUS_TXT
+		       ,D.CREATE_DT
+       		   ,( D.CREATE_DT + INTERVAL 2 DAY) AS LIMIT_DT
+       		   ,D.DELY_ID
+       		   ,D.DELY_CMP
+			   ,D.DELY_CMP_NM
+			   ,D.INVOICE	
+      		   ,IFNULL(P.O_ID, 0) AS CHK
+		  FROM PRDT_MST PM, 
+		       PRDT_DTL PD,
+      	 	   CMM_CODE_DTL CD,
+      	 	   ORDR_DTL D 
+		       LEFT JOIN ORDR_DTL P
+		       ON D.ORDR_ID = P.ORDR_ID
+		       AND D.O_ID = P.O_ID
+				<if test='PRDT_DTL_CD != null'>
+						AND P.O_ID IN 
+						<foreach collection="array" item="O_ID" open="(" close=")" separator=",">
+							#{O_ID}
+						</foreach>
+				</if>
+		 WHERE D.ORDR_USR_ID 	= #{usrId}
+		       AND D.PRDT_CD 		= PM.PRDT_CD 
+		       AND D.STORE_ID 		= PM.STORE_ID 
+		       AND D.PRDT_CD 		= PD.PRDT_CD 
+		       AND D.PRDT_DTL_CD 	= PD.PRDT_DTL_CD 
+		       AND D.STORE_ID 		= PD.STORE_ID  
+		       AND CD.CL_CD 			= '1010'
+		       AND CD.DTL_CD 		= D.STTUS
+		       AND D.STTUS IN ('0','1','2','3','4')
+		       <isNotEmpty property="ordrId" prepend="AND">
+		       		D.ORDR_ID	= #{ordrId}
+		       </isNotEmpty>
+		       <isNotEmpty property="prdrNm" prepend="AND">
+		       		PM.PRDT_NM LIKE CONCAT('%',#{prdrNm},'%')
+		       </isNotEmpty>
+		       <isNotEmpty property="sttus" prepend="AND">
+		       		D.STTUS	= #{sttus}
+		       </isNotEmpty>
+				<isNotEmpty property="sDt"  prepend="AND">
+					DATE(D.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</isNotEmpty> 
+				<isNotEmpty property="eDt"  prepend="AND">
+					DATE(D.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</isNotEmpty> 
+				AND D.DELETE_DT IS NULL
+		ORDER BY D.STORE_ID, D.ORDR_ID DESC, D.STTUS DESC 
+	</select>
+	
+	<select id="getOrdrMst" parameterType="hashMap" resultType="hashMap">
+	  	/*ShopOrderDao.getOrdrMst*/
+		SELECT 
+			   M.ORDR_ID , 
+		       M.TOT_PRICE , 
+		       M.DEVY_FEE , 
+		       M.SUM_PRICE , 
+		       M.ADDR_NM , 
+		       M.RECV_NM , 
+		       M.ZONE_TP , 
+		       M.ZONE_CODE , 
+		       M.ZIP_CODE , 
+		       M.ADDRESS , 
+		       M.ADDRESS_DETAIL , 
+		       M.TEL_NO , 
+		       M.RMK , 
+		       M.TID,
+		       P.TOTPRICE , 
+		       P.REFPRICE , 
+		       P.PAYMETHOD , 
+		       DATE_FORMAT ( CONCAT(P.APPLDATE,P.APPLTIME ),'%Y/%m/%d %T') AS APPL_DT, 
+		       P.CARD_NUM, 
+		       (SELECT DTL_CD_NM 
+		         FROM CMM_CODE_DTL 
+		        WHERE CL_CD ='1011' 
+		              AND DTL_CD = P.CARD_CODE 
+		       ) AS CARD_NM, 
+		       P.VACT_NUM ,   
+		       (SELECT DTL_CD_NM 
+		         FROM CMM_CODE_DTL 
+		        WHERE CL_CD ='1012' 
+		              AND DTL_CD = P.ACCT_BANK_CODE 
+		       ) AS ACCT_BANK_NM, 
+		       (SELECT DTL_CD_NM 
+		         FROM CMM_CODE_DTL 
+		        WHERE CL_CD ='1012' 
+		              AND DTL_CD = P.VACT_BANK_CODE 
+		       ) AS VBANK_NM,  
+		       P.VACT_NAME , 
+		       P.VACT_INPUT_NAME , 
+		       DATE_FORMAT ( CONCAT(P.VACT_DATE,P.VACT_TIME ),'%Y/%m/%d %T') AS LIMIT_DT, 
+       		   DATE_FORMAT ( CONCAT(P.TRANS_DATE,P.TRANS_TIME ),'%Y/%m/%d %T') AS TRANS_DT,
+       		   M.USE_YN
+		  FROM ORDR_MST M, 
+		       ORDR_PAY P 
+		 WHERE M.ORDR_ID = P.ORDR_ID 
+		 	AND M.ORDR_USR_ID = #{usrId}    
+		 	AND M.ORDR_ID = #{ordrId}
+		 	AND M.DELETE_DT IS NULL
+	</select>
+	
+	<select id="getOrdrStrMst" parameterType="hashMap" resultType="hashMap">
+	  	/*ShopOrderDao.getOrdrStrMst*/
+		SELECT 
+			   S.ORDR_ID , 
+		       S.TOT_PRICE , 
+		       S.DEVY_FEE , 
+		       S.SUM_PRICE , 
+		       S.CNT_PRDT , 
+		       S.STORE_ID , 
+		       SI.STORE_NM ,
+		       IF(SI.MOU_TP = 'M', '대화배송', '업체배송') AS DEVY_TP , 
+		       SI.DLVY_FEE , 
+		       SI.FREE_DLVY , 
+		       SI.FREE_AMT , 
+		       SI.RTN_FEE , 
+		       SI.ECHG_FEE , 
+		       SI.EXTRA_FEE_TP , 
+		       SI.T_ZONE1 , 
+		       SI.T_ZONE2 , 
+		       SI.T_ZONE3 , 
+		       SI.APPN_RTN_HDRY , 
+		       SI.HDRY , 
+     		  (SELECT DTL_CD_NM FROM CMM_CODE_DTL WHERE CL_CD = '1003' AND DTL_CD = SI.HDRY) AS RTN_HDRY,
+		       SI.RTN_ZIP_CD , 
+		       SI.RTN_ADRES , 
+		       SI.RTN_ADRES_DTL  
+		  FROM ORDR_STR_MST S, STORE_INFO SI 
+		 WHERE S.ORDR_ID = #{ordrId}
+		 	AND S.ORDR_USR_ID = #{usrId}    
+		 	AND S.STORE_ID = SI.STORE_ID
+		 	AND S.DELETE_DT IS NULL
+	</select>
+    
+	<!-- 장바구니 리스트 -->
+	<sql id="CartBody">
+			SELECT 
+				UC.USR_ID , 
+				UC.PRDT_CD , 
+				UC.PRDT_DTL_CD , 
+				PD.STORE_ID , 
+				PM.CATEG_CD , 
+				(SELECT CATEG_NM FROM CATEG_INFO WHERE CATEG_CD = PM.CATEG_CD) AS CATEG_NM ,
+				PM.PRDT_NM , 
+				PM.MAKR_NM , 
+				PD.STNDRD , 
+			    PD.OUT_AMT,
+			    PD.OUT_UNIT,
+				PM.PRDT_TP, 
+				UC.QY , 
+				PD.INVT_AMT, 
+       			PD.SOLDOUT_AT,
+				PD.RE_SALE_DT, 
+				PD.SEL_PRICE , 
+				PD.SALE_PRICE , 
+				PD.PUR_PRICE , 
+				(UC.QY * IF(PD.SALE_PRICE = 0, PD.SEL_PRICE, PD.SALE_PRICE)) AS TOT_PRICE , 
+				PM.DLVY_TP, 
+				PM.DLVY_FEE_TP , 
+				PM.DLVY_FEE , 
+				PM.PRDT_IMG, 
+				CASE WHEN PM.DLVY_TP = 'T' AND ( PM.DLVY_FEE_TP != '2' AND PM.DLVY_FEE_TP != '3' ) THEN 1 ELSE 0 END AS DLVY_MEG, 
+				SI.STORE_NM, 
+				SI.FREE_DLVY, 
+				SI.FREE_AMT,
+				SI.EXTRA_FEE_TP,
+				SI.T_ZONE1,
+				SI.T_ZONE2,
+				SI.T_ZONE3 
+			FROM 
+					USER_CART UC,
+			       	PRDT_MST PM,
+			       	PRDT_DTL PD,
+                	STORE_INFO SI
+			WHERE  UC.PRDT_CD     		= PM.PRDT_CD
+				AND  PM.PRDT_CD     		= PD.PRDT_CD
+				AND  UC.PRDT_CD     		= PD.PRDT_CD
+				AND  UC.PRDT_DTL_CD		= PD.PRDT_DTL_CD
+         		AND  PM.STORE_ID			= SI.STORE_ID
+	</sql>
+
+	<sql id="CartWhere">
+		AND UC.USR_ID = #{usrId} 
+	</sql>
+	
+	<sql id="CartChkWhere">
+		AND UC.USR_ID = #{usrId} 
+	  <dynamic prepend="AND UC.PRDT_DTL_CD IN">
+			<iterate property="PRDT_DTL_CD" open="(" conjunction="," close=")">
+				 #PRDT_DTL_CD[]#
+			</iterate>
+	  </dynamic>
+	</sql>
+
+	<select id="getCart" parameterType="hashMap" resultType="hashMap">
+		/*ShopOrderDao.getCart*/
+		<include refid="CartBody"/>
+		<include refid="CartWhere"/>
+		ORDER BY PM.PRDT_TP, PD.STORE_ID, DLVY_MEG DESC, UC.PRDT_CD, UC.PRDT_DTL_CD, PM.DLVY_TP
+	</select>
+
+	<select id="getCartChk" parameterType="hashMap" resultType="hashMap">
+		/*ShopOrderDao.getCartChk*/
+		<include refid="CartBody"/>
+		<include refid="CartChkWhere"/>
+		ORDER BY PM.PRDT_TP, PD.STORE_ID, DLVY_MEG DESC, UC.PRDT_CD, UC.PRDT_DTL_CD, PM.DLVY_TP
+	</select>
+
+	<select id="chkZoneTp" parameterType="hashMap" resultType="hashMap">
+		/* ShopOrderDao.chkZoneTp */
+		SELECT 
+			IFNULL(
+						(SELECT SORT_ORDR FROM CMM_CODE_DTL WHERE CL_CD = '1013' AND DTL_CD = #{zoneCode})
+						,0
+					)AS ZONE_TP 
+       FROM DUAL
+	</select>
+
+	<select id="chkZoneTpByAddr" parameterType="hashMap" resultType="hashMap">
+		/* ShopOrderDao.chkZoneTpByAddr */
+		SELECT 
+			IFNULL(
+						(SELECT MAX(ZONE_TP) FROM USER_ADDR WHERE USR_ID = #{usrId} AND ZONE_CODE = #{zoneCode} AND ZIP_CODE = #{zipCode})
+						,9
+					)AS ZONE_TP 
+       FROM DUAL
+	</select>
+
+	<!-- 장바구니에 물건 담기 / 같은 상품일경우 수량 업데이트 -->
+	<update id="addCart">
+		/*ShopOrderDao.addCart*/
+		  INSERT
+		  INTO   USER_CART
+		         (
+		                USR_ID ,
+		                PRDT_CD ,
+		                PRDT_DTL_CD ,
+		                QY ,
+		                CREATE_DT ,
+		                CREATE_ID
+		         )
+		         VALUES
+		         (
+		                #{usrId} ,
+		                #{PRDT_CD},
+		                #{PRDT_DTL_CD},
+		                #{QY} ,
+		                NOW(),
+		                #{usrId}
+		         )
+		  ON DUPLICATE KEY
+		  UPDATE QY = IF( 
+		  						(QY + #{QY}) > (SELECT INVT_AMT FROM PRDT_DTL WHERE PRDT_DTL_CD = #{PRDT_DTL_CD})  
+		  						, (SELECT INVT_AMT FROM PRDT_DTL WHERE PRDT_DTL_CD = #{PRDT_DTL_CD})  
+		  						, (QY + #{QY})
+		  					),
+		  UPDATE_DT = NOW(), 
+		  UPDATE_ID = #{usrId}
+	</update>
+	
+	<update id="setCart">
+		/*ShopOrderDao.setCart*/
+		  UPDATE  USER_CART SET
+			  QY 						= #{QY}, 
+			  UPDATE_DT 			= NOW(), 
+			  UPDATE_ID 			= #{usrId}
+		WHERE USR_ID 			= #{usrId}
+			AND PRDT_CD 			= #{PRDT_CD}
+			AND PRDT_DTL_CD 	= #{PRDT_DTL_CD}
+	</update>
+	
+	<!-- 장바구니에서 해당 상품 삭제전 히스토리 백업 -->
+	<update id="delCartHist" >
+		  /*ShopOrderDao.delCartHist*/
+		  INSERT
+		  INTO   USER_CART_HIST
+		         (
+		                USR_ID,
+		                PRDT_CD,
+		                PRDT_DTL_CD,
+		                QY,
+		                CREATE_DT,
+		                DELETE_DT
+		         )
+		  SELECT 
+		  			USR_ID,
+		         PRDT_CD,
+		         PRDT_DTL_CD,
+		         QY,
+		         CREATE_DT,
+		         NOW()
+		  FROM   USER_CART
+		  WHERE  USR_ID = #{usrId} 
+		  <dynamic prepend="AND PRDT_DTL_CD IN">
+				<iterate property="PRDT_DTL_CD" open="(" conjunction="," close=")">
+					 #PRDT_DTL_CD[]#
+				</iterate>
+		  </dynamic>
+	</update>	
+	
+	<!-- 장바구니에서 해당 상품 삭제 -->
+	<delete id="delCart" >
+		  /*ShopOrderDao.delCart*/
+		  DELETE 
+		  FROM USER_CART
+		  WHERE  USR_ID = #{usrId} 
+		  <dynamic prepend="AND PRDT_DTL_CD IN">
+				<iterate property="PRDT_DTL_CD" open="(" conjunction="," close=")">
+					 #PRDT_DTL_CD[]#
+				</iterate>
+		  </dynamic>
+	</delete>	
+	
+	
+	<insert id="setTmpOrderMst">
+    	<selectKey keyProperty="ordrId" resultType="string">
+    		SELECT IF(#{ordrId} = 0, IFNULL(MAX(ORDR_ID), 100000) + 1, #{ordrId}) AS ordrId FROM TMP_ORDER_MST
+    	</selectKey>
+			/* ShopOrderDao.setTmpOrderMst */
+		  INSERT
+		  INTO   TMP_ORDER_MST
+		         (
+					ORDR_ID
+					,ORDR_USR_ID
+					,STORE_ID
+					,TOT_PRICE
+					,DEVY_FEE
+					,SUM_PRICE
+					,QY
+					,ADDR_NM
+					,RECV_NM
+					,ZONE_TP
+					,ZONE_CODE
+					,ZIP_CODE
+					,ADDRESS
+					,ADDRESS_DETAIL
+					,TEL_NO
+					,TAX_BILL
+					,RMK
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{ordrId}
+					,#{usrId}
+					,#{STORE_ID}
+					,#{TOT_PRICE}
+					,#{DEVY_FEE}
+					,#{SUM_PRICE}
+					,#{QY}
+					,#{addrNm}
+					,#{receiver}
+					,#{ZONE_TP}
+					,#{zoneCode}
+					,#{zipCode}
+					,#{address}
+					,#{dtlAddress}
+					,#{mobileNo}
+					,#{aTaxBill}
+					,#{rmk}
+					,NOW()
+					,#{usrId}
+		         )
+	</insert>
+	
+	<insert id="setTmpOrderDtl">
+			/* ShopOrderDao.setTmpOrderDtl */
+		  INSERT
+		  INTO   TMP_ORDER_DTL
+			(	
+				ORDR_ID
+				,ORDR_USR_ID
+				,PRDT_TP
+				,PRDT_CD
+				,STORE_ID
+				,PRDT_DTL_CD
+				,TOT_PRICE
+				,PUR_PRICE 
+				,QY
+				,SUM_PRICE
+				,CREATE_DT
+				,CREATE_ID
+			)	
+			SELECT 
+		         	#{ordrId}
+					,#{usrId}
+		         	,A.PRDT_TP
+		         	,A.PRDT_CD
+		         	,A.STORE_ID
+		         	,A.PRDT_DTL_CD
+		         	,IF(A.SALE_PRICE = 0, A.SEL_PRICE, A.SALE_PRICE)
+		         	,A.PUR_PRICE
+		         	,A.QY
+		         	,(A.QY * IF(A.SALE_PRICE = 0, A.SEL_PRICE, A.SALE_PRICE))
+					,NOW()
+					,#{usrId}
+			FROM(
+				<include refid="CartBody"/>
+				<include refid="CartChkWhere"/>
+				ORDER BY PM.PRDT_TP, PD.STORE_ID, DLVY_MEG DESC, UC.PRDT_CD, UC.PRDT_DTL_CD, PM.DLVY_TP
+		 	) AS A
+	</insert>
+	
+	<insert id="setTmpOrderPay">
+    	<selectKey keyProperty="oid" resultType="string">
+    		SELECT CONCAT(#{mid},'_',DATE_FORMAT(NOW(),'%Y%m%d%H%i%S'),#{ordrId}) AS oid FROM DUAL
+    	</selectKey>
+			/* ShopOrderDao.setTmpOrderPay */
+		  INSERT
+		  INTO   TMP_ORDER_PAY
+		         (
+					ORDR_ID
+					,SUM_PRICE
+					,OID
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (	
+		         	#{ordrId}
+					,#{SUM_PRICE}
+					,#{oid}
+					,NOW()
+					,#{usrId}
+		         )
+	</insert>
+
+	<insert id="setOrderPay">
+    	<selectKey keyProperty="ORDR_ID" resultType="string">
+    		SELECT 
+    			CONCAT(DATE_FORMAT(NOW(),'%Y%m%d%H%i%S'),ORDR_ID) AS ORDR_ID 
+    		FROM TMP_ORDER_PAY 
+    		WHERE OID = #{MOID}
+    	</selectKey>
+			/* ShopOrderDao.setOrderPay */
+		  INSERT
+		  INTO   ORDR_PAY
+		  (
+				ORDR_ID
+				,ORDR_PAY_ID
+				,SUM_PRICE
+				,RESULTCODE
+				,EVENTCODE
+				,TOTPRICE
+				,PAYMETHOD
+				,OID
+				,TID
+				,APPLDATE
+				,APPLTIME
+				,CARD_NUM
+				,APPLNUM
+				,CARD_QUOTA
+				,CARD_CODE
+				,CARD_PRTC_CODE
+				,ACCT_BANK_CODE 
+				,CSHR_RESULT_CODE 
+				,CSHR_TYPE
+				,CSHR_DT
+				,NO_CSHR_APPL
+				,VACT_NUM
+				,VACT_BANK_CODE
+				,VACT_NAME
+				,VACT_INPUT_NAME
+				,VACT_DATE
+				,VACT_TIME
+				,CREATE_DT
+				,CREATE_ID
+		  )
+		  SELECT 
+				#{ORDR_ID}
+				,ORDR_PAY_ID
+				,SUM_PRICE
+				,#{resultCode}
+				,#{EventCode}
+				,IF(#{sttus} = '1', #{TotPrice}, 0)
+				,#{payMethod}
+				,#{MOID}
+				,#{tid}
+				,#{applDate}
+				,#{applTime}
+				,#{CARD_Num}
+				,#{applNum}
+				,#{CARD_Quota}
+				,#{CARD_Code}
+				,#{CARD_PrtcCode}
+				,RIGHT(#{ACCT_BankCode},2) 
+				,#{CSHR_ResultCode} 
+				,#{CSHR_Type}
+				,STR_TO_DATE(CONCAT(#{dt_cshr},#{tm_cshr}), '%Y%m%d%H%i%s')
+				,#{no_cshr_appl}
+				,#{VACT_Num}
+				,#{VACT_BankCode}
+				,#{VACT_Name}
+				,#{VACT_InputName}
+				,#{VACT_Date}
+				,#{VACT_Time}
+				,NOW()
+				,#{usrId}
+		  FROM TMP_ORDER_PAY 
+    		WHERE OID = #{MOID}
+	</insert>
+		
+	<insert id="setOrderMst">
+			/* ShopOrderDao.setOrderMst */
+		  INSERT
+		  INTO   ORDR_MST
+		         (
+				ORDR_ID
+				,ORDR_USR_ID
+				,STORE_CNT
+				,TOT_PRICE
+				,DEVY_FEE
+				,SUM_PRICE
+				,PAYMETHOD
+				,TOTPRICE
+				,OID
+				,TID
+				,ADDR_NM
+				,RECV_NM
+				,ZONE_TP
+				,ZONE_CODE
+				,ZIP_CODE
+				,ADDRESS
+				,ADDRESS_DETAIL
+				,TEL_NO
+				,TAX_BILL
+				,RMK
+				,USE_YN
+				,CREATE_DT
+				,CREATE_ID 
+		         )
+			SELECT 
+				#{ORDR_ID}
+				,OMST.ORDR_USR_ID
+				,COUNT(OMST.STORE_ID)
+				,SUM(OMST.TOT_PRICE )
+				,SUM(OMST.DEVY_FEE )
+				,SUM(OMST.SUM_PRICE )
+				,#{payMethod}
+				,#{TotPrice}
+				,#{MOID}
+				,#{tid}
+				,MAX(OMST.ADDR_NM)
+				,MAX(OMST.RECV_NM)
+				,MAX(OMST.ZONE_TP)
+				,MAX(OMST.ZONE_CODE)
+				,MAX(OMST.ZIP_CODE)
+				,MAX(OMST.ADDRESS)
+				,MAX(OMST.ADDRESS_DETAIL)
+				,MAX(OMST.TEL_NO)
+				,MAX(OMST.TAX_BILL)
+				,MAX(OMST.RMK)
+				,'Y'
+				,NOW()
+				,#{usrId}
+		FROM TMP_ORDER_PAY OPAY, TMP_ORDER_MST OMST
+		WHERE OPAY.ORDR_ID = OMST.ORDR_ID
+			AND OPAY.OID = #{MOID}
+		GROUP BY OMST.ORDR_ID
+	</insert>
+		
+	<insert id="setOrderStrMst">
+			/* ShopOrderDao.setOrderStrMst */
+		  INSERT
+		  INTO   ORDR_STR_MST
+		         (
+					ORDR_ID
+					,ORDR_USR_ID
+					,STORE_ID
+					,TOT_PRICE
+					,DEVY_FEE
+					,SUM_PRICE
+					,CNT_PRDT
+					,STTUS
+					,CREATE_DT
+					,CREATE_ID 
+		         )
+			SELECT 
+				#{ORDR_ID}
+				,OMST.ORDR_USR_ID
+				,OMST.STORE_ID
+				,OMST.TOT_PRICE
+				,OMST.DEVY_FEE
+				,OMST.SUM_PRICE
+				,OMST.QY
+				,#{sttus}
+				,NOW()
+				,#{usrId}
+		FROM TMP_ORDER_PAY OPAY, TMP_ORDER_MST OMST
+		WHERE OPAY.ORDR_ID 	= OMST.ORDR_ID
+			AND OPAY.OID 		= #{MOID}
+	</insert>
+	
+	<insert id="setOrderDtl">
+			/* ShopOrderDao.setOrderDtl */
+		  INSERT
+		  INTO   ORDR_DTL
+		         (
+				ORDR_ID
+				,ORDR_USR_ID
+				,PRDT_CD
+				,STORE_ID
+				,PRDT_DTL_CD
+				,PRDT_NM
+				,MAKR_NM
+				,STNDRD
+				,TOT_PRICE
+				,PUR_PRICE
+				,QY
+				,SUM_PRICE
+				,STTUS
+				,ORDR_DT
+				,CREATE_DT
+				,CREATE_ID
+		         )
+			SELECT 
+				#{ORDR_ID}
+				,ODTL.ORDR_USR_ID
+				,ODTL.PRDT_CD
+				,ODTL.STORE_ID
+				,ODTL.PRDT_DTL_CD
+                ,M.PRDT_NM
+                ,M.MAKR_NM
+                ,D.STNDRD
+				,ODTL.TOT_PRICE
+				,ODTL.PUR_PRICE
+				,ODTL.QY
+				,ODTL.SUM_PRICE
+				,#{sttus}
+				,IF(#{sttus} = 0, NULL, NOW())
+				,NOW()
+				,#{usrId}
+		FROM TMP_ORDER_PAY OPAY, TMP_ORDER_DTL ODTL, PRDT_MST M, PRDT_DTL D
+		WHERE OPAY.OID 			= #{MOID}	
+			AND OPAY.ORDR_ID 		= ODTL.ORDR_ID
+			AND ODTL.PRDT_CD 		= M.PRDT_CD
+			AND ODTL.STORE_ID 	= M.STORE_ID
+			AND ODTL.PRDT_CD 		= D.PRDT_CD
+			AND ODTL.STORE_ID 	= D.STORE_ID
+			AND ODTL.PRDT_DTL_CD = D.PRDT_DTL_CD
+	</insert>
+	
+	<update id="delOrderCart">
+		/*ShopOrderDao.delOrderCart*/
+		DELETE CA 
+		  FROM USER_CART CA,
+		       TMP_ORDER_PAY OPAY, 
+		       TMP_ORDER_DTL ODTL 
+		 WHERE 	  CA.USR_ID 			= OPAY.CREATE_ID 
+		       AND CA.PRDT_DTL_CD 	= ODTL.PRDT_DTL_CD 
+		       AND OPAY.ORDR_ID 		= ODTL.ORDR_ID 
+		       AND OPAY.OID 				= #{MOID}	
+	</update>
+	
+	<update id="setOrderInfo">
+		/* ShopOrderDao.setOrderInfo */
+		UPDATE PRDT_DTL PRDT 
+		     INNER JOIN TMP_ORDER_DTL ODTL 
+		         ON( PRDT.PRDT_CD 			= ODTL.PRDT_CD 
+		         AND PRDT.STORE_ID 		= ODTL.STORE_ID 
+		         AND PRDT.PRDT_DTL_CD 	= ODTL.PRDT_DTL_CD 
+		         AND ODTL.ORDR_ID 			= (SELECT ORDR_ID FROM TMP_ORDER_PAY WHERE OID = #{MOID}) 
+		       ) 
+		       SET 
+		       PRDT.SEL_CNT 					= PRDT.SEL_CNT + ODTL.QY
+		      ,PRDT.INVT_AMT 				= PRDT.INVT_AMT - IF( PRDT.PRDT_TP = 'J' ,0 ,ODTL.QY ) 
+		 WHERE PRDT.PRDT_CD 			= ODTL.PRDT_CD 
+		       AND PRDT.STORE_ID 			= ODTL.STORE_ID 
+		       AND PRDT.PRDT_DTL_CD 	= ODTL.PRDT_DTL_CD
+	</update>
+		
+	<update id="orderDecision">
+		/*ShopOrderDao.orderDecision*/
+		  UPDATE  ORDR_DTL SET
+			  STTUS 				= #{sttus} 
+			  ,ORDT_COMP_DT	= NOW() 
+			  ,UPDATE_DT 			= NOW() 
+			  ,UPDATE_ID 			= #{usrId}
+		WHERE O_ID 				= #{oSeq}
+			AND ORDR_USR_ID	= #{usrId}
+			AND USE_YN = 'Y'
+	</update>
+		
+	<update id="chageAddr">
+		/* ShopOrderDao.chageAddr */
+		  UPDATE  ORDR_MST SET
+			ADDR_NM				= IFNULL(#{addrNm}, ADDR_NM)
+			,RECV_NM				= IFNULL(#{receiver}, RECV_NM)
+			,ZONE_CODE			= IFNULL(#{zoneCode}, ZONE_CODE)
+			,ZIP_CODE				= IFNULL(#{zipCode}, ZIP_CODE)
+			,ADDRESS				= IFNULL(#{address}, ADDRESS)
+			,ADDRESS_DETAIL	= #{dtlAddress}
+			,TEL_NO					= #{mobileNo}
+			,RMK						= #{rmk}
+			,UPDATE_DT 			= NOW()
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID			= #{ordrId}
+			AND ORDR_USR_ID	= #{usrId}
+	</update>
+	
+	<update id="uptOrderPay">
+		/* ShopOrderDao.uptOrderPay */
+		UPDATE ORDR_PAY SET
+			TOTPRICE				= CONVERT(#{amt_input}, UNSIGNED) 
+			,NO_TID					= #{no_tid}
+			,ACCT_BANK_CODE	= RIGHT(#{cd_deal},2) 
+			,TRANS_DATE			= #{dt_trans}
+			,TRANS_TIME			= #{tm_trans}
+			,AMT_INPUT			= #{amt_input}
+			,DT_INPUTSTD			= #{dt_inputstd}
+			,CSHR_DT				= STR_TO_DATE(CONCAT(#{dt_cshr},#{tm_cshr}), '%Y%m%d%H%i%s')
+			,NO_CSHR_APPL		= #{no_cshr_appl}
+			,UPDATE_DT 			= NOW()
+			,UPDATE_ID	 			= '11111111'
+		WHERE OID					= #{no_oid}
+			AND VACT_NUM 		= #{no_vacct}
+			AND SUM_PRICE 		= CONVERT(#{amt_input}, UNSIGNED) 
+			AND NO_TID IS NULL
+			AND DELETE_DT IS NULL
+	</update>
+	
+	<update id="uptOrderStrMst">
+		/* ShopOrderDao.uptOrderStrMst */
+		UPDATE ORDR_STR_MST SET
+		 	STTUS 			= '1'
+		 	, UPDATE_DT	= NOW()
+			, UPDATE_ID 	= '11111111' 
+		WHERE ORDR_ID = (SELECT ORDR_ID FROM ORDR_PAY WHERE OID = #{no_oid})
+	</update>
+	
+	<update id="uptOrderDtl">
+		/* ShopOrderDao.uptOrderDtl */
+		UPDATE ORDR_DTL SET
+		 	STTUS 			= '1'
+		 	, ORDR_DT		= NOW()
+		 	, UPDATE_DT	= NOW()
+			, UPDATE_ID 	= '11111111' 
+		WHERE ORDR_ID = (SELECT ORDR_ID FROM ORDR_PAY WHERE OID = #{no_oid})
+	</update>
+	
+	<!-- 주문 정보 리스트 수정-->
+	<update id="canOrderDtl">
+		/* ShopOrderDao.canOrderDtl */
+		UPDATE ORDR_DTL SET
+			STTUS 					= #{sttus}
+			,USE_YN					= 'N'
+			,CANCEL_DT 			= NOW() 
+			,UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID 			= #{ordrId}
+		  <dynamic prepend="AND O_ID IN">
+				<iterate property="O_ID" open="(" conjunction="," close=")">
+					 #O_ID[]#
+				</iterate>
+		  </dynamic>
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+			AND STTUS NOT IN ('8', '9')
+	</update>
+	
+	<!-- 주문 정보 리스트 수정-->
+	<update id="canOrderStrMst">
+		/* ShopOrderDao.canOrderStrMst */
+		UPDATE ORDR_STR_MST SET
+			STTUS 					= #{sttus}
+			,USE_YN					= 'N'
+			,UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+			AND STTUS NOT IN ('8', '9')
+	</update>
+	
+	<!-- 주문 정보 리스트 수정-->
+	<update id="canOrderMst">
+		/* ShopOrderDao.canOrderMst */
+		UPDATE ORDR_MST SET
+			USE_YN					= 'N'
+			,UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</update>
+	
+	<!-- 주문 정보 결제정보 취소-->
+	<update id="canOrderPay">
+		/* ShopOrderDao.canOrderPay */
+		UPDATE ORDR_PAY SET
+			USE_YN					= IF(
+											TOTPRICE = #{refAmt}
+											,'N'
+											,'Y'
+											)
+			,TOTPRICE 				= (TOTPRICE - #{refAmt})
+			,REFPRICE 				= (REFPRICE + #{refAmt})
+			,UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</update>
+	
+	<insert id="setRefundPay">
+		/* ShopOrderDao.setRefundPay */
+		  INSERT
+		  INTO   ORDR_REPAY
+		         (
+					ORDR_ID
+					,TYPE
+					,TID
+					,NTID
+					,CANCELDATE
+					,CANCELTIME
+					,PAYMETHOD
+					,O_PRICE
+					,C_PRICE
+					,PRICE
+					,CSHR_RESULT_CODE
+					,CSHR_CANCEL_NUM
+					,CSHR_CANCEL_DATE
+					,CSHR_CANCEL_TIME 
+					,CREATE_DT
+					,CREATE_ID
+		         )
+		         VALUES
+		         (
+					#{ordrId}
+					,#{procType}
+					,#{tid}
+					,#{Ntid}
+					,#{CancelDate}
+					,#{CancelTime}
+					,#{PAYMETHOD}
+					,#{O_PRICE}
+					,#{PRTC_Price}
+					,#{PRTC_Remains}
+					,#{CSHR_ResultCode}
+					,#{CSHR_CancelNum}
+					,#{CSHR_CancelDate}
+					,#{CSHR_CancelTime} 
+					,NOW()
+					,#{usrId}	         
+		         )
+	</insert>
+	
+	<insert id="insOrderStrMstHist">
+		/* ShopOrderDao.insOrderStrMstHist */
+		  INSERT
+		  INTO  ORDR_STR_MST_HIST	
+		         (
+					INSERT_DT
+					,INSERT_ID
+					,O_ID
+					,ORDR_ID
+					,STORE_ID
+					,ORDR_USR_ID
+					,TOT_PRICE
+					,CNT_PRDT
+					,CAN_PRDT
+					,DEVY_FEE
+					,SUM_PRICE
+					,STTUS
+					,CREATE_DT
+					,CREATE_ID
+					,USE_YN
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID	
+	    	 )
+			SELECT 
+					NOW()
+					,#{usrId}	   
+					,O_ID
+					,ORDR_ID
+					,STORE_ID
+					,ORDR_USR_ID
+					,TOT_PRICE
+					,CNT_PRDT
+					,CAN_PRDT
+					,DEVY_FEE
+					,SUM_PRICE
+					,STTUS
+					,CREATE_DT
+					,CREATE_ID
+					,USE_YN
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID	
+			FROM ORDR_STR_MST
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT		IS NULL
+		<isNotEmpty property="storeId" prepend="AND">
+			STORE_ID	= #{storeId}
+		</isNotEmpty>
+	</insert>
+	
+	<insert id="insOrderMstHist">
+		/* ShopOrderDao.insOrderMstHist */
+		  INSERT
+		  INTO  ORDR_MST_HIST	
+		         (
+					INSERT_DT
+					,INSERT_ID
+					,ORDR_ID
+					,ORDR_USR_ID
+					,STORE_CNT
+					,TOT_PRICE
+					,DEVY_FEE
+					,SUM_PRICE
+					,PAYMETHOD
+					,TOTPRICE
+					,OID
+					,TID
+					,ADDR_NM
+					,RECV_NM
+					,ZONE_TP
+					,ZONE_CODE
+					,ZIP_CODE
+					,ADDRESS
+					,ADDRESS_DETAIL
+					,TEL_NO
+					,RMK
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID
+	    	 )
+			SELECT 
+					NOW()
+					,#{usrId}	
+					,ORDR_ID
+					,ORDR_USR_ID
+					,STORE_CNT
+					,TOT_PRICE
+					,DEVY_FEE
+					,SUM_PRICE
+					,PAYMETHOD
+					,TOTPRICE
+					,OID
+					,TID
+					,ADDR_NM
+					,RECV_NM
+					,ZONE_TP
+					,ZONE_CODE
+					,ZIP_CODE
+					,ADDRESS
+					,ADDRESS_DETAIL
+					,TEL_NO
+					,RMK
+					,USE_YN
+					,CREATE_DT
+					,CREATE_ID
+					,UPDATE_DT
+					,UPDATE_ID
+					,DELETE_DT
+					,DELETE_ID
+			FROM ORDR_MST
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</insert>
+	
+	<!-- 주문 정보 상점마스터 수정-->
+	<update id="chgOrderStrMst">
+		/* ShopOrderDao.chgOrderStrMst */
+		UPDATE ORDR_STR_MST SET
+			CNT_PRDT				= (CNT_PRDT - #{canPrdt})
+			,CAN_PRDT				= (CAN_PRDT + #{canPrdt})
+			,TOT_PRICE				= (TOT_PRICE - #{cPrice})
+			,DEVY_FEE				= (DEVY_FEE + #{newDevy} - #{refDevy})
+			,SUM_PRICE			= (SUM_PRICE - #{refAmt})
+			,USE_YN					= IF(
+											'S' = #{allChk}
+											,'N'
+											,'Y'
+											)
+			,STTUS					= IF(
+											'S' = #{allChk}
+											,#{sttus}
+											,STTUS
+											)
+			,UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID 			= #{ordrId}
+			AND STORE_ID			= #{storeId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+			AND STTUS NOT IN ('8', '9')
+	</update>
+	
+		
+	<!-- 주문 정보 마스터 수정-->
+	<update id="chgOrderMst">
+		/* ShopOrderDao.chgOrderMst */
+		UPDATE ORDR_MST SET
+			TOT_PRICE				= (TOT_PRICE - #{cPrice})
+			,DEVY_FEE				= (DEVY_FEE + #{newDevy} - #{refDevy})
+			,SUM_PRICE			= (SUM_PRICE - #{refAmt})
+			,TOTPRICE				= (TOTPRICE - #{refAmt})
+			,STORE_CNT			= STORE_CNT - 
+											IF(
+												'S' = #{allChk}
+												,1
+												,0
+											)
+			,USE_YN					= IF(
+											SUM_PRICE = #{refAmt}
+											,'N'
+											,'Y'
+											)	
+			,UPDATE_DT 			= NOW() 
+			,UPDATE_ID 			= #{usrId}
+		WHERE ORDR_ID 			= #{ordrId}
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</update>
+	
+	
+	
+	<insert id="reqReturn">
+		<selectKey keyProperty="chgId" resultType="Integer" type="post">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+		/* ShopOrderDao.reqReturn */
+		INSERT INTO ORDR_CHG_MST (
+			ORDR_ID
+			,ORDR_USR_ID
+			,STORE_ID
+			,TID
+			,CNT_PRDT
+			,SUM_PRICE
+			,RMK_CD
+			,RMK
+			,DEVY_TP
+			,CREATE_DT
+			,CREATE_ID		
+		)
+		SELECT 
+			   M.ORDR_ID ,
+		       M.ORDR_USR_ID ,
+		       M.STORE_ID ,
+		       P.TID ,
+		       COUNT(M.O_ID) ,
+		       SUM(M.SUM_PRICE) ,
+		       #{canReson} ,
+		       #{canRmk} ,
+		       #{chrDlvy} ,
+		       NOW() ,
+		       #{usrId} 
+		  FROM ORDR_DTL M , 
+		       ORDR_PAY P 
+		 WHERE M.ORDR_ID 				= P.ORDR_ID  
+				AND M.ORDR_ID			= #{ordrId} 
+				AND M.ORDR_USR_ID 	= #{usrId} 
+				AND M.O_ID IN
+				<iterate property="oId" open="(" conjunction="," close=")">
+					 #oId[]#
+				</iterate>
+		   GROUP BY M.ORDR_ID, M.ORDR_USR_ID, M.STORE_ID
+	</insert>
+	
+	<update id="setOrderChg">
+		/* ShopOrderDao.setOrderChg */
+		UPDATE ORDR_DTL SET
+			STTUS 				= #{aSttus}
+			,CHG_ID 				= #{chgId}
+			,UPDATE_DT		= NOW()
+			,UPDATE_ID			= #{usrId}
+		WHERE ORDR_ID		= #{ordrId}  
+			AND ORDR_USR_ID 	= #{usrId} 
+			AND O_ID IN
+			<iterate property="oId" open="(" conjunction="," close=")">
+				 #oId[]#
+			</iterate>
+	</update>
+	
+	<select id="getOrdrInfo" parameterType="hashMap" resultType="hashMap">
+			/* ShopOrderDao.getOrdrInfo */
+			SELECT 
+				ORDR_ID
+				,ORDR_USR_ID			 
+				,PAYMETHOD
+				,SEND_RESULT
+				,OID
+				,TID
+	       FROM ORDR_MST
+		WHERE ORDR_ID			= #{ordrId}  
+			AND ORDR_USR_ID 	= #{usrId} 
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</select>
+	
+	<select id="getTidToOrderId" parameterType="hashMap" resultType="string">
+			/* ShopOrderDao.getTidToOrderId */
+			SELECT 
+				ORDR_ID
+	       FROM ORDR_MST
+		WHERE TID					= #{tid}  
+			AND ORDR_USR_ID 	= #{usrId} 
+			AND USE_YN			= 'Y'
+			AND DELETE_DT IS NULL
+	</select>	
+
+	<update id="setOrderConf">
+		/* ShopOrderDao.setOrderConf */
+		UPDATE ORDR_MST SET
+			SEND_RESULT			=	#{sSttus}
+			,RESULT_DT			= STR_TO_DATE(#{timestamp}, '%Y%m%d%H%i%s')
+			,UPDATE_DT			= NOW()
+			,UPDATE_ID				= #{usrId}
+		WHERE TID					= #{tid}  
+			AND ORDR_USR_ID 	= #{usrId} 
+	</update>
+	
+	<update id="setOrderConfDtl">
+		/* ShopOrderDao.setOrderConfDtl */
+		UPDATE ORDR_DTL SET
+			STTUS					= #{sttus}
+		    ,ORDT_COMP_DT		= NOW() 
+			,UPDATE_DT			= NOW()
+			,UPDATE_ID				= #{usrId}
+		WHERE ORDR_USR_ID 	= #{usrId}
+			AND ORDR_ID			= #{ordrId}  
+			AND USE_YN = 'Y'
+			AND STTUS = '4'
+	</update>
+	
+	<update id="setOrderConfStrMst">
+		/* ShopOrderDao.setOrderConfStrMst */
+		UPDATE ORDR_STR_MST SET
+			STTUS					= #{sttus}
+			,UPDATE_DT			= NOW()
+			,UPDATE_ID				= #{usrId}
+		WHERE ORDR_USR_ID 	= #{usrId}
+			AND ORDR_ID			= #{ordrId}  
+			AND USE_YN = 'Y'
+			AND STTUS = '4'
+	</update>
+	
+	<select id="getOrdrSm" resultType="hashMap">
+			/* ShopOrderDao.getOrdrSm */
+			SELECT 
+				M.ORDR_ID
+				,M.DEVY_FEE
+				,M.SUM_PRICE AS TOT_PRICE
+				,D.PRDT_DTL_CD
+				,D.MAKR_NM
+				,D.PRDT_NM
+				,D.STNDRD
+				,D.TOT_PRICE
+				,D.QY
+				,D.SUM_PRICE
+		FROM ORDR_DTL D, ORDR_MST M
+		WHERE D.ORDR_ID 	= #{ORDR_ID}
+			AND D.ORDR_ID 	= M.ORDR_ID
+			AND D.USE_YN 	= 'Y'
+			AND M.USE_YN 	= 'Y'
+	</select>	
+	
+</mapper>

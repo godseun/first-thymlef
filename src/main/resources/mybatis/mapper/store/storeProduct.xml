@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="StoreProduct">
+
+	<insert id="StoreProductDao.insPrdt">
+		<selectKey keyProperty="PRDT_CD" resultType="java.lang.String">
+    		SELECT IFNULL(MAX(PRDT_CD), 1000000) + 1 AS PRDT_CD FROM TMP_PRDT_INFO
+    	</selectKey>
+			/* StoreProductDao.insPrdt */
+ 		  INSERT
+		  INTO   TMP_PRDT_INFO
+		         ( 
+					PRDT_CD
+					,STORE_ID
+					,PRDT_DTL_CD
+					,CATEG_CD1
+					,CATEG_CD2
+					,CATEG_CD3
+					,CATEG_CD4
+					,CATEG_CD5
+					,PRDT_NM
+					,PRDT_TP
+					,STNDRD
+					,MAKR_NM
+					,MODEL_NM
+					,INVT_AMT
+					,SEL_PRICE
+					,PRDT_IMG
+					,EXTRA_IMG_AT
+					,EXTRA_IMG_NO
+					,PRDT_DTL_INFO
+					,PRDT_NOTICE_TP
+					,DLVY_TP
+					,DLVY_FEE_TP
+					,PKG_TP
+					,DLVY_FEE
+					,STTUS
+					,CREATE_DT
+					,CREATE_ID
+					  )
+		         VALUES
+		         (
+					#{PRDT_CD}
+					,#{storeId}
+					,#{PRDT_CD}
+					,'C9999'
+					,'C9999'
+					,'C9999'
+					,'C9999'
+					,'C9999'
+					,#{prdtNm}
+					,'S'
+					,#{stndrd}
+					,#{makrNm}
+					,#{modelNm}
+					,#{amt}
+					,#{price}
+					,#{PRDT_CD}
+					,#{extra_img_at}
+					,#{PRDT_CD}
+					,#{dtlInfo}
+					,'9'
+					,#{del_tp}
+					,#{del_fee_tp}
+					,#{del_pkg_tp}
+					,#{del_fee}
+					,'1'
+					,NOW()
+					,#{usrId}
+		         )
+	</insert>
+	
+	<select id="StoreProductDao.getUpPrdtList" parameterType="hashMap" resultType="hashMap">
+		/* StoreProductDao.getUpPrdtList */
+		SELECT A.PRDT_CD AS sPrdtCd,
+		       A.STORE_ID AS sSId,
+		       (SELECT CMP_NM
+		       FROM    STORE_INFO
+		       WHERE   STORE_ID = A.STORE_ID
+		       ) AS sSNm ,
+		       A.PRDT_DTL_CD AS sPrdtDtlCd,
+		       A.CATEG_CD1 AS ca1,
+		       A.CATEG_CD2 AS ca2,
+		       A.CATEG_CD3 AS ca3,
+		       A.CATEG_CD4 AS ca4,
+		       A.CATEG_CD5 AS ca5,
+		       A.PRDT_NM AS sPrdtNm,
+		       A.PRDT_ETC_NM AS sPrdtEtcNm,
+		       A.PRDT_TP AS sPrdtTp,
+		       A.STNDRD AS sStndrd,
+		       A.MAKR_CD AS sMakerCd,
+		       A.MAKR_NM AS sMakerNm,
+		       A.MODEL_NM AS sModelNm,
+		       A.ORG_PLCE AS sOrgPlce,
+		       A.INVT_AMT AS sAmt,
+		       A.SEL_PRICE AS sPrice,
+		       A.PUR_PRICE AS sPurPrice,
+		       (SELECT CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME)
+		       FROM    BOARD_FILE
+		       WHERE   BBS_ID     ='PRDT_MAIN'
+		       AND     ARTICLE_ID = A.PRDT_CD
+		       ) AS sPImg,
+              (SELECT  CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME)
+		       FROM     BOARD_FILE
+		       WHERE    BBS_ID     ='PRDT_SUB'
+		       AND      ARTICLE_ID = A.PRDT_CD
+		       ORDER BY FILE_ID 
+		       LIMIT 0,1
+		       ) AS sEImg0, 
+              (SELECT  CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME)
+		       FROM     BOARD_FILE
+		       WHERE    BBS_ID     ='PRDT_SUB'
+		       AND      ARTICLE_ID = A.PRDT_CD
+		       ORDER BY FILE_ID 
+		       LIMIT 1,1
+		       ) AS sEImg1, 
+              (SELECT  CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME)
+		       FROM     BOARD_FILE
+		       WHERE    BBS_ID     ='PRDT_SUB'
+		       AND      ARTICLE_ID = A.PRDT_CD
+		       ORDER BY FILE_ID 
+		       LIMIT 2,1
+		       ) AS sEImg2, 
+              (SELECT  CONCAT('/upload',FILE_PATH,FILE_SAVE_NAME)
+		       FROM     BOARD_FILE
+		       WHERE    BBS_ID     ='PRDT_SUB'
+		       AND      ARTICLE_ID = A.PRDT_CD
+		       ORDER BY FILE_ID 
+		       LIMIT 3,1
+		       ) AS sEImg3, 
+		       A.PRDT_INFO AS sPdrtInfo,
+		       A.PRDT_DTL_INFO AS sPrdtDtlInfo,
+		       A.PRDT_NOTICE_TP AS sPrdtNotiTp,
+		       A.DLVY_TP AS sDlTp,
+		       A.DLVY_FEE_TP AS sDlFeeTp,
+		       A.PKG_TP AS sPkgTp,
+		       A.DLVY_FEE AS sDlFee,
+		       A.CONFM_YN AS sConYN,
+		       A.CONFM_DT AS sConDt,
+		       A.CONFM_ID AS sConId,
+		       A.CONFM_RMK AS sConRMK,
+		       A.STTUS AS sSttus,
+		       A.CREATE_DT AS sCdt,
+		       A.CREATE_ID AS sCid,
+		       A.UPDATE_DT AS sUdt,
+		       A.UPDATE_ID AS sUid
+		FROM   TMP_PRDT_INFO A
+		WHERE 1 = 1
+			AND A.STORE_ID = #{storeId}
+			AND A.STTUS NOT IN ('3')
+			AND A.USE_YN = 'Y'
+	</select>	
+</sqlMap>
+       

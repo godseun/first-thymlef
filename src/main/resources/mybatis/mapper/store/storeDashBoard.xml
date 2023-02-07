@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="StoreDashBoard">
+	<sql id="StoreDashBoard.OrdrBody">
+		SELECT 
+			   COUNT(D.O_ID) AS T_OR  ,
+		       SUM( IF ( D.STTUS = 1, 1, 0 )) AS OR_1 ,
+		       SUM( IF ( D.STTUS = 1, IF( DATE(NOW()) > DATE(D.ORDR_DT + INTERVAL 1 DAY), 1, 0 ), 0 )) AS OR_O_1 ,
+		       SUM( IF ( D.STTUS = 2, 1, 0 )) AS OR_2 ,
+		       SUM( IF ( D.STTUS = 2, IF( DATE(NOW()) > DATE(D.RECEIPT_DT + INTERVAL 1 DAY), 1, 0 ), 0 )) AS OR_O_2 ,
+		       SUM( IF ( D.STTUS = 3, 1, 0 )) AS OR_3 ,
+		       SUM( IF ( D.STTUS IN(4, 9), 1, 0 )) AS OR_4 ,
+		       0 AS OR_5 ,
+		       0 AS UP ,
+		       0 AS CON_1 ,
+		       0 AS REJ_1   
+		  FROM ORDR_STR_MST M, 
+		       ORDR_DTL D 
+		 WHERE M.STORE_ID = D.STORE_ID 
+		       AND M.ORDR_ID = D.ORDR_ID 
+		       AND M.USE_YN 		= 'Y'
+		       AND D.USE_YN 			= 'Y'
+		       AND M.DELETE_DT IS NULL 
+		       AND D.DELETE_DT IS NULL 
+	</sql>
+	
+	<sql id="StoreDashBoard.OrdrWhere">
+		<isNotEmpty property="storeId">
+       		AND M.STORE_ID = #{storeId}
+		</isNotEmpty>
+		<isNotEqual property="isAll" compareValue="Y">
+	       	AND D.STTUS IN ('1','2','3','4') 
+	       	AND DATE(D.ORDR_DT) <![CDATA[>=]]> DATE(( NOW() - INTERVAL 7 DAY))
+		</isNotEqual>
+	</sql>
+	
+	<sql id="StoreDashBoard.UploadBody">
+		SELECT
+		       	 0 AS T_OR   
+		      	,0 AS OR_1 
+		      	,0 AS OR_O_1 
+		      	,0 AS OR_2 
+		      	,0 AS OR_O_2 
+		      	,0 AS OR_3 
+		     	,0 AS OR_4   
+		     	,0 AS OR_5   
+				,COUNT(PRDT_CD) AS UP
+				,SUM( IF ( STTUS = 3, 1, 0 )) AS CON_1
+				,SUM( IF ( STTUS = 4, 1, 0 )) AS REJ_1
+		FROM TMP_PRDT_INFO
+	</sql>
+	
+	<sql id="StoreDashBoard.UploadWhere">
+		WHERE USE_YN = 'Y'
+	       	AND DATE(CREATE_DT) <![CDATA[>=]]> DATE(( NOW() - INTERVAL 7 DAY))
+		<isNotEmpty property="storeId">
+       		AND STORE_ID = #{storeId}
+		</isNotEmpty>
+	</sql>
+	
+	<select id="StoreDashBoard.getDashBoard" parameterType="hashMap" resultType="hashMap">
+		SELECT 
+			SUM(A.T_OR) AS T_OR   
+			,SUM(A.OR_1) AS OR_1 
+			,SUM(A.OR_O_1) AS OR_O_1 
+			,SUM(A.OR_2) AS OR_2 
+			,SUM(A.OR_O_2) AS OR_O_2 
+			,SUM(A.OR_3) AS OR_3 
+			,SUM(A.OR_4) AS OR_4   
+			,SUM(A.OR_5) AS OR_5   
+			,SUM(A.UP) AS UP
+			,SUM(A.CON_1) AS CON_1
+			,SUM(A.REJ_1) AS REJ_1 
+		FROM (	
+				<include refid="StoreDashBoard.OrdrBody"/> 
+				<include refid="StoreDashBoard.OrdrWhere"/>
+				UNION ALL
+				<include refid="StoreDashBoard.UploadBody"/> 
+				<include refid="StoreDashBoard.UploadWhere"/>
+		)A
+	</select>
+	
+</sqlMap>
+       
