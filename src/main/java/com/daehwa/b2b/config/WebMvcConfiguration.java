@@ -12,7 +12,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver;
 
@@ -22,19 +21,19 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
 
   // @Bean
   // public TilesConfigurer tilesConfigurer() {
-  //   final TilesConfigurer configurer = new TilesConfigurer();
-  //   configurer.setDefinitions(new String[] { "/WEB-INF/tiles/tiles.xml" });
-  //   configurer.setCheckRefresh(true);
+  // final TilesConfigurer configurer = new TilesConfigurer();
+  // configurer.setDefinitions(new String[] { "/WEB-INF/tiles/tiles.xml" });
+  // configurer.setCheckRefresh(true);
 
-  //   return configurer;
+  // return configurer;
   // }
 
-  @Override
-  public void configureViewResolvers(ViewResolverRegistry registry) {
-    registry.jsp("/WEB-INF/views/", ".jsp");
+  // @Override
+  // public void configureViewResolvers(ViewResolverRegistry registry) {
+  // registry.jsp("/WEB-INF/views/", ".jsp");
 
-    WebMvcConfigurer.super.configureViewResolvers(registry);
-  }
+  // WebMvcConfigurer.super.configureViewResolvers(registry);
+  // }
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
@@ -46,8 +45,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
 
   @Override
   public void addArgumentResolvers(
-    List<HandlerMethodArgumentResolver> resolvers
-  ) {
+      List<HandlerMethodArgumentResolver> resolvers) {
     resolvers.add(new DeviceHandlerMethodArgumentResolver());
     resolvers.add(new SitePreferenceHandlerMethodArgumentResolver());
     WebMvcConfigurer.super.addArgumentResolvers(resolvers);
@@ -56,32 +54,35 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
     registry
-      .addResourceHandler("/resources/**")
-      .addResourceLocations("/WEB-INF/resources/");
+        .addResourceHandler("/resources/**")
+        .addResourceLocations("classpath:/static/resources/");
 
-    registry.addResourceHandler("/js/**").addResourceLocations("/WEB-INF/js/");
+    registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/resources/js/");
     registry
-      .addResourceHandler("/css/**")
-      .addResourceLocations("/WEB-INF/css/");
+        .addResourceHandler("/css/**")
+        .addResourceLocations("classpath:/static/resources/css/");
     registry
-      .addResourceHandler("/img/**")
-      .addResourceLocations("/WEB-INF/img/");
+        .addResourceHandler("/m/**")
+        .addResourceLocations("classpath:/static/resources/m/");
+
     registry
-      .addResourceHandler("/upload/**")
-      .addResourceLocations("/WEB-INF/upload/");
+        .addResourceHandler("/img/**")
+        .addResourceLocations("classpath:/static/resources/img/");
+    registry
+        .addResourceHandler("/upload/**")
+        .addResourceLocations("classpath:/static/upload/");
 
     WebMvcConfigurer.super.addResourceHandlers(registry);
   }
 
   @Override
   public void extendHandlerExceptionResolvers(
-    List<HandlerExceptionResolver> resolvers
-  ) {
+      List<HandlerExceptionResolver> resolvers) {
     HandlerExceptionResolver eResolver = resolvers
-      .stream()
-      .filter(x -> x instanceof ExceptionHandlerExceptionResolver)
-      .findAny()
-      .get();
+        .stream()
+        .filter(x -> x instanceof ExceptionHandlerExceptionResolver)
+        .findAny()
+        .get();
 
     int index = resolvers.indexOf(eResolver);
     resolvers.add(index, new CustomExceptionResolver());

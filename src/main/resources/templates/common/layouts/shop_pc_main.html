@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html
+  lagn="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+>
+  <head>
+    <th:block th:replace="common/fragments/meta::baseMeta"></th:block>
+    <title>대화공업</title>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div id="header">
+        <th:block
+          th:replace="common/fragments/shop/shop_pc_header::shopPcHeader"
+        ></th:block>
+      </div>
+      <div id="section" style="width: auto">
+        <!-- content fragment 사용 -->
+        <th:block layout:fragment="content"></th:block>
+      </div>
+    </div>
+    <div id="footer">
+      <th:block
+        th:replace="common/fragments/shop/shop_pc_footer::shopPcFooter"
+      ></th:block>
+    </div>
+  </body>
+</html>
