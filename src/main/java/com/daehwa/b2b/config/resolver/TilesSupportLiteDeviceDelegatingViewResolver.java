@@ -13,7 +13,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.ViewResolver;
 
-// TODO: Auto-generated Javadoc
 /**
  * Integration of Tiles with Spring Moblie
  *
@@ -21,7 +20,7 @@ import org.springframework.web.servlet.ViewResolver;
  */
 
 public class TilesSupportLiteDeviceDelegatingViewResolver
-  extends LiteDeviceDelegatingViewResolver {
+    extends LiteDeviceDelegatingViewResolver {
 
   /** The device type. */
   private String deviceType;
@@ -30,7 +29,7 @@ public class TilesSupportLiteDeviceDelegatingViewResolver
    * Instantiates a new tiles support lite device delegating view resolver.
    *
    * @param resolver
-   *            the resolver
+   *                 the resolver
    */
   public TilesSupportLiteDeviceDelegatingViewResolver(ViewResolver resolver) {
     super(resolver);
@@ -47,12 +46,10 @@ public class TilesSupportLiteDeviceDelegatingViewResolver
     String attributeValue = null;
     RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
     Assert.isInstanceOf(ServletRequestAttributes.class, attrs);
-    HttpServletRequest request =
-      ((ServletRequestAttributes) attrs).getRequest();
+    HttpServletRequest request = ((ServletRequestAttributes) attrs).getRequest();
     Device device = DeviceUtils.getCurrentDevice(request);
     SitePreference sitePreference = SitePreferenceUtils.getCurrentSitePreference(
-      request
-    );
+        request);
     String resolvedViewName = viewName;
     if (ResolverUtils.isNormal(device, sitePreference)) {
       resolvedViewName = getNormalPrefix() + viewName + getNormalSuffix();
@@ -77,7 +74,7 @@ public class TilesSupportLiteDeviceDelegatingViewResolver
    * Strip trailing slash.
    *
    * @param viewName
-   *            the view name
+   *                 the view name
    * @return the string
    */
   private String stripTrailingSlash(String viewName) {
@@ -91,7 +88,7 @@ public class TilesSupportLiteDeviceDelegatingViewResolver
    * Sets the device type.
    *
    * @param deviceType
-   *            the deviceType to set
+   *                   the deviceType to set
    */
   public void setDeviceType(String deviceType) {
     this.deviceType = deviceType;

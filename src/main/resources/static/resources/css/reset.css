@@ -1,0 +1,103 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+
+	font-size: 100%; /*css스타일시트에서 body 폰트 속성값 정의*/
+	font: inherit;
+	vertical-align: baseline;
+	font-weight:normal;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+input, select, img {
+	vertical-align: middle;
+	font-family: "Nanum Gothic", "맑은고딕","Malgun Gothic",Gulim,"굴림","돋움",Dotum,tahoma,Helvetica,AppleGothic,Sans-serif;
+}
+caption, legend, hr {
+	display: none;
+}
+
+* {
+ box-sizing: border-box; 
+ -ms-box-sizing: border-box; 
+ -moz-box-sizing: border-box; 
+ -webkit-box-sizing: border-box; 
+}
+::-webkit-input-placeholder {
+	color:#575757;
+}
+:-moz-placeholder {
+	color:#575757;
+}
+::-moz-placeholder {
+	color:#575757;
+}
+:-ms-input-placeholder {
+	color:#575757;
+}
+input, select, textarea, button {
+ vertical-align:middle
+}
+input[type='text'],input[type='password'],input[type='submit'],input[type='search'] {
+ -webkit-appearance:none; 
+}
+input[type='text'],input[type='password'], select, textarea {
+ border:1px solid #cccccc;
+}
+button,input[type='button'],input[type='submit'],input[type='reset'],input[type='file'] {
+ -webkit-appearance:none; 
+ border-radius:0
+}
+input[type='button'] {
+ -webkit-appearance:none;
+  border: 0;
+}
+input[type='search']:-webkit-search-cancel-button {
+ -webkit-appearance:none
+}
+input[type='radio'], input[type='checkbox'] {
+ border:none !important
+}
+
+a, a:link, a:visited, a:hover, a:active {
+ text-decoration: none;
+}
+
+
+
+
+
