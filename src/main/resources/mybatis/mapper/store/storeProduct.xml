@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<sqlMap namespace="StoreProduct">
+<mapper namespace="com.daehwa.b2b.store.dao.StoreProductDao">
 
-	<insert id="StoreProductDao.insPrdt">
-		<selectKey keyProperty="PRDT_CD" resultType="java.lang.String">
+	<insert id="insPrdt">
+		<selectKey keyProperty="PRDT_CD" resultType="string">
     		SELECT IFNULL(MAX(PRDT_CD), 1000000) + 1 AS PRDT_CD FROM TMP_PRDT_INFO
     	</selectKey>
 			/* StoreProductDao.insPrdt */
@@ -71,7 +71,7 @@
 		         )
 	</insert>
 	
-	<select id="StoreProductDao.getUpPrdtList" parameterType="hashMap" resultType="hashMap">
+	<select id="getUpPrdtList" parameterType="hashMap" resultType="hashMap">
 		/* StoreProductDao.getUpPrdtList */
 		SELECT A.PRDT_CD AS sPrdtCd,
 		       A.STORE_ID AS sSId,
@@ -151,5 +151,5 @@
 			AND A.STTUS NOT IN ('3')
 			AND A.USE_YN = 'Y'
 	</select>	
-</sqlMap>
+</mapper>
        

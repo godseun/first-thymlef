@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<sqlMap namespace="StoreJoin">
+<mapper namespace="com.daehwa.b2b.store.dao.StoreJoinDao">
         
     <!-- 사업자 번호 사용금지, 중복 사용 여부 체크-->
-    <select id="StoreJoinDao.checkBusiNo" parameterType="hashMap" resultType="string">
+    <select id="checkBusiNo" parameterType="hashMap" resultType="string">
     	/* StoreJoinDao.checkBusiNo */
 		SELECT 
 		  CASE WHEN (SELECT COUNT(1)
@@ -23,7 +23,7 @@
     </select> 
     
     <!-- 상점 등록 처리 (sStep2.jsp) -->
-    <insert id="StoreJoinDao.shopInsert">
+    <insert id="shopInsert">
     	<selectKey keyProperty="storeId" resultType="java.lang.String">
     		SELECT IFNULL(MAX(STORE_ID), 40000000) + 1 AS storeId FROM STORE_INFO
     	</selectKey>
@@ -73,7 +73,7 @@
     </insert>
     
     <!-- 상점 임시 등록 처리 (sStep2.jsp) -->
-    <insert id="StoreJoinDao.shopTmpInsert">
+    <insert id="shopTmpInsert">
     	<selectKey keyProperty="storeId" resultType="java.lang.String">
     		SELECT IFNULL(MAX(STORE_ID), 40000003) + 1 AS storeId FROM TMP_STORE_INFO
     	</selectKey>
@@ -103,7 +103,7 @@
     </insert>
     
     <!-- 상점 등록 처리 (sStep2.jsp) -->
-    <insert id="StoreJoinDao.shopAdminInsert">
+    <insert id="shopAdminInsert">
     	/*StoreJoinDao.shopAdminInsert*/
 		INSERT INTO STORE_ADMIN(
 			STORE_ID 
@@ -119,7 +119,7 @@
     </insert>
 
     <!-- 패스워드 변경 완료 -->
-	<update id="StoreJoinDao.setLoginPw">
+	<update id="setLoginPw">
 		/* StoreJoinDao.setLoginPw */
 		UPDATE USER_INFO SET
 			USR_PW 			= SHA1(#{shaRePw})
@@ -130,4 +130,4 @@
 			AND USR_PW 		= SHA1(#{shaPw})
 	</update>
 
-</sqlMap>
+</mapper>

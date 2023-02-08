@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<sqlMap namespace="StoreOrderDao">
-	<update id="StoreOrderDao.setOrderSttus">
+<mapper namespace="com.daehwa.b2b.store.dao.StoreOrderDao">
+	<update id="setOrderSttus">
 		/* StoreOrderDao.setOrderSttus */
 		UPDATE ORDR_DTL SET
 			STTUS 				= #{aSttus}
@@ -12,13 +12,13 @@
 			,UPDATE_ID			= #{usrId}
 		WHERE STORE_ID 	= #{storeId}
 			AND STTUS			= #{bSttus}
-			AND O_ID IN
-			<iterate property="oId" open="(" conjunction="," close=")">
-				 #oId[]#
-			</iterate>
+			AND O_ID IN 
+			<foreach collection="array" item="oId" open="(" close=")" separator=",">
+				#{oId}
+			</foreach>
 	</update>
 	
-	<update id="StoreOrderDao.setOrderInvoice">
+	<update id="setOrderInvoice">
 		/* StoreOrderDao.setOrderInvoice */
 		UPDATE ORDR_DTL SET
 			STTUS 				= #{aSttus}
@@ -33,7 +33,7 @@
 			AND O_ID 			= #{oId}
 	</update>
 	
-	<update id="StoreOrderDao.setOrderMstSttus">
+	<update id="setOrderMstSttus">
 		/* StoreOrderDao.setOrderMstSttus */
 		UPDATE ORDR_STR_MST M 
 		       SET M.STTUS =  
@@ -44,9 +44,9 @@
 													                FROM ORDR_DTL 
 													               WHERE STORE_ID 	= #{storeId}
 													               AND O_ID IN
-																	<iterate property="oId" open="(" conjunction="," close=")">
-																		 #oId[]#
-																	</iterate>
+																	<foreach collection="array" item="oId" open="(" close=")" separator=",">
+																		#{oId}
+																	</foreach>
 													              ) 
 							              AND D.STORE_ID 	= #{storeId}
 							              AND D.USE_YN  = 'Y' 
@@ -61,13 +61,13 @@
 					                FROM ORDR_DTL 
 					               WHERE STORE_ID 	= #{storeId}
 					               AND O_ID IN
-									<iterate property="oId" open="(" conjunction="," close=")">
-										 #oId[]#
-									</iterate>
+									<foreach collection="array" item="oId" open="(" close=")" separator=",">
+										#{oId}
+									</foreach>
 					              ) 		
 	</update>
 	
-	<update id="StoreOrderDao.setOrderMstInvoice">
+	<update id="setOrderMstInvoice">
 		/* StoreOrderDao.setOrderMstInvoice */
 		UPDATE ORDR_STR_MST M 
 		       SET M.STTUS =  
@@ -78,9 +78,9 @@
 													                FROM ORDR_DTL 
 													               WHERE STORE_ID 	= #{storeId}
 													               AND O_ID IN
-																	<iterate property="oId" open="(" conjunction="," close=")">
-																		 #oId[]#
-																	</iterate>
+																	<foreach collection="array" item="oId" open="(" close=")" separator=",">
+																		#{oId}
+																	</foreach>
 													              ) 
 							              AND D.STORE_ID 	= #{storeId}
 							              AND D.ORDR_ID = M.ORDR_ID 
@@ -94,13 +94,13 @@
 					                FROM ORDR_DTL 
 					               WHERE STORE_ID 	= #{storeId}
 					               AND O_ID IN
-									<iterate property="oId" open="(" conjunction="," close=")">
-										 #oId[]#
-									</iterate>
+									<foreach collection="array" item="oId" open="(" close=")" separator=",">
+										#{oId}
+									</foreach>
 					              ) 		
 	</update>
 
-	<select id="StoreOrderDao.getOrderRefusalList" parameterType="hashMap" resultType="hashMap">
+	<select id="getOrderRefusalList" parameterType="hashMap" resultType="hashMap">
 			/* StoreOrderDao.getOrderRefusalList */		
 			SELECT 
 				M.ORDR_ID, 
@@ -123,9 +123,9 @@
 				AND S.STORE_ID 	= #{storeId} 
 				AND S.O_ID 		= M.O_ID 
 				AND S.O_ID IN
-				<iterate property="oId" open="(" conjunction="," close=")">
-					 #oId[]#
-				</iterate>
+				<foreach collection="array" item="oId" open="(" close=")" separator=",">
+					#{oId}
+				</foreach>
 			WHERE M.ORDR_ID 	= #{ordrId} 
 				AND M.STORE_ID 	= #{storeId} 
 				AND M.ORDR_ID 	= SM.ORDR_ID 
@@ -133,8 +133,8 @@
        			AND M.USE_YN 	= 'Y'
 	</select>
 	
-	<insert id="StoreOrderDao.reqRefusal">
-		<selectKey keyProperty="chgId" resultType="Integer" type="post">
+	<insert id="reqRefusal">
+		<selectKey keyProperty="chgId" resultType="Integer" order="AFTER">
 			SELECT LAST_INSERT_ID()
 		</selectKey>
 		/* StoreOrderDao.reqRefusal */
@@ -167,15 +167,15 @@
 				AND M.ORDR_ID	= #{ordrId} 
 				AND M.STORE_ID 	= #{storeId} 
 				AND M.O_ID IN
-				<iterate property="oId" open="(" conjunction="," close=")">
-					 #oId[]#
-				</iterate>
+				<foreach collection="array" item="oId" open="(" close=")" separator=",">
+					#{oId}
+				</foreach>
 		   GROUP BY M.ORDR_ID,
 		       		M.ORDR_USR_ID,
 		       		M.STORE_ID
 	</insert>
 	
-	<update id="StoreOrderDao.setOrderChg">
+	<update id="setOrderChg">
 		/* StoreOrderDao.setOrderChg */
 		UPDATE ORDR_DTL SET
 			STTUS 				= #{aSttus}
@@ -185,13 +185,13 @@
 		WHERE STORE_ID 	= #{storeId}
 			AND ORDR_ID		= #{ordrId}  
 			AND O_ID IN
-			<iterate property="oId" open="(" conjunction="," close=")">
-				 #oId[]#
-			</iterate>
+			<foreach collection="array" item="oId" open="(" close=")" separator=",">
+				#{oId}
+			</foreach>
 	</update>
 
 	<!-- 주문 정보 리스트 조회 -->
-	<select id="StoreOrderDao.getOrdrListChk" parameterType="hashMap" resultType="hashMap">
+	<select id="getOrdrListChk" parameterType="hashMap" resultType="hashMap">
 	  	/* StoreOrderDao.getOrdrListChk */
 		SELECT 
 				D.O_ID
@@ -220,12 +220,13 @@
 		  	   , ORDR_DTL D 
 		       LEFT JOIN ORDR_DTL P
 		       ON D.ORDR_ID = P.ORDR_ID
-		       AND D.O_ID = P.O_ID
-			  <dynamic prepend="AND P.O_ID IN">
-					<iterate property="oId" open="(" conjunction="," close=")">
-						 #oId[]#
-					</iterate>
-			  </dynamic>
+		       AND D.O_ID = P.O_ID 
+					<if test='O_ID != null'>
+						AND P.O_ID IN 
+						<foreach collection="array" item="oId" open="(" close=")" separator=",">
+							#{oId}
+						</foreach>
+					</if>
 		 WHERE  D.ORDR_ID  = M.ORDR_ID
 			   AND D.ORDR_ID  = SM.ORDR_ID
 			   AND D.STORE_ID 	= SM.STORE_ID
@@ -235,15 +236,15 @@
 						                FROM ORDR_DTL 
 						               WHERE STORE_ID 	= #{storeId}
 						               AND O_ID IN
-										<iterate property="oId" open="(" conjunction="," close=")">
-											 #oId[]#
-										</iterate>
+														<foreach collection="array" item="oId" open="(" close=")" separator=",">
+															#{oId}
+														</foreach>
 						              ) 
 				AND D.DELETE_DT IS NULL
 		ORDER BY D.STORE_ID, D.ORDR_ID, D.STTUS DESC 
 	</select>
 
-	<insert id="StoreOrderDao.saveOrdrRmk">
+	<insert id="saveOrdrRmk">
 			/* StoreOrderDao.saveOrdrRmk*/
 		  INSERT
 		  INTO   CONTACT_BOARD
@@ -266,7 +267,7 @@
 		         )
 	</insert>	
 	
-	<update id="StoreOrderDao.orderRmkSave">
+	<update id="orderRmkSave">
 		/* StoreOrderDao.orderRmkSave */
 		UPDATE ORDR_DTL SET
 			RMK 					= #{sRMK}
@@ -276,5 +277,5 @@
 			AND O_ID 			= #{oId}
 	</update>	
 	
-</sqlMap>
+</mapper>
        

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.daehwa.b2b.front.dao.FrontSearchDao">
-	<sql id="FrontSearch.body">
+	<sql id="body">
 			SELECT 
 				   	PM.PRDT_CD ,
 			       	PD.PRDT_DTL_CD ,
@@ -30,7 +30,7 @@
 	</sql>
 	
 	<!-- 상품 info - 품목정보 -->
-	<sql id="FrontSearch.prductBody">
+	<sql id="prductBody">
 			SELECT 
 					PM.PRDT_CD,
 					PM.STORE_ID,
@@ -105,14 +105,14 @@
 			  	AND PM.STORE_ID = SI.STORE_ID
 	</sql>
 
-	<sql id="FrontSearch.prductWhere">  
-			<isNotEqual property="isAdmin" compareValue="N">
+	<sql id="prductWhere">  
+			<if test='isAdmin != "N"'>
 				AND PM.USE_YN  	='Y'
-			</isNotEqual>
+			</if>
 				AND PM.PRDT_CD = #{pCode}
 	</sql>
 		
-	<sql id="FrontSearch.categBody">
+	<sql id="categBody">
 		   SELECT   
 		   			T1.CATEG_CD AS LEV1_CD,
 		            T1.CATEG_NM AS LEV1_NM,
@@ -137,7 +137,7 @@
 		   WHERE    1 = 1
 	</sql>	
 	
-	<sql id="FrontSearch.contactBody">
+	<sql id="contactBody">
 			SELECT 
 			    ARTICLE_ID AS sArtCd
 			    ,BBS_ID AS sBbsId
@@ -161,10 +161,10 @@
 	</sql>	
 
 
-	<sql id="FrontSearch.where">  
+	<sql id="where">  
 			WHERE		PM.PRDT_CD = PD.PRDT_CD	
 			AND			PM.STORE_ID = PD.STORE_ID
-			<isNotEmpty property="mValue">
+			<if test='mValue != ""'>
 				AND(			
 								PM.PRDT_NM LIKE CONCAT('%',#{mValue},'%')
 						OR	PM.MAKR_NM LIKE CONCAT('%',#{mValue},'%')
@@ -173,55 +173,55 @@
 						OR	PM.PRDT_CD LIKE CONCAT('%',#{mValue},'%')
 						OR	PD.PRDT_DTL_CD LIKE CONCAT('%',#{mValue},'%')
 				)
-			</isNotEmpty>
-			<isNotEmpty property="mName">
+			</if>
+			<if test='mName != ""'>
 				AND			PM.PRDT_NM LIKE CONCAT('%',#{mName},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mBrand">
+			</if>
+			<if test='mBrand != ""'>
 				AND			PM.MAKR_NM LIKE CONCAT('%',#{mBrand},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mStndrd">
+			</if>
+			<if test='mStndrd != ""'>
 				AND			PD.STNDRD LIKE CONCAT('%',#{mStndrd},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mModel">
+			</if>
+			<if test='mModel != ""'>
 				AND			PD.MODEL_NM LIKE CONCAT('%',#{mModel},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mPrdtCd">
+			</if>
+			<if test='mPrdtCd != ""'>
 				AND			PM.PRDT_CD = #{mPrdtCd}
-			</isNotEmpty>
+			</if>
 	</sql>
 	
-	<sql id="FrontSearch.categDepthWhere">
-			<isNotEmpty property="ca1">
-				<isNotEqual property="ca1" compareValue="C9999">
+	<sql id="categDepthWhere">
+			<if test='ca1 != ""'>
+				<if test='ca1 != "C9999"'>
 					AND    T1.CATEG_TY_CD	= '1'
 			   		AND    T1.CATEG_CD 		= #{ca1}
-				</isNotEqual>
-			</isNotEmpty>
-			<isNotEmpty property="ca2">
-				<isNotEqual property="ca2" compareValue="C9999">
+				</if>
+			</if>
+			<if test='ca2 != ""'>
+				<if test='ca2 != "C9999"'>
 					AND    T2.CATEG_TY_CD	= '2'
 			   		AND    T2.CATEG_CD 		= #{ca2}
-				</isNotEqual>
-			</isNotEmpty>
-			<isNotEmpty property="ca3">
-				<isNotEqual property="ca3" compareValue="C9999">
+				</if>
+			</if>
+			<if test='ca3 != ""'>
+				<if test='ca3 != "C9999"'>
 					AND    T3.CATEG_TY_CD	= '3'
 			   		AND    T3.CATEG_CD 		= #{ca3}
-				</isNotEqual>
-			</isNotEmpty>
-			<isNotEmpty property="ca4">
-				<isNotEqual property="ca4" compareValue="C9999">
+				</if>
+			</if>
+			<if test='ca4 != ""'>
+				<if test='ca4 != "C9999"'>
 					AND    T4.CATEG_TY_CD	= '4'
 			   		AND    T4.CATEG_CD 		= #{ca4}
-				</isNotEqual>
-			</isNotEmpty>
-			<isNotEmpty property="ca5">
-				<isNotEqual property="ca5" compareValue="C9999">
+				</if>
+			</if>
+			<if test='ca5 != ""'>
+				<if test='ca5 != "C9999"'>
 					AND    T5.CATEG_TY_CD	= '5'
 			   		AND    T5.CATEG_CD 		= #{ca5}
-				</isNotEqual>
-			</isNotEmpty>
+				</if>
+			</if>
 	</sql>
  
  	<sql id="OrdrMstBody">
@@ -446,9 +446,9 @@
 			FROM 	
 				CMM_CODE
 			WHERE 1=1
-			<isNotEmpty property="sCd" prepend="AND">
-				CL_CD = #{sCd}
-			</isNotEmpty>
+			<if test='sCd != ""'>
+				AND CL_CD = #{sCd}
+			</if>
 	</select>	
  
 	<select id="getCodeDtl" parameterType="hashMap" resultType="hashMap">
@@ -483,12 +483,12 @@
 				MAKER_INFO
 			WHERE
 				 1 = 1
-			<isNotEmpty property="sValue" prepend="AND">
-				MAKR_NM LIKE CONCAT('%',#{sValue},'%')
-			</isNotEmpty>
-			<isNotEmpty property="sSus" prepend="AND">
-				USE_YN = #{sSus}
-			</isNotEmpty>
+			<if test='sValue != ""'>
+				AND MAKR_NM LIKE CONCAT('%',#{sValue},'%')
+			</if>
+			<if test='sSus != ""'>
+				AND USE_YN = #{sSus}
+			</if>
 	</select>	
 
 	<select id="getCateg" parameterType="hashMap" resultType="hashMap">
@@ -506,12 +506,12 @@
 			FROM 
 				CATEG_INFO	
 			WHERE 1=1
-			<isNotEmpty property="sCtp" prepend="AND">
-				CATEG_TY_CD = #{sCtp}
-			</isNotEmpty>
-			<isNotEmpty property="sPcd" prepend="AND">
-				P_CATEG_CD = #{sPcd}
-			</isNotEmpty>
+			<if test='sCtp != ""'>
+				AND CATEG_TY_CD = #{sCtp}
+			</if>
+			<if test='sPcd != ""'>
+				AND P_CATEG_CD = #{sPcd}
+			</if>
 	</select>	
 
 	<select id="getBbsList" parameterType="hashMap" resultType="hashMap">
@@ -536,12 +536,12 @@
 					AND 	B.BBS_ID = A.ATCH_TP
 					AND 	A.USE_AT = 'Y'
 			WHERE 1=1
-			<isNotEmpty property="bbsId" prepend="AND">
-				B.BBS_ID = #{bbsId}
-			</isNotEmpty>
-			<isNotEmpty property="artCd" prepend="AND">
-				B.ARTICLE_ID = #{artCd}
-			</isNotEmpty>
+			<if test='bbsId != ""'>
+				AND B.BBS_ID = #{bbsId}
+			</if>
+			<if test='artCd != ""'>
+				AND B.ARTICLE_ID = #{artCd}
+			</if>
 	</select>	
 	
 	<select id="getPromoList" parameterType="hashMap" resultType="hashMap">
@@ -577,12 +577,12 @@
                     AND	A.FILE_DC IS NOT NULL
                     AND	A.USE_AT = 'Y'
 			WHERE B.BBS_ID IN ('PRM', 'MSB', 'MCB', 'STF')
-			<isNotEmpty property="bbsId" prepend="AND">
-				B.BBS_ID = #{bbsId}
-			</isNotEmpty>
-			<isNotEmpty property="artCd" prepend="AND">
-				B.ARTICLE_ID = #{artCd}
-			</isNotEmpty>
+			<if test='bbsId != ""'>
+				AND B.BBS_ID = #{bbsId}
+			</if>
+			<if test='artCd != ""'>
+				AND B.ARTICLE_ID = #{artCd}
+			</if>
 	</select>	
 	
 	<select id="getUserList" parameterType="hashMap" resultType="hashMap">
@@ -611,26 +611,26 @@
 				,IF(USR_TP = 'A', SUBSTR(STORE_ID, 6, 1),'0') AS A9
 			FROM USER_INFO
 			WHERE WITHD_DT IS NULL
-			<isNotEmpty property="sUsrId" prepend="AND">
-				USR_ID = #{sUsrId}
-			</isNotEmpty>
-			<isNotEmpty property="sUsrNm" prepend="AND">
-				USR_NM = #{sUsrNm}
-			</isNotEmpty>
-			<isNotEmpty property="sUsrTp" prepend="AND">
-				USR_TP = #{sUsrTp}
-			</isNotEmpty>
-			<isNotEmpty property="sUsrLv" prepend="AND">
-				USR_LV = #{sUsrLv}
-			</isNotEmpty>
-			<isNotEmpty property="sValue">
-				AND(			
+			<if test='sUsrId != ""'>
+				AND USR_ID = #{sUsrId}
+			</if>
+			<if test='sUsrNm != ""'>
+				AND USR_NM = #{sUsrNm}
+			</if>
+			<if test='sUsrTp != ""'>
+				AND USR_TP = #{sUsrTp}
+			</if>
+			<if test='sUsrLv != ""'>
+				AND USR_LV = #{sUsrLv}
+			</if>
+			<if test='sValue != ""'>
+				AND (			
 							USR_ID LIKE CONCAT('%',#{sValue},'%')
 						OR USR_NM LIKE CONCAT('%',#{sValue},'%')
 						OR	 EMAIL LIKE CONCAT('%',#{sValue},'%')
 						OR MOBILE LIKE CONCAT('%',#{sValue},'%')
 				)
-			</isNotEmpty>
+			</if>
 	</select>	
 	
 	<select id="getStoreList" parameterType="hashMap" resultType="hashMap">
@@ -698,26 +698,26 @@
 			FROM STORE_INFO
 			WHERE WITHD_DT IS NULL
 			 	AND DELETE_DT IS NULL
-			<isNotEmpty property="erpLv" prepend="AND">
-				ERP_LV = #{erpLv}
-			</isNotEmpty>
-			<isNotEmpty property="sSttus" prepend="AND">
-				STTUS = #{sSttus}
-			</isNotEmpty>
-			<isNotEmpty property="sStoreId" prepend="AND">
-				STORE_ID = #{sStoreId}
-			</isNotEmpty>
-			<isNotEmpty property="sCmpBizNo" prepend="AND">
-				 FN_DECRYPT(CMP_BIZ_NO) = #{sCmpBizNo} COLLATE utf8_general_ci
-			</isNotEmpty>
-			<isNotEmpty property="sKeyWd">
-				AND(			
+			<if test='erpLv != ""'>
+				AND ERP_LV = #{erpLv}
+			</if>
+			<if test='sSttus != ""'>
+				AND STTUS = #{sSttus}
+			</if>
+			<if test='sStoreId != ""'>
+				AND STORE_ID = #{sStoreId}
+			</if>
+			<if test='sCmpBizNo != ""'>
+				 AND FN_DECRYPT(CMP_BIZ_NO) = #{sCmpBizNo} COLLATE utf8_general_ci
+			</if>
+			<if test='sKeyWd != ""'>
+				AND (			
 							RPRSNTV_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
 						OR CHARGER_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
 						OR STORE_NM LIKE 		CONCAT('%',#{sKeyWd},'%')
 						OR CMP_NM LIKE 			CONCAT('%',#{sKeyWd},'%')
 				)
-			</isNotEmpty>
+			</if>
 	</select>	
 	
 	
@@ -757,28 +757,28 @@
 				)AS BSL_IMG		
 			FROM STORE_INFO
 			WHERE 1 = 1
-			<isNotEmpty property="sSttus" prepend="AND">
-				STTUS = #{sSttus}
-			</isNotEmpty>
-			<isNotEmpty property="sStoreId" prepend="AND">
-				STORE_ID = #{sStoreId}
-			</isNotEmpty>
-			<isNotEmpty property="sCmpBizNo" prepend="AND">
-				 FN_DECRYPT(CMP_BIZ_NO) = #{sCmpBizNo} COLLATE utf8_general_ci
-			</isNotEmpty>
-			<isNotEmpty property="sKeyWd">
-				AND(			
+			<if test='sSttus != ""'>
+				AND STTUS = #{sSttus}
+			</if>
+			<if test='sStoreId != ""'>
+				AND STORE_ID = #{sStoreId}
+			</if>
+			<if test='sCmpBizNo != ""'>
+				 AND FN_DECRYPT(CMP_BIZ_NO) = #{sCmpBizNo} COLLATE utf8_general_ci
+			</if>
+			<if test='sKeyWd != ""'>
+				AND (			
 							RPRSNTV_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
 						OR CHARGER_NM LIKE 	CONCAT('%',#{sKeyWd},'%')
 						OR STORE_NM LIKE 		CONCAT('%',#{sKeyWd},'%')
 						OR CMP_NM LIKE 			CONCAT('%',#{sKeyWd},'%')
 				)
-			</isNotEmpty>
+			</if>
 	</select>	
 	
 	<select id="getContList" parameterType="hashMap" resultType="hashMap">
  		/* FrontSearchDao.getContList */
-		<include refid="FrontSearch.contactBody"/>
+		<include refid="contactBody"/>
 	  	  AND WRITER = #{sWriter}
 		<if test='sBbsId != ""'>
 			AND BBS_ID IN (
@@ -792,11 +792,11 @@
 	
 	<select id="getUserBbs" parameterType="hashMap" resultType="hashMap">
 		/* FrontSearchDao.getUserBbs */
-		<include refid="FrontSearch.contactBody"/>
+		<include refid="contactBody"/>
 	  	  AND WRITER = #{sCid}
-		<isNotEmpty property="sBbsId" prepend="AND">
-			BBS_ID = #{sBbsId}
-		</isNotEmpty>
+		<if test='sBbsId != ""'>
+			AND BBS_ID = #{sBbsId}
+		</if>
 	</select>	
 	
 	<select id="getUserCart" parameterType="hashMap" resultType="hashMap">
@@ -842,19 +842,19 @@
 	
 	<select id="getContBbsList" parameterType="hashMap" resultType="hashMap">
 		/* FrontSearchDao.getContBbsList */
-		<include refid="FrontSearch.contactBody"/>
-		<isNotEmpty property="sCid" prepend="AND">
-	  	  	WRITER = #{sCid}
-		</isNotEmpty>
-		<isNotEmpty property="sBbsId" prepend="AND">
-			BBS_ID = #{sBbsId}
-		</isNotEmpty>
-		<isNotEmpty property="sValue" prepend="AND">
-			(
+		<include refid="contactBody"/>
+		<if test='sCid != ""'>
+	  	  	AND WRITER = #{sCid}
+		</if>
+		<if test='sBbsId != ""'>
+			AND BBS_ID = #{sBbsId}
+		</if>
+		<if test='sValue != ""'>
+			AND (
 				TITLE LIKE CONCAT('%',#{sValue},'%')
 				OR CONTENT LIKE CONCAT('%',#{sValue},'%')
 			)
-		</isNotEmpty>
+		</if>
 		<if test='isNoAns == "Y"'>
 			AND ANSWER_DT IS NULL
 		</if> 
@@ -864,12 +864,12 @@
 		<if test='sBbsId == ""'>
 			AND BBS_ID NOT IN ('MNG','ORD')
 		</if>
-		<isNotEmpty property="sDt" prepend="AND">
-			DATE(CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
-		</isNotEmpty>
-		<isNotEmpty property="eDt" prepend="AND">
-			DATE(CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
-		</isNotEmpty>
+		<if test='sDt != ""'>
+			AND DATE(CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+		</if>
+		<if test='eDt != ""'>
+			AND DATE(CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+		</if>
 		ORDER BY  ANSWER_DT, CREATE_DT, BBS_ID 
 	</select>	
 	
@@ -889,14 +889,14 @@
         	A.LEV5_CD as sCcd,
         	A.LEV5_NM as sCnm
 		FROM (
-					<include refid="FrontSearch.body"/>
+					<include refid="body"/>
 						,(		  SELECT C.LEV1_CD, C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
 								  FROM   (
-												<include refid="FrontSearch.categBody"/>
-												<include refid="FrontSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="FrontSearch.where"/>
+			<include refid="where"/>
 			AND PM.CATEG_CD = CATEG.LEV3_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}
 			AND PM.USE_YN = 'Y'
@@ -919,14 +919,14 @@
         	A.LEV5_CD as sCcd,
         	A.LEV5_NM as sCnm
 		FROM (
-					<include refid="FrontSearch.body"/>
+					<include refid="body"/>
 						,(		  SELECT C.LEV1_CD, C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
 								  FROM   (
-												<include refid="FrontSearch.categBody"/>
-												<include refid="FrontSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="FrontSearch.where"/>
+			<include refid="where"/>
 			AND PM.CATEG_CD = CATEG.LEV5_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}
 			AND PM.USE_YN = 'Y'
@@ -940,8 +940,8 @@
 	
 	<select id="getPrdtInfo" parameterType="hashMap" resultType="hashMap">
 		/* FrontSearchDao.getPrdtInfo */
-		<include refid="FrontSearch.prductBody"/>
-		<include refid="FrontSearch.prductWhere"/>	
+		<include refid="prductBody"/>
+		<include refid="prductWhere"/>	
 	</select>	
 	
 	
@@ -1016,19 +1016,19 @@
 			FROM   PRDT_MST PM, PRDT_DTL PD,  STORE_INFO SI
 						,(		  SELECT C.LEV1_CD, C.LEV2_CD, C.LEV3_CD, C.LEV4_CD, C.LEV5_CD, C.LEV5_NM
 								  FROM   (
-												<include refid="FrontSearch.categBody"/>
-												<include refid="FrontSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="FrontSearch.where"/>
+			<include refid="where"/>
 			AND PM.CATEG_CD 	= CATEG.LEV5_CD	
 			AND PM.STORE_ID	= SI.STORE_ID
 			AND PM.PRDT_TP 	= #{PRDT_TP}
 			
-			<isNotEmpty property="mStoreId">
+			<if test='mStoreId != ""'>
 				AND PM.STORE_ID	= #{mStoreId}
-			</isNotEmpty>
-			<isNotEmpty property="sPrdtTp">
+			</if>
+			<if test='sPrdtTp != ""'>
 				<if test='sPrdtTp == "5"'>
 					AND PD.SOLDOUT_AT = 'Y'
 				</if>
@@ -1047,7 +1047,7 @@
 					AND PD.USE_YN = 'Y'
 					AND PD.DELETE_DT IS  NULL
 				</if>
-			</isNotEmpty> 
+			</if> 
          ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD, PD.PRDT_DTL_CD		
 	</select>	
 	
@@ -1119,19 +1119,19 @@
 			FROM   PRDT_MST PM, PRDT_DTL PD,  STORE_INFO SI
 						,(		  SELECT C.LEV1_CD, C.LEV2_CD, C.LEV3_CD, C.LEV4_CD, C.LEV5_CD, C.LEV5_NM
 								  FROM   (
-												<include refid="FrontSearch.categBody"/>
-												<include refid="FrontSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="FrontSearch.where"/>
+			<include refid="where"/>
 			AND PM.CATEG_CD 	= CATEG.LEV5_CD	
 			AND PM.STORE_ID	= SI.STORE_ID
 			AND PM.PRDT_TP 	= #{PRDT_TP}
 			
-			<isNotEmpty property="mStoreId">
+			<if test='mStoreId != ""'>
 				AND PM.STORE_ID	= #{mStoreId}
-			</isNotEmpty>
-			<isNotEmpty property="sPrdtTp">
+			</if>
+			<if test='sPrdtTp != ""'>
 				<if test='sPrdtTp == "5"'>
 					AND PD.SOLDOUT_AT = 'Y'
 				</if>
@@ -1146,7 +1146,7 @@
 					AND PD.SOLDOUT_AT = 'N'
 					AND PD.DELETE_DT IS  NULL
 				</if>
-			</isNotEmpty> 
+			</if> 
          ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD, PD.PRDT_DTL_CD		
 	</select>	
 	
@@ -1191,28 +1191,28 @@
 			FROM   PRDT_MST PM
 						,(		  SELECT C.LEV1_CD, C.LEV2_CD, C.LEV3_CD, C.LEV4_CD, C.LEV5_CD, C.LEV5_NM
 								  FROM   (
-												<include refid="FrontSearch.categBody"/>
-												<include refid="FrontSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
 			WHERE PM.CATEG_CD 	= CATEG.LEV5_CD	
 				AND PM.PRDT_TP 	= #{PRDT_TP}
-				<isNotEmpty property="mValue">
+				<if test='mValue != ""'>
 					AND(			
 									PM.PRDT_NM LIKE CONCAT('%',#{mValue},'%')
 							OR	PM.MAKR_NM LIKE CONCAT('%',#{mValue},'%')
 							OR	PM.PRDT_CD LIKE CONCAT('%',#{mValue},'%')
 					)
-				</isNotEmpty>
-				<isNotEmpty property="mName">
+				</if>
+				<if test='mName != ""'>
 					AND			PM.PRDT_NM LIKE CONCAT('%',#{mName},'%')
-				</isNotEmpty>
-				<isNotEmpty property="mBrand">
+				</if>
+				<if test='mBrand != ""'>
 					AND			PM.MAKR_NM LIKE CONCAT('%',#{mBrand},'%')
-				</isNotEmpty>
-				<isNotEmpty property="mPrdtCd">
+				</if>
+				<if test='mPrdtCd != ""'>
 					AND			PM.PRDT_CD = #{mPrdtCd}
-				</isNotEmpty>
+				</if>
          ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM , PM.PRDT_CD
 	</select>	
 	
@@ -1261,8 +1261,8 @@
 			FROM   STORE_INFO SI
 						,(		  SELECT C.LEV1_NM, C.LEV2_NM, C.LEV3_NM, C.LEV4_NM, C.LEV5_NM, C.LEV5_CD
 								  FROM   (
-												<include refid="FrontSearch.categBody"/>
-												<include refid="FrontSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
 						, PRDT_MST PM
@@ -1272,7 +1272,7 @@
 			WHERE PM.CATEG_CD 	= CATEG.LEV5_CD	
 			AND PM.STORE_ID	= SI.STORE_ID
 			AND PM.PRDT_TP 	= #{PRDT_TP}
-			<isNotEmpty property="mValue">
+			<if test='mValue != ""'>
 					AND(			
 								PM.PRDT_NM LIKE CONCAT('%',#{mValue},'%')
 						OR	PM.MAKR_NM LIKE CONCAT('%',#{mValue},'%')
@@ -1281,26 +1281,26 @@
 						OR	PM.PRDT_CD LIKE CONCAT('%',#{mValue},'%')
 						OR	PD.PRDT_DTL_CD LIKE CONCAT('%',#{mValue},'%')
 					)
-			</isNotEmpty>
-			<isNotEmpty property="mPrdtCd">
+			</if>
+			<if test='mPrdtCd != ""'>
 				AND PM.PRDT_CD = #{mPrdtCd}
-			</isNotEmpty>
-			<isNotEmpty property="mName">
+			</if>
+			<if test='mName != ""'>
 				AND PM.PRDT_NM LIKE CONCAT('%',#{mName},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mBrand">
+			</if>
+			<if test='mBrand != ""'>
 				AND PM.MAKR_NM LIKE CONCAT('%',#{mBrand},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mStndrd">
+			</if>
+			<if test='mStndrd != ""'>
 				AND PD.STNDRD LIKE CONCAT('%',#{mStndrd},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mModel">
+			</if>
+			<if test='mModel != ""'>
 				AND PD.MODEL_NM LIKE CONCAT('%',#{mModel},'%')
-			</isNotEmpty> 
-			<isNotEmpty property="mStoreId">
+			</if> 
+			<if test='mStoreId != ""'>
 				AND PM.STORE_ID	= #{mStoreId}
-			</isNotEmpty>
-			<isNotEmpty property="sPrdtTp">
+			</if>
+			<if test='sPrdtTp != ""'>
 				<if test='sPrdtTp == "1"'> 
 					AND PM.USE_YN = 'Y'
 					AND PD.USE_YN = 'Y'
@@ -1312,28 +1312,28 @@
 				<if test='sPrdtTp == "2"'>
 					AND PD.USE_YN = 'N'
 				</if>
-			</isNotEmpty>
-			<isNotEmpty property="sPrdtCd">
+			</if>
+			<if test='sPrdtCd != ""'>
 				AND PM.PRDT_CD	= #{sPrdtCd}
-			</isNotEmpty>
-			<isNotEmpty property="STcareYn">
+			</if>
+			<if test='STcareYn != ""'>
 				AND PM.ST_CARE_AT	= #{STcareYn}
-			</isNotEmpty>
-			<isNotEmpty property="mnfYn">
+			</if>
+			<if test='mnfYn != ""'>
 				AND PM.MNF_AT	= #{mnfYn}
-			</isNotEmpty>
-			<isNotEmpty property="moveYn">
+			</if>
+			<if test='moveYn != ""'>
 				AND PM.MOVE_AT	= #{moveYn}
-			</isNotEmpty>
-			<isNotEmpty property="ebookYn">
+			</if>
+			<if test='ebookYn != ""'>
 				AND PM.EBOOK_IMG_AT	= #{ebookYn}
-			</isNotEmpty>
-			<isNotEmpty property="ctlImgYn">
+			</if>
+			<if test='ctlImgYn != ""'>
 				AND PM.CTL_IMG_AT	= #{ctlImgYn}
-			</isNotEmpty>
-			<isNotEmpty property="adYn">
+			</if>
+			<if test='adYn != ""'>
 				AND PM.AD_YN	= #{adYn}
-			</isNotEmpty>
+			</if>
          ORDER BY PM.PRDT_CD		
 	</select>	
 	
@@ -1366,18 +1366,18 @@
 			FROM   PRDT_MST PM, PRDT_DTL PD,  STORE_INFO SI
 						,(		  SELECT C.LEV1_NM, C.LEV2_NM, C.LEV3_NM, C.LEV4_NM, C.LEV5_NM, C.LEV5_CD
 								  FROM   (
-												<include refid="FrontSearch.categBody"/>
-												<include refid="FrontSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="FrontSearch.where"/>
-			<isNotEmpty property="mStoreId">
+			<include refid="where"/>
+			<if test='mStoreId != ""'>
 				AND PM.STORE_ID	= #{mStoreId}
-			</isNotEmpty>
+			</if>
 			AND PM.CATEG_CD 	= CATEG.LEV5_CD	
 			AND PM.STORE_ID	= SI.STORE_ID
 			AND PM.PRDT_TP 	= #{PRDT_TP}
-			<isNotEmpty property="sPrdtTp">
+			<if test='sPrdtTp != ""'>
 				<if test='sPrdtTp == "1"'>
 					AND PM.USE_YN = 'Y'
 					AND PD.USE_YN = 'Y'
@@ -1389,28 +1389,28 @@
 				<if test='sPrdtTp == "2"'>
 					AND PD.USE_YN = 'N'
 				</if>
-			</isNotEmpty> 
-			<isNotEmpty property="sPrdtCd">
+			</if> 
+			<if test='sPrdtCd != ""'>
 				AND PM.PRDT_CD	= #{sPrdtCd}
-			</isNotEmpty>
-			<isNotEmpty property="STcareYn">
+			</if>
+			<if test='STcareYn != ""'>
 				AND PM.ST_CARE_AT	= #{STcareYn}
-			</isNotEmpty>
-			<isNotEmpty property="mnfYn">
+			</if>
+			<if test='mnfYn != ""'>
 				AND PM.MNF_AT	= #{mnfYn}
-			</isNotEmpty>
-			<isNotEmpty property="moveYn">
+			</if>
+			<if test='moveYn != ""'>
 				AND PM.MOVE_AT	= #{moveYn}
-			</isNotEmpty>
-			<isNotEmpty property="ebookYn">
+			</if>
+			<if test='ebookYn != ""'>
 				AND PM.EBOOK_IMG_AT	= #{ebookYn}
-			</isNotEmpty>
-			<isNotEmpty property="ctlImgYn">
+			</if>
+			<if test='ctlImgYn != ""'>
 				AND PM.CTL_IMG_AT	= #{ctlImgYn}
-			</isNotEmpty>
-			<isNotEmpty property="adYn">
+			</if>
+			<if test='adYn != ""'>
 				AND PM.AD_YN	= #{adYn}
-			</isNotEmpty>
+			</if>
          ORDER BY PD.PRDT_CD, PD.PRDT_DTL_CD
 	</select>	
 	
@@ -1488,24 +1488,24 @@
 		FROM   TMP_PRDT_INFO A
 		WHERE 1 = 1
 			AND A.USE_YN = 'Y'
-		<isNotEmpty property="sSus" prepend="AND">
-			A.STTUS = #{sSus}
-		</isNotEmpty>
-		<isNotEmpty property="sNm"  prepend="AND">
-			A.STORE_ID = #{sNm}
-		</isNotEmpty> 
-		<isNotEmpty property="sValue"  prepend="AND">
-			(
+		<if test='sSus != ""'>
+			AND A.STTUS = #{sSus}
+		</if>
+		<if test='sNm != ""'>
+			AND A.STORE_ID = #{sNm}
+		</if> 
+		<if test='sValue != ""'>
+			AND (
 			A.PRDT_NM LIKE CONCAT('%',#{sValue},'%')
 			OR A.STNDRD LIKE CONCAT('%',#{sValue},'%')
 			)
-		</isNotEmpty> 
-		<isNotEmpty property="sDt"  prepend="AND">
-			DATE(A.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
-		</isNotEmpty> 
-		<isNotEmpty property="eDt"  prepend="AND">
-			DATE(A.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
-		</isNotEmpty> 
+		</if> 
+		<if test='sDt != ""'>
+			AND DATE(A.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+		</if> 
+		<if test='eDt != ""'>
+			AND DATE(A.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+		</if> 
 	</select>	
 	
 	<select id="getMdPrdtList" parameterType="hashMap" resultType="hashMap">
@@ -1563,15 +1563,15 @@
                ,P.USE_YN AS sUseYN
 			FROM PROMO_BOARD AS P
 			WHERE P.USE_YN = 'Y' 
-			<isNotEmpty property="onlyMovie">
+			<if test='onlyMovie != ""'>
 				AND P.URL IS NOT NULL
-			</isNotEmpty>
-			<isNotEmpty property="sPrdtCd">
+			</if>
+			<if test='sPrdtCd != ""'>
 				AND P.PRDT_CD = #{sPrdtCd}
-			</isNotEmpty>
-			<isNotEmpty property="sBbsId">
+			</if>
+			<if test='sBbsId != ""'>
 				AND P.BBS_ID = #{sBbsId}
-			</isNotEmpty>
+			</if>
 	</select>	
 	
 	<select id="getOrderDashBoard" parameterType="hashMap" resultType="hashMap">
@@ -1691,12 +1691,14 @@
 		<if test='jobTp == "orderMng"'>
 		       AND M.USE_YN 		= 'Y'
 		       AND D.USE_YN 			= 'Y'
-			<isEmpty property="sSus">
-				AND D.STTUS <![CDATA[>=]]> '1'
-			</isEmpty>
-			<isNotEmpty property="sSus">
-				AND D.STTUS = #{sSus}
-			</isNotEmpty>
+						<choose>
+							<when test='sSus == ""'>
+							AND D.STTUS <![CDATA[>=]]> '1' 
+							</when>
+							<otherwise>
+							AND D.STTUS = #{sSus} 
+							</otherwise>
+						</choose>
 		</if>
 		<if test='jobTp == "deliveryMng"'>
 		       AND M.USE_YN 		= 'Y'
@@ -1821,20 +1823,20 @@
 	<select id="getOrderAllList" parameterType="hashMap" resultType="hashMap">
 		/* FrontSearchDao.getOrderAllList */
 		<include refid="OrdrDtlBody"/> 
-		<isNotEmpty property="sDt" prepend="AND">
-			DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
-		</isNotEmpty>
-		<isNotEmpty property="eDt" prepend="AND">
-			DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
-		</isNotEmpty>		
-		<isNotEmpty property="sSus" prepend="AND">
-			D.STTUS = #{sSus}
-		</isNotEmpty>
-		<isNotEmpty property="sOusr" prepend="AND">
-			D.ORDR_USR_ID = #{sOusr}
-		</isNotEmpty>
-		<isNotEmpty property="mValue">
-			AND(			
+		<if test='sDt != ""'>
+			AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+		</if>
+		<if test='eDt != ""'>
+			AND DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+		</if>		
+		<if test='sSus != ""'>
+			AND D.STTUS = #{sSus}
+		</if>
+		<if test='sOusr != ""'>
+			AND D.ORDR_USR_ID = #{sOusr}
+		</if>
+		<if test='mValue != ""'>
+			AND (			
 							D.ORDR_ID 				LIKE CONCAT('%',#{mValue},'%')
 					OR		D.INVOICE 				LIKE CONCAT('%',#{mValue},'%')
 					
@@ -1846,7 +1848,7 @@
 					OR		U.USR_NM LIKE CONCAT('%',#{mValue},'%')
 					OR		REPLACE(U.MOBILE,'-','')LIKE CONCAT('%',REPLACE(#{mValue},'-',''),'%')
 			)
-		</isNotEmpty>		 
+		</if>		 
 		ORDER BY D.ORDR_DT, D.ORDR_ID, D.STTUS,  D.O_ID      			
 	</select>	
 	
@@ -1855,13 +1857,13 @@
 		<include refid="RtnOrdrDtlBody"/> 
 		<include refid="OrdrWhere"/>
 		AND D.ORDR_ID = #{ordrId}
-		<isNotEqual property="jobTp" compareValue="returnMng">
-			<isNotEqual property="jobTp" compareValue="cancelMng">
+		<if test='jobTp != "returnMng"'>
+			<if test='jobTp != "cancelMng"'>
 		       AND M.USE_YN 		= 'Y'
 		       AND SM.USE_YN 		= 'Y'
 		       AND D.USE_YN 			= 'Y'
-			</isNotEqual>
-		</isNotEqual>
+			</if>
+		</if>
 		ORDER BY D.ORDR_DT, D.ORDR_ID, D.STTUS,  D.O_ID
 	</select>	
 	
@@ -2473,22 +2475,22 @@
 				,EM.STTUS
 			  FROM ESTIMATE_MST EM
 			 WHERE USE_YN = 'Y'
-				<isNotEmpty property="sDt"  prepend="AND">
-					DATE(EM.REQ_DT) <![CDATA[>=]]>  DATE(#{sDt})
-				</isNotEmpty> 
-				<isNotEmpty property="eDt"  prepend="AND">
-					DATE(EM.REQ_DT) <![CDATA[<=]]>  DATE(#{eDt})
-				</isNotEmpty> 
-				<isNotEmpty property="sSttus" prepend="AND">
-					EM.STTUS = #{sSttus}
-				</isNotEmpty>
-				<isNotEmpty property="sValue" prepend="AND">
-					(			
+				<if test='sDt != ""'>
+					AND DATE(EM.REQ_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</if> 
+				<if test='eDt != ""'>
+					AND DATE(EM.REQ_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</if> 
+				<if test='sSttus != ""'>
+					AND EM.STTUS = #{sSttus}
+				</if>
+				<if test='sValue != ""'>
+					AND (			
 							EM.EST_ID LIKE CONCAT('%',#{sValue},'%')
 						OR EM.CHAR_NM LIKE CONCAT('%',#{sValue},'%')
 						OR EM.CMP_NM LIKE CONCAT('%',#{sValue},'%')
 					)
-				</isNotEmpty>
+				</if>
 	</select>	
 			
 	<select id="getEstPrdtList" parameterType="hashMap" resultType="hashMap">
@@ -2677,13 +2679,15 @@
 				,N.CREATE_DT
 				,N.CREATE_ID
 			FROM CRM_NOTI N 
-			WHERE N.USE_YN 	= 'Y'
-				<isNotEmpty property="mobile">
-					AND N.PHONE = REPLACE(#{mobile},'-','')
-				</isNotEmpty> 
-				<isEmpty property="mobile">
-					AND N.STTUS = '1'
-				</isEmpty> 
+			WHERE N.USE_YN 	= 'Y' 
+				<choose>
+					<when test='mobile != ""'>
+					AND N.PHONE = REPLACE(#{mobile},'-','') 
+					</when>
+					<otherwise>
+					AND N.STTUS = '1' 
+					</otherwise>
+				</choose>
 			ORDER BY N.STTUS, N.CRM_ID DESC
 	</select>	
 			
@@ -2703,18 +2707,18 @@
 					,IFNULL(B.UPDATE_ID,  B.CREATE_ID)  AS sCid
 			FROM BOARD AS B
 			WHERE B.BBS_ID = 'TSP'
-			<isNotEmpty property="sValue">
+			<if test='sValue != ""'>
 				AND (
 						B.ARTICLE_ID LIKE CONCAT('%',#{sValue},'%')
 					OR	B.TITLE LIKE CONCAT('%',#{sValue},'%')
 					)
-			</isNotEmpty>
-			<isNotEmpty property="sDt">
+			</if>
+			<if test='sDt != ""'>
 				AND DATE(B.BBS_STRT_DT) <![CDATA[>=]]>  DATE(#{sDt})
-			</isNotEmpty> 
-			<isNotEmpty property="eDt">
+			</if> 
+			<if test='eDt != ""'>
 				AND DATE(B.BBS_END_DT) <![CDATA[<=]]>  DATE(#{eDt})
-			</isNotEmpty> 
+			</if> 
 	</select>	
 	
 	<select id="getSalePrdtList" parameterType="hashMap" resultType="hashMap">
@@ -2819,12 +2823,12 @@
 			AND SOLDOUT_AT 	= 'N'
 			AND V_MD_AT 			= 'Y'	
 			AND PRDT_CD LIKE 'ST7%'
-			<isNotEmpty property="mCd">
+			<if test='mCd != ""'>
 				AND	PRDT_CD LIKE CONCAT('%',#{mCd},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mNm">
+			</if>
+			<if test='mNm != ""'>
 				AND	PRDT_NM LIKE CONCAT('%',#{mNm},'%')
-			</isNotEmpty>
+			</if>
 	</select>
 	
 	<select id="getSetPrdtList" parameterType="hashMap" resultType="hashMap">

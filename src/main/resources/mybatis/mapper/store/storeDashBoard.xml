@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<sqlMap namespace="StoreDashBoard">
-	<sql id="StoreDashBoard.OrdrBody">
+<mapper namespace="com.daehwa.b2b.store.dao.StoreDashBoard">
+	<sql id="OrdrBody">
 		SELECT 
 			   COUNT(D.O_ID) AS T_OR  ,
 		       SUM( IF ( D.STTUS = 1, 1, 0 )) AS OR_1 ,
@@ -25,17 +25,17 @@
 		       AND D.DELETE_DT IS NULL 
 	</sql>
 	
-	<sql id="StoreDashBoard.OrdrWhere">
-		<isNotEmpty property="storeId">
+	<sql id="OrdrWhere">
+		<if test='storeId != ""'>
        		AND M.STORE_ID = #{storeId}
-		</isNotEmpty>
-		<isNotEqual property="isAll" compareValue="Y">
+		</if>
+		<if test='isAll != "Y"'>
 	       	AND D.STTUS IN ('1','2','3','4') 
 	       	AND DATE(D.ORDR_DT) <![CDATA[>=]]> DATE(( NOW() - INTERVAL 7 DAY))
-		</isNotEqual>
+		</if>
 	</sql>
 	
-	<sql id="StoreDashBoard.UploadBody">
+	<sql id="UploadBody">
 		SELECT
 		       	 0 AS T_OR   
 		      	,0 AS OR_1 
@@ -51,15 +51,15 @@
 		FROM TMP_PRDT_INFO
 	</sql>
 	
-	<sql id="StoreDashBoard.UploadWhere">
+	<sql id="UploadWhere">
 		WHERE USE_YN = 'Y'
 	       	AND DATE(CREATE_DT) <![CDATA[>=]]> DATE(( NOW() - INTERVAL 7 DAY))
-		<isNotEmpty property="storeId">
+		<if test='storeId != ""'>
        		AND STORE_ID = #{storeId}
-		</isNotEmpty>
+		</if>
 	</sql>
 	
-	<select id="StoreDashBoard.getDashBoard" parameterType="hashMap" resultType="hashMap">
+	<select id="getDashBoard" parameterType="hashMap" resultType="hashMap">
 		SELECT 
 			SUM(A.T_OR) AS T_OR   
 			,SUM(A.OR_1) AS OR_1 
@@ -73,13 +73,13 @@
 			,SUM(A.CON_1) AS CON_1
 			,SUM(A.REJ_1) AS REJ_1 
 		FROM (	
-				<include refid="StoreDashBoard.OrdrBody"/> 
-				<include refid="StoreDashBoard.OrdrWhere"/>
+				<include refid="OrdrBody"/> 
+				<include refid="OrdrWhere"/>
 				UNION ALL
-				<include refid="StoreDashBoard.UploadBody"/> 
-				<include refid="StoreDashBoard.UploadWhere"/>
+				<include refid="UploadBody"/> 
+				<include refid="UploadWhere"/>
 		)A
 	</select>
 	
-</sqlMap>
+</mapper>
        

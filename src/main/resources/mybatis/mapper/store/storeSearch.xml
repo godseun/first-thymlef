@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<sqlMap namespace="storeSearchDao">
-	<sql id="StoreSearchDao.OrdrBody">
+<mapper namespace="com.daehwa.b2b.store.dao.StoreSearchDao">
+	<sql id="OrdrBody">
 		SELECT   
 			   D.ORDR_ID AS sMordrId ,
 		       D.ORDR_DT AS sMordrDt ,
@@ -47,7 +47,7 @@
 	</sql>
 	
 
-	<sql id="StoreSearchDao.OrdrBody2">
+	<sql id="OrdrBody2">
 		SELECT   
 			   D.ORDR_ID AS sMordrId ,
 		       D.ORDR_DT AS sMordrDt ,
@@ -118,49 +118,49 @@
 		       AND D.DELETE_DT 	IS NULL 
 	</sql>	
 	
-	<sql id="StoreSearchDao.OrdrWhere">
+	<sql id="OrdrWhere">
 		AND SM.STORE_ID = #{storeId}
-		<isEmpty property="allSsttus">
-			<isNotEqual property="isAll" compareValue="Y" prepend="AND">
-		       	D.STTUS NOT IN ('0','7','8') 
-			</isNotEqual>
-			<isNotEmpty property="sDt" prepend="AND">
-				DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
-			</isNotEmpty>
-			<isNotEmpty property="eDt" prepend="AND">
-				DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
-			</isNotEmpty>
-			<isNotEmpty property="sttus" prepend="AND">
-		       	D.STTUS = #{sttus}
-			</isNotEmpty>
-			<isNotEmpty property="sValue" prepend="AND">
-		       	(
+		<if test='allSsttus == ""'>
+			<if test='isAll != "Y"'>
+		       	AND D.STTUS NOT IN ('0','7','8') 
+			</if>
+			<if test='sDt != ""'>
+				AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+			</if>
+			<if test='eDt != ""'>
+				AND DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+			</if>
+			<if test='sttus != ""'>
+		       	AND D.STTUS = #{sttus}
+			</if>
+			<if test='sValue != ""'>
+		       	AND (
 		       				D.ORDR_ID LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.PRDT_DTL_CD  LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.PRDT_NM  LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.MAKR_NM  LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.STNDRD  LIKE CONCAT('%',#{sValue},'%')
 		       	)
-			</isNotEmpty>
+			</if>
 			<if test='delayStatus == "D1"'>
 				AND DATE(NOW()) > DATE(D.ORDR_DT + INTERVAL 1 DAY)		
 			</if>
-		</isEmpty>
+		</if>
 		<if test='allSsttus != ""'>
 			AND DATE(D.ORDR_DT)  = DATE(#{tDt})
 			AND D.STTUS NOT IN ('0','7') 
 		</if>
 	</sql>
 	
-	<sql id="StoreSearchDao.OrdrWhere2">
+	<sql id="OrdrWhere2">
 		AND SM.STORE_ID = #{storeId}
-		<isEmpty property="allSsttus">
-			<isNotEmpty property="sDt" prepend="AND">
-				DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
-			</isNotEmpty>
-			<isNotEmpty property="eDt" prepend="AND">
-				DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
-			</isNotEmpty>
+		<if test='allSsttus == ""'>
+			<if test='sDt != ""'>
+				AND DATE(D.ORDR_DT) <![CDATA[>=]]>  DATE(#{sDt})
+			</if>
+			<if test='eDt != ""'>
+				AND DATE(D.ORDR_DT) <![CDATA[<=]]>  DATE(#{eDt})
+			</if>
 			<if test='sttus != ""'>
 				AND 
 				<choose>
@@ -172,56 +172,56 @@
 					</otherwise>
 				</choose>
 			</if>
-			<isNotEmpty property="sValue" prepend="AND">
-		       	(
+			<if test='sValue != ""'>
+		       	AND (
 		       				D.ORDR_ID LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.PRDT_DTL_CD  LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.PRDT_NM  LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.MAKR_NM  LIKE CONCAT('%',#{sValue},'%')
 		       		OR 	D.STNDRD  LIKE CONCAT('%',#{sValue},'%')
 		       	)
-			</isNotEmpty>
-			<isNotEmpty property="sOrdrId" prepend="AND">
-					D.ORDR_ID = #{sOrdrId}
-			</isNotEmpty>
-		</isEmpty>
-		<isNotEmpty property="allSsttus">
+			</if>
+			<if test='sOrdrId != ""'>
+					AND D.ORDR_ID = #{sOrdrId}
+			</if>
+		</if>
+		<if test='allSsttus != ""'>
 			AND DATE(D.DELY_DT)  = DATE(#{tDt})
 			AND D.STTUS NOT IN ('0','7') 
-		</isNotEmpty>
+		</if>
 	</sql>
 	
-	<select id="StoreSearchDao.getOrderList" parameterType="hashMap" resultType="hashMap">
+	<select id="getOrderList" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getOrderList */
-		<include refid="StoreSearchDao.OrdrBody"/> 
-		<include refid="StoreSearchDao.OrdrWhere"/> 
+		<include refid="OrdrBody"/> 
+		<include refid="OrdrWhere"/> 
 		ORDER BY D.ORDR_ID, D.STTUS,  D.O_ID
 	</select>
 
-	<select id="StoreSearchDao.getReceiptList" parameterType="hashMap" resultType="hashMap">
+	<select id="getReceiptList" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getReceiptList */
-		<include refid="StoreSearchDao.OrdrBody2"/> 
-		<include refid="StoreSearchDao.OrdrWhere2"/>
-		<isNotEqual property="isAll" compareValue="Y" prepend="AND">
-	       	D.STTUS IN ('2','51','71') 
-		</isNotEqual>
+		<include refid="OrdrBody2"/> 
+		<include refid="OrdrWhere2"/>
+		<if test='isAll != "Y"'>
+	       	AND D.STTUS IN ('2','51','71') 
+		</if>
 		<if test='delayStatus == "D2"'>
 			AND DATE(NOW()) > DATE(D.RECEIPT_DT + INTERVAL 1 DAY)		
 		</if>
 		ORDER BY D.ORDR_ID DESC, D.STTUS,  D.O_ID
 	</select>
 
-	<select id="StoreSearchDao.getDlvyList" parameterType="hashMap" resultType="hashMap">
+	<select id="getDlvyList" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getDlvyList */
-		<include refid="StoreSearchDao.OrdrBody2"/> 
-		<include refid="StoreSearchDao.OrdrWhere2"/> 
-		<isNotEqual property="isAll" compareValue="Y" prepend="AND">
-	       	D.STTUS IN ('3','4','51','9') 
-		</isNotEqual>
+		<include refid="OrdrBody2"/> 
+		<include refid="OrdrWhere2"/> 
+		<if test='isAll != "Y"'>
+	       	AND D.STTUS IN ('3','4','51','9') 
+		</if>
 		ORDER BY D.ORDR_ID DESC, D.STTUS,  D.O_ID
 	</select>
 	
-	<select id="StoreSearchDao.getPrdtList" parameterType="hashMap" resultType="hashMap">
+	<select id="getPrdtList" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getPrdtList */
 		SELECT 
 			   PM.PRDT_CD, 
@@ -321,17 +321,17 @@
 						       )AS CATEG  
 			 WHERE PM.PRDT_CD 	= PD.PRDT_CD 
 			       AND PM.STORE_ID = PD.STORE_ID 
-					<isNotEmpty property="storeId">
-			       		AND PM.STORE_ID = #{storeId}
-			        </isNotEmpty>
-					<isNotEmpty property="sValue">
+					<if test='storeId != ""'>
+							AND PM.STORE_ID = #{storeId}
+					</if>
+					<if test='sValue != ""'>
 						AND(			
 										PM.PRDT_NM LIKE CONCAT('%',#{sValue},'%')
 								OR		PM.MAKR_NM LIKE CONCAT('%',#{sValue},'%')
 								OR		PD.STNDRD LIKE CONCAT('%',#{sValue},'%')
 								OR		PD.MODEL_NM LIKE CONCAT('%',#{sValue},'%')
 						)
-					</isNotEmpty>
+					</if>
 			       AND PM.CATEG_CD = CATEG.LEV5_CD  
 			       AND PM.PRDT_TP 	= 'S' 
 			       <if test='sSus == "1"'>
@@ -352,7 +352,7 @@
 			ORDER BY PM.PRDT_NM, PD.STNDRD 
 	</select>
 	
-	<select id="StoreSearchDao.getOrdrRmk" parameterType="hashMap" resultType="hashMap">
+	<select id="getOrdrRmk" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getOrdrRmk */
 		SELECT 
 			C.ARTICLE_ID AS sArtCd ,  
@@ -368,7 +368,7 @@
 		ORDER BY C.CREATE_DT DESC	
 	</select>		
 	
-	<select id="StoreSearchDao.getMagamSum" parameterType="hashMap" resultType="hashMap">
+	<select id="getMagamSum" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getMagamSum */
 		SELECT S.STORE_NM, 
 		       (SELECT
@@ -411,7 +411,7 @@
 		ORDER BY M.TAR_DT DESC    
 	</select>		
 	
-	<select id="StoreSearchDao.getMagamMng" parameterType="hashMap" resultType="hashMap">
+	<select id="getMagamMng" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getMagamMng */
 			SELECT S.STORE_ID ,
 				   FN_DECRYPT(S.CMP_BIZ_NO) AS BIZ_NO,
@@ -434,7 +434,7 @@
 			 	AND S.STORE_ID = #{storeId} 
 	</select>	
 	
-	<select id="StoreSearchDao.getMagamDtl" parameterType="hashMap" resultType="hashMap">
+	<select id="getMagamDtl" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getMagamDtl */
 			SELECT D.O_ID , 
 			       D.USE_YN , 
@@ -478,7 +478,7 @@
 			ORDER BY D.CAL_DT , D.ORDR_DT  	
 	</select>	
 	
-	<select id="StoreSearchDao.getMagamDevy" parameterType="hashMap" resultType="hashMap">
+	<select id="getMagamDevy" parameterType="hashMap" resultType="hashMap">
 		/* StoreSearchDao.getMagamDevy */
 			SELECT M.ORDR_ID , 
 			       CASE WHEN MAX(D.CAL_DT) = #{mon} AND DATE(D.ORDR_DT) <![CDATA[<]]>  DATE(CONCAT(#{mon},'01')) THEN '1' 
@@ -507,5 +507,5 @@
 	</select>	
 	
 	
-</sqlMap>
+</mapper>
        

@@ -419,7 +419,7 @@
 	
 		
 	<insert id="setRtnMsg">
-		<selectKey keyProperty="chgId" resultType="Integer" type="post">
+		<selectKey keyProperty="chgId" resultType="Integer" order="AFTER">
 			SELECT LAST_INSERT_ID()
 		</selectKey>
 		/* FrontOrderDao.setRtnMsg */

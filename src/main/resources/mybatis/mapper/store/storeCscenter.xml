@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<sqlMap namespace="StoreCscenterDao">
+<mapper namespace="com.daehwa.b2b.store.dao.StoreCscenterDao">
 
 	<!-- 상점정보 -->
-	<select id="StoreCscenterDao.getStoreInfo" parameterType="hashMap" resultType="hashMap">
+	<select id="getStoreInfo" parameterType="hashMap" resultType="hashMap">
 			/* StoreCscenterDao.getStoreInfo */
 			SELECT 
 				STORE_ID
@@ -59,7 +59,7 @@
 		FROM STORE_INFO
 		WHERE STORE_ID = #{storeId}
 	</select>	
-	<update id="StoreCscenterDao.setStoreInfo">
+	<update id="setStoreInfo">
 		/* StoreCscenterDao.setStoreInfo */
 		UPDATE STORE_INFO SET
 				STORE_NM 				= #{prsNm}
@@ -90,5 +90,5 @@
 				,UPDATE_ID				= #{usrId}
 		 WHERE STORE_ID 			= #{storeId}	
 	</update>
-</sqlMap>
+</mapper>
        

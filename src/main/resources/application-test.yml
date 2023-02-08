@@ -15,7 +15,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/selltool?autoreconnect=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
     username: root
-    password: sksk00
+    password: kyg85627!@#
 
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/**/*.xml

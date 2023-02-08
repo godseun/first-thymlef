@@ -127,21 +127,21 @@
 		       AND CD.CL_CD 			= '1010'
 		       AND CD.DTL_CD 		= D.STTUS
 		       AND D.STTUS IN ('0','1','2','3','4')
-		       <isNotEmpty property="ordrId" prepend="AND">
-		       		D.ORDR_ID	= #{ordrId}
-		       </isNotEmpty>
-		       <isNotEmpty property="prdrNm" prepend="AND">
-		       		PM.PRDT_NM LIKE CONCAT('%',#{prdrNm},'%')
-		       </isNotEmpty>
-		       <isNotEmpty property="sttus" prepend="AND">
-		       		D.STTUS	= #{sttus}
-		       </isNotEmpty>
-				<isNotEmpty property="sDt"  prepend="AND">
-					DATE(D.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
-				</isNotEmpty> 
-				<isNotEmpty property="eDt"  prepend="AND">
-					DATE(D.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
-				</isNotEmpty> 
+		       <if test='ordrId != ""'>
+		       		AND D.ORDR_ID	= #{ordrId}
+		       </if>
+		       <if test='prdrNm != ""'>
+		       		AND PM.PRDT_NM LIKE CONCAT('%',#{prdrNm},'%')
+		       </if>
+		       <if test='sttus != ""'>
+		       		AND D.STTUS	= #{sttus}
+		       </if>
+				<if test='sDt != ""'>
+					AND DATE(D.CREATE_DT) <![CDATA[>=]]>  DATE(#{sDt})
+				</if> 
+				<if test='eDt != ""'>
+					AND DATE(D.CREATE_DT) <![CDATA[<=]]>  DATE(#{eDt})
+				</if> 
 				AND D.DELETE_DT IS NULL
 		ORDER BY D.STORE_ID, D.ORDR_ID DESC, D.STTUS DESC 
 	</select>
@@ -283,11 +283,12 @@
 	
 	<sql id="CartChkWhere">
 		AND UC.USR_ID = #{usrId} 
-	  <dynamic prepend="AND UC.PRDT_DTL_CD IN">
-			<iterate property="PRDT_DTL_CD" open="(" conjunction="," close=")">
-				 #PRDT_DTL_CD[]#
-			</iterate>
-	  </dynamic>
+		<if test='PRDT_DTL_CD != null'>
+			AND UC.PRDT_DTL_CD IN 
+			<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+				#{PRDT_DTL_CD}
+			</foreach>
+	</if>
 	</sql>
 
 	<select id="getCart" parameterType="hashMap" resultType="hashMap">
@@ -389,11 +390,12 @@
 		         NOW()
 		  FROM   USER_CART
 		  WHERE  USR_ID = #{usrId} 
-		  <dynamic prepend="AND PRDT_DTL_CD IN">
-				<iterate property="PRDT_DTL_CD" open="(" conjunction="," close=")">
-					 #PRDT_DTL_CD[]#
-				</iterate>
-		  </dynamic>
+			<if test='PRDT_DTL_CD != null'>
+				AND PRDT_DTL_CD IN 
+				<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+					#{PRDT_DTL_CD}
+				</foreach>
+			</if>
 	</update>	
 	
 	<!-- 장바구니에서 해당 상품 삭제 -->
@@ -402,11 +404,12 @@
 		  DELETE 
 		  FROM USER_CART
 		  WHERE  USR_ID = #{usrId} 
-		  <dynamic prepend="AND PRDT_DTL_CD IN">
-				<iterate property="PRDT_DTL_CD" open="(" conjunction="," close=")">
-					 #PRDT_DTL_CD[]#
-				</iterate>
-		  </dynamic>
+			<if test='PRDT_DTL_CD != null'>
+				AND PRDT_DTL_CD IN 
+				<foreach collection="array" item="PRDT_DTL_CD" open="(" close=")" separator=",">
+					#{PRDT_DTL_CD}
+				</foreach>
+			</if>
 	</delete>	
 	
 	
@@ -846,12 +849,13 @@
 			,CANCEL_DT 			= NOW() 
 			,UPDATE_DT 			= NOW() 
 			,UPDATE_ID 			= #{usrId}
-		WHERE ORDR_ID 			= #{ordrId}
-		  <dynamic prepend="AND O_ID IN">
-				<iterate property="O_ID" open="(" conjunction="," close=")">
-					 #O_ID[]#
-				</iterate>
-		  </dynamic>
+		WHERE ORDR_ID 			= #{ordrId} 
+			<if test='O_ID != null'>
+				AND O_ID IN 
+				<foreach collection="array" item="O_ID" open="(" close=")" separator=",">
+					#{O_ID}
+				</foreach>
+			</if>
 			AND USE_YN			= 'Y'
 			AND DELETE_DT IS NULL
 			AND STTUS NOT IN ('8', '9')
@@ -993,9 +997,9 @@
 		WHERE ORDR_ID 			= #{ordrId}
 			AND USE_YN			= 'Y'
 			AND DELETE_DT		IS NULL
-		<isNotEmpty property="storeId" prepend="AND">
-			STORE_ID	= #{storeId}
-		</isNotEmpty>
+		<if test='storeId != ""'>
+			AND STORE_ID	= #{storeId}
+		</if>
 	</insert>
 	
 	<insert id="insOrderMstHist">
@@ -1125,7 +1129,7 @@
 	
 	
 	<insert id="reqReturn">
-		<selectKey keyProperty="chgId" resultType="Integer" type="post">
+		<selectKey keyProperty="chgId" resultType="Integer" order="AFTER">
 			SELECT LAST_INSERT_ID()
 		</selectKey>
 		/* ShopOrderDao.reqReturn */
@@ -1159,10 +1163,10 @@
 		 WHERE M.ORDR_ID 				= P.ORDR_ID  
 				AND M.ORDR_ID			= #{ordrId} 
 				AND M.ORDR_USR_ID 	= #{usrId} 
-				AND M.O_ID IN
-				<iterate property="oId" open="(" conjunction="," close=")">
-					 #oId[]#
-				</iterate>
+				AND M.O_ID IN 
+				<foreach collection="array" item="oId" open="(" close=")" separator=",">
+					#{oId}
+				</foreach>
 		   GROUP BY M.ORDR_ID, M.ORDR_USR_ID, M.STORE_ID
 	</insert>
 	
@@ -1175,10 +1179,10 @@
 			,UPDATE_ID			= #{usrId}
 		WHERE ORDR_ID		= #{ordrId}  
 			AND ORDR_USR_ID 	= #{usrId} 
-			AND O_ID IN
-			<iterate property="oId" open="(" conjunction="," close=")">
-				 #oId[]#
-			</iterate>
+			AND O_ID IN 
+			<foreach collection="array" item="oId" open="(" close=")" separator=",">
+				#{oId}
+			</foreach>
 	</update>
 	
 	<select id="getOrdrInfo" parameterType="hashMap" resultType="hashMap">

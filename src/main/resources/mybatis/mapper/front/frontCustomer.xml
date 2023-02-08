@@ -575,12 +575,14 @@
 		         VALUES
 		         (
 							#{usrId} ,
-							<isEmpty property="seq">
+							<choose>
+								<when test='seq == ""'>
 								#{usrSeq},
-							</isEmpty>
-							<isNotEmpty property="seq">
+								</when>
+								<otherwise>
 								#{seq},
-							</isNotEmpty>
+								</otherwise>
+							</choose>
 							#{baseAddrYn},
 							#{addrNm},
 							#{receiver},

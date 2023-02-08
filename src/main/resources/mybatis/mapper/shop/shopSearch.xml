@@ -3,8 +3,23 @@
 
 <mapper namespace="com.daehwa.b2b.shop.dao.ShopSearchDao">
 
+	<sql id="pagingLimit">
+		LIMIT #{startRow},#{itemSize}
+	</sql>
+
+	<sql id="countPre">
+		SELECT
+			COUNT(1)
+		FROM
+		(
+	</sql>
+
+	<sql id="countSuf">
+		) A
+	</sql>
+
 	<!-- 특정상품 카테고리 정보 -->
-	<sql id="ShopSearch.categBody">
+	<sql id="categBody">
 		   SELECT   
 		   			T1.CATEG_CD AS LEV1_CD,
 		            T1.CATEG_NM AS LEV1_NM,
@@ -30,7 +45,7 @@
 	</sql>	
 	
 	<!-- 자기 자신 / 하위 카테고리 정보 -->
-	<sql id="ShopSearch.categBody2">
+	<sql id="categBody2">
 		   SELECT   
           			DISTINCT 
 						<if test='cTp == "0"'>
@@ -53,25 +68,25 @@
 						</if>
 		   			,T1.CATEG_CD AS LEV1_CD
 		            ,T1.CATEG_NM AS LEV1_NM
-		            <isGreaterEqual property="cTp" compareValue="1">
+		            <if test='cTp >= "1"'>
 				            ,T2.CATEG_CD AS LEV2_CD
 				            ,T2.CATEG_NM AS LEV2_NM		           
 				            ,T2.PRODUCT_CNT AS LEV2_CNT
-		            </isGreaterEqual>
-		            <isGreaterEqual property="cTp" compareValue="2">
+		            </if>
+		            <if test='cTp >= "2"'>
 			            ,T3.CATEG_CD AS LEV3_CD
 			            ,T3.CATEG_NM AS LEV3_NM
 			            ,T3.PRODUCT_CNT AS LEV3_CNT
-		            </isGreaterEqual>
-		            <isGreaterEqual property="cTp" compareValue="3">
+		            </if>
+		            <if test='cTp >= "3"'>
 			            ,T4.CATEG_CD AS LEV4_CD
 			            ,T4.CATEG_NM AS LEV4_NM
-		            </isGreaterEqual>
-		            <isGreaterEqual property="cTp" compareValue="4">
+		            </if>
+		            <if test='cTp >= "4"'>
 			            ,T5.CATEG_CD AS LEV5_CD
 			            ,T5.CATEG_NM AS LEV5_NM
 			            ,T5.PRODUCT_CNT AS LEV5_CNT
-		            </isGreaterEqual>
+		            </if>
 		   FROM     CATEG_INFO           AS T1
 		            LEFT JOIN CATEG_INFO AS T2
 		            ON       T2.P_CATEG_CD = T1.CATEG_CD
@@ -85,7 +100,7 @@
 	</sql> 
 
 	<!-- 1단계 카테고리 정보만 표시 -->
-	<sql id="ShopSearch.categBody3">
+	<sql id="categBody3">
 		   SELECT   
           			DISTINCT 
 						'0' AS LEV1_TP
@@ -103,7 +118,7 @@
 		   WHERE    1 = 1
 	</sql> 
 	
-	<sql id="ShopSearch.categWhere">
+	<sql id="categWhere">
 		   AND    T3.CATEG_TY_CD         = '3'
 		   AND    T3.CATEG_CD IN
 										            (
@@ -116,7 +131,7 @@
 										            )
 	</sql>
 	
-	<sql id="ShopSearch.categDepthWhere">
+	<sql id="categDepthWhere">
 			<if test='cTp == "0"'>
 				AND    T3.CATEG_TY_CD		= '3'
 			</if>
@@ -125,10 +140,9 @@
 		   		AND    T1.CATEG_CD 			IN 
 		   		<if test='cCodeList != ""'>
 						<if test='cCodeList != null'>
-									
-							<iterate property="cCodeList" open="(" conjunction="," close=")">
-									#cCodeList[]#
-							</iterate>
+							<foreach collection="array" item="cCodeList" open="(" close=")" separator=",">
+								#{cCodeList}
+							</foreach>
 						</if>
 					</if>
 			</if>
@@ -151,7 +165,7 @@
 	</sql>
  
 	<!-- 카운트용 제품 정보 -->
-	<sql id="ShopSearch.cntBody">
+	<sql id="cntBody">
 			SELECT 
 					 PM.PRDT_CD  
 			FROM   PRDT_MST PM,
@@ -159,7 +173,7 @@
 	</sql>
 
 	<!-- 카테고리 정보 -->
-	<sql id="ShopSearch.categInfoBody">
+	<sql id="categInfoBody">
 			SELECT 
 					 DISTINCT PM.CATEG_CD
 			FROM   PRDT_MST PM,
@@ -167,7 +181,7 @@
 	</sql>
 	
 	<!-- 제조사 정보 -->
-	<sql id="ShopSearch.makerInfoBody">
+	<sql id="makerInfoBody">
 			SELECT 
 					 DISTINCT PM.MAKR_CD
 			FROM   PRDT_MST PM,
@@ -175,7 +189,7 @@
 	</sql>
 	
    <!-- 리스트용 제품 정보 -->
-	<sql id="ShopSearch.body">
+	<sql id="body">
 			SELECT 
 				   PM.PRDT_CD ,
 			       PD.PRDT_DTL_CD ,
@@ -197,7 +211,7 @@
 	</sql>
 	
    <!-- 리스트용 / 카테고리 포함 제품 정보 조회 -->
-	<sql id="ShopSearch.body2">
+	<sql id="body2">
 			SELECT 
 				PM.PRDT_CD ,
 				PD.PRDT_DTL_CD ,
@@ -225,59 +239,59 @@
 			       PRDT_DTL PD
 	</sql>
 
-	<sql id="ShopSearch.where">  
+	<sql id="where">  
 			WHERE	PM.PRDT_CD = PD.PRDT_CD	
 				AND	PM.STORE_ID = PD.STORE_ID
 				AND	PM.USE_YN ='Y'
 				AND	PD.USE_YN ='Y'
-			<isNotEmpty property="sub_sValue">
+			<if test='sub_sValue != ""'>
 				AND(			
 								PM.PRDT_NM LIKE CONCAT('%',#{sub_sValue},'%')
 						OR		PM.MAKR_NM LIKE CONCAT('%',#{sub_sValue},'%')
 						OR		PD.STNDRD LIKE CONCAT('%',#{sub_sValue},'%')
 						OR		PD.MODEL_NM LIKE CONCAT('%',#{sub_sValue},'%')
 				)
-			</isNotEmpty>
-			<isNotEmpty property="sub_pName">
+			</if>
+			<if test='sub_pName != ""'>
 				AND			PM.PRDT_NM LIKE CONCAT('%',#{sub_pName},'%')
-			</isNotEmpty>
-			<isNotEmpty property="sub_sBrand">
+			</if>
+			<if test='sub_sBrand != ""'>
 				AND			PM.MAKR_NM LIKE CONCAT('%',#{sub_sBrand},'%')
-			</isNotEmpty>
-			<isNotEmpty property="sub_sStndrd">
+			</if>
+			<if test='sub_sStndrd != ""'>
 				AND			PD.STNDRD LIKE CONCAT('%',#{sub_sStndrd},'%')
-			</isNotEmpty>
-			<isNotEmpty property="sub_sModel">
+			</if>
+			<if test='sub_sModel != ""'>
 				AND			PD.MODEL_NM LIKE CONCAT('%',#{sub_sModel},'%')
-			</isNotEmpty>
+			</if>
 	</sql>
 	
 	<!-- 제조사 선택한 경우 -->
-	<sql id="ShopSearch.brandWhere">
-		<isNotEmpty property="cBrandList">
-			<isNotNull property="cBrandList">
-				AND PM.MAKR_CD IN
-					<iterate property="cBrandList" open="(" conjunction="," close=")">
-						 #cBrandList[]#
-					</iterate>
-			</isNotNull>
-		</isNotEmpty>
+	<sql id="brandWhere">
+		<if test='cBrandList != ""'>
+			<if test='cBrandList != null'>
+				AND PM.MAKR_CD IN 
+					<foreach collection="array" item="cBrandList" open="(" close=")" separator=",">
+						#{cBrandList}
+					</foreach>
+			</if>
+		</if>
 	</sql>
 	
-	<sql id="ShopSearch.keyWordWhere">  
-			<isNotEmpty property="mValueList">
-				<isNotNull property="mValueList">
-					<iterate property="mValueList" open="AND(	" conjunction=") AND(" close=")">
-								PM.PRDT_NM LIKE CONCAT('%',#mValueList[]#,'%')
+	<sql id="keyWordWhere">  
+			<if test='mValueList != ""'>
+				<if test='mValueList != null'>
+					<foreach collection="array" item="mValueList" open="AND(	" close=")" separator=") AND(">
+									PM.PRDT_NM LIKE CONCAT('%',#mValueList[]#,'%')
 						OR		PM.PRDT_ETC_NM LIKE CONCAT('%',#mValueList[]#,'%')
 						OR		PM.MAKR_NM LIKE CONCAT('%',#mValueList[]#,'%')
 						OR		PD.STNDRD LIKE CONCAT('%',#mValueList[]#,'%')
 						OR		PD.MODEL_NM LIKE CONCAT('%',#mValueList[]#,'%')
-					</iterate>
-				</isNotNull>
-			</isNotEmpty>
-			<isEmpty property="mValueList">
-				<isNotEmpty property="mValue">
+					</foreach>
+				</if>
+			</if>
+			<if test='mValueList == ""'>
+				<if test='mValue != ""'>
 					AND(			
 									PM.PRDT_NM LIKE CONCAT('%',#{mValue},'%')
 							OR		PM.PRDT_ETC_NM LIKE CONCAT('%',#{mValue},'%')
@@ -287,30 +301,30 @@
 							OR		PM.PRDT_CD LIKE CONCAT('%',#{mValue},'%')
 							OR		PD.PRDT_DTL_CD LIKE CONCAT('%',#{mValue},'%')
 					)
-				</isNotEmpty>
-			</isEmpty>
-			<isNotEmpty property="mName">
+				</if>
+			</if>
+			<if test='mName != ""'>
 				AND			PM.PRDT_NM LIKE CONCAT('%',#{mName},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mBrand">
+			</if>
+			<if test='mBrand != ""'>
 				AND			PM.MAKR_NM LIKE CONCAT('%',#{mBrand},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mStndrd">
+			</if>
+			<if test='mStndrd != ""'>
 				AND			PD.STNDRD LIKE CONCAT('%',#{mStndrd},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mModel">
+			</if>
+			<if test='mModel != ""'>
 				AND			PD.MODEL_NM LIKE CONCAT('%',#{mModel},'%')
-			</isNotEmpty>
-			<isNotEmpty property="mCode">
+			</if>
+			<if test='mCode != ""'>
 				AND			PD.PRDT_DTL_CD  = #{mCode}
-			</isNotEmpty>
-			<isNotEmpty property="mStore">
+			</if>
+			<if test='mStore != ""'>
 				AND			PD.STORE_ID = #{mStore}
-			</isNotEmpty>
+			</if>
 	</sql>
 		
 	<!-- 상품 info - 품목정보 -->
-	<sql id="ShopSearch.prductBody">
+	<sql id="prductBody">
 			SELECT 
 					PM.PRDT_CD,
 					PM.STORE_ID,
@@ -410,15 +424,15 @@
 			  	AND PM.STORE_ID = SI.STORE_ID
 	</sql>
 
-	<sql id="ShopSearch.prductWhere">  
-			<isNotEqual property="isAdmin" compareValue="N">
+	<sql id="prductWhere">  
+			<if test='isAdmin != "N"'>
 				AND PM.USE_YN  	='Y'
-			</isNotEqual>
+			</if>
 				AND PM.PRDT_CD = #{pCode}
 	</sql>
 
 	<!-- 상품 info - 규격정보 -->
-	<sql id="ShopSearch.stndrdBody">
+	<sql id="stndrdBody">
 			SELECT 
 				    PD.PRDT_CD,
 				    PD.STORE_ID,
@@ -472,7 +486,7 @@
 			  WHERE  1 = 1
 	</sql>
 	
-  	<sql id="ShopSearch.stndrdWhere">  
+  	<sql id="stndrdWhere">  
 			<if test='isAdmin != "N"'>
 					AND PD.USE_YN  	='Y'
 			</if>
@@ -577,78 +591,78 @@
         	A.LEV5_CD,
         	A.LEV5_NM 
 		FROM (
-					<include refid="ShopSearch.body2"/>
+					<include refid="body2"/>
 						,(		  SELECT C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
 								  FROM   (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.keyWordWhere"/>
-			<include refid="ShopSearch.brandWhere"/>
+			<include refid="where"/>
+			<include refid="keyWordWhere"/>
+			<include refid="brandWhere"/>
 			AND PM.CATEG_CD = CATEG.LEV5_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}
        	ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM, PM.CATEG_CD , PM.PRDT_CD, PD.PRDT_DTL_CD			
 		)AS A
 		GROUP BY A.LEV3_CD, A.LEV4_CD, A.LEV5_CD, A.MAKR_NM, A.PRDT_CD, A.STORE_ID, A.CATEG_CD, A.PRDT_NM, A.PRDT_IMG 		
-		<include refid="Common.paging.limit"/>		
+		<include refid="pagingLimit"/>		
 	</select>
 	
    <!-- 메인 / 키워드 검색 1단계 카테고리 리스트 -->
 	<select id="getMainSercCategList" parameterType="hashMap" resultType="hashMap">
 		/* ShopSearchDao.getMainSercCategList */
-		<include refid="ShopSearch.categBody3"/>
-		<include refid="ShopSearch.categDepthWhere"/>
+		<include refid="categBody3"/>
+		<include refid="categDepthWhere"/>
 		 	AND	T3.CATEG_CD IN (
-														<include refid="ShopSearch.categInfoBody"/>
-														<include refid="ShopSearch.where"/>
-														<include refid="ShopSearch.keyWordWhere"/>
-														<include refid="ShopSearch.brandWhere"/>
+														<include refid="categInfoBody"/>
+														<include refid="where"/>
+														<include refid="keyWordWhere"/>
+														<include refid="brandWhere"/>
           										 )  
 		   ORDER BY T1.CATEG_CD
 	</select>
 
 	<select id="getCategListCnt" parameterType="hashMap" resultType="Integer">
 		/*ShopSearchDao.getCategListCnt*/
-		<include refid="Common.count.pre"/>
-		<include refid="ShopSearch.cntBody"/>
+		<include refid="countPre"/>
+		<include refid="cntBody"/>
 		,(		  SELECT A.LEV3_CD
 				  FROM   (
-								<include refid="ShopSearch.categBody"/>
-								<include refid="ShopSearch.categDepthWhere"/>
+								<include refid="categBody"/>
+								<include refid="categDepthWhere"/>
 				  				)AS A
 		)AS CATEG
-		<include refid="ShopSearch.where"/>
-		<include refid="ShopSearch.keyWordWhere"/>
-		<include refid="ShopSearch.brandWhere"/>
+		<include refid="where"/>
+		<include refid="keyWordWhere"/>
+		<include refid="brandWhere"/>
 		AND PM.CATEG_CD = CATEG.LEV3_CD
 		AND PM.PRDT_TP = #{PRDT_TP}
       GROUP BY PM.PRDT_CD 
-		<include refid="Common.count.suf"/>
+		<include refid="countSuf"/>
 	</select>
 
-	<select id="categList" parameterType="hashMap" resultType="hashMap" remapResults="true">
+	<select id="categList" parameterType="hashMap" resultType="hashMap"><!-- remapResults="true" -->
 		/* ShopSearchDao.categList */
-		<include refid="ShopSearch.categBody2"/>
-		<include refid="ShopSearch.categDepthWhere"/>
+		<include refid="categBody2"/>
+		<include refid="categDepthWhere"/>
 		 AND    T3.CATEG_CD IN (
-														<include refid="ShopSearch.categInfoBody"/>
-														<include refid="ShopSearch.where"/>
-														<include refid="ShopSearch.keyWordWhere"/> 
-														<include refid="ShopSearch.brandWhere"/>
+														<include refid="categInfoBody"/>
+														<include refid="where"/>
+														<include refid="keyWordWhere"/> 
+														<include refid="brandWhere"/>
           										 )  
 		   
 		   ORDER BY T1.CATEG_CD, T2.CATEG_CD
-       <isGreaterEqual property="cTp" compareValue="2">
+       <if test='cTp >= "2"'>
         	,T3.CATEG_CD
-       </isGreaterEqual>
-       <isGreaterEqual property="cTp" compareValue="3">
+       </if>
+       <if test='cTp >= "3"'>
         	,T4.CATEG_CD
-       </isGreaterEqual> 
-       <isGreaterEqual property="cTp" compareValue="4">
+       </if> 
+       <if test='cTp >= "4"'>
         	,T5.CATEG_CD
-       </isGreaterEqual> 
+       </if> 
 	</select>
 	
    <!-- 메인 / 키워드 검색 제조사 리스트 -->
@@ -658,9 +672,9 @@
 				MAKR_CD, MAKR_NM
 		FROM MAKER_INFO 
 		WHERE (MAKR_CD) IN (
-								<include refid="ShopSearch.makerInfoBody"/>
-								<include refid="ShopSearch.where"/>
-								<include refid="ShopSearch.keyWordWhere"/> 
+								<include refid="makerInfoBody"/>
+								<include refid="where"/>
+								<include refid="keyWordWhere"/> 
 								)
 		ORDER BY MAKR_NM
 	</select>
@@ -672,15 +686,15 @@
 				MAKR_CD, MAKR_NM
 		FROM MAKER_INFO 
 		WHERE (MAKR_CD) IN (
-						<include refid="ShopSearch.makerInfoBody"/>
+						<include refid="makerInfoBody"/>
 						,(		  SELECT C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
 								  FROM   (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.keyWordWhere"/>
+			<include refid="where"/>
+			<include refid="keyWordWhere"/>
 			AND PM.CATEG_CD = CATEG.LEV3_CD	
 		)
 		ORDER BY MAKR_NM	
@@ -708,22 +722,22 @@
 			A.SALE_PRICE ,
 			A.PRDT_IMG 
 		FROM (
-					<include refid="ShopSearch.body"/>
+					<include refid="body"/>
 						,(		  SELECT C.LEV5_CD
 								  FROM   (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.keyWordWhere"/>
-			<include refid="ShopSearch.brandWhere"/>
+			<include refid="where"/>
+			<include refid="keyWordWhere"/>
+			<include refid="brandWhere"/>
 			AND PM.CATEG_CD = CATEG.LEV5_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}
        	ORDER BY PM.CATEG_CD, PM.PRDT_CD, PD.PRDT_DTL_CD			
 		)AS A
 		GROUP BY A.PRDT_CD, A.STORE_ID, A.CATEG_CD, A.PRDT_NM, A.MAKR_NM, A.PRDT_IMG 		
-		<include refid="Common.paging.limit"/>		
+		<include refid="pagingLimit"/>		
 	</select>
 	
 	<select id="getCategList2" parameterType="hashMap" resultType="hashMap">
@@ -739,22 +753,22 @@
 			A.SALE_PRICE ,
 			A.PRDT_IMG 
 		FROM (
-					<include refid="ShopSearch.body"/>
+					<include refid="body"/>
 						,(		  SELECT C.LEV5_CD
 								  FROM   (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.keyWordWhere"/>
-			<include refid="ShopSearch.brandWhere"/>
+			<include refid="where"/>
+			<include refid="keyWordWhere"/>
+			<include refid="brandWhere"/>
 			AND PM.CATEG_CD = CATEG.LEV5_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}
          ORDER BY PM.CATEG_CD , PM.PRDT_CD, PD.PRDT_DTL_CD			
 		)AS A
 		GROUP BY A.PRDT_CD, A.STORE_ID, A.CATEG_CD, A.PRDT_NM, A.MAKR_NM, A.PRDT_IMG, A.STNDRD 		
-		<include refid="Common.paging.limit"/>		
+		<include refid="pagingLimit"/>		
 	</select>
 	
 	<select id="getTegCategList" parameterType="hashMap" resultType="hashMap">
@@ -806,12 +820,12 @@
 			                     C.LEV5_CD,
 			                     C.LEV5_NM 
 			                FROM (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.brandWhere"/>
+			<include refid="where"/>
+			<include refid="brandWhere"/>
 			AND PM.PRDT_INFO LIKE CONCAT('%',#{mValue},'%')
 			AND PM.CATEG_CD = CATEG.LEV5_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}	
@@ -822,21 +836,21 @@
 
 	<select id="getTegCategListCnt" parameterType="hashMap" resultType="Integer">
 		/* ShopSearchDao.getTegCategListCnt */
-		<include refid="Common.count.pre"/>
-		<include refid="ShopSearch.cntBody"/>
+		<include refid="countPre"/>
+		<include refid="cntBody"/>
 		,(		  SELECT A.LEV5_CD
 				  FROM   (
-								<include refid="ShopSearch.categBody"/>
-								<include refid="ShopSearch.categDepthWhere"/>
+								<include refid="categBody"/>
+								<include refid="categDepthWhere"/>
 				  				)AS A
 		)AS CATEG
-		<include refid="ShopSearch.where"/>
-		<include refid="ShopSearch.brandWhere"/>
+		<include refid="where"/>
+		<include refid="brandWhere"/>
 		AND PM.PRDT_INFO LIKE CONCAT('%',#{mValue},'%')
 		AND PM.CATEG_CD = CATEG.LEV5_CD
 		AND PM.PRDT_TP = #{PRDT_TP}
       GROUP BY PM.PRDT_CD 
-		<include refid="Common.count.suf"/>
+		<include refid="countSuf"/>
 	</select>
 	
 	<select id="getSetSearchList" parameterType="hashMap" resultType="hashMap">
@@ -862,7 +876,7 @@
 
 	<select id="getSetSearchListCnt" parameterType="hashMap" resultType="Integer">
 		/* ShopSearchDao.getSetSearchListCnt */
-		<include refid="Common.count.pre"/>
+		<include refid="countPre"/>
 			SELECT 
 				   M.PRDT_CD
 			  FROM PROMO_BOARD B, 
@@ -875,7 +889,7 @@
 			       AND B.USE_YN = 'Y' 
 			       AND M.USE_YN = 'Y' 
       		GROUP BY P.PRDT_CD 
-		<include refid="Common.count.suf"/>
+		<include refid="countSuf"/>
 	</select>
 	
 	<select id="getCategList3" parameterType="hashMap" resultType="hashMap">
@@ -899,24 +913,24 @@
         	A.LEV5_CD,
         	A.LEV5_NM
 		FROM (
-					<include refid="ShopSearch.body2"/>
+					<include refid="body2"/>
 						,(		  SELECT C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
 								  FROM   (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.keyWordWhere"/>
-			<include refid="ShopSearch.brandWhere"/>
+			<include refid="where"/>
+			<include refid="keyWordWhere"/>
+			<include refid="brandWhere"/>
 			AND PM.CATEG_CD = CATEG.LEV3_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}
 		)AS A
 		GROUP BY A.LEV3_CD, A.LEV4_CD, A.LEV5_CD, A.MAKR_NM, A.PRDT_CD, A.STORE_ID, A.CATEG_CD, A.PRDT_NM, A.PRDT_IMG 
 		ORDER BY A.LEV3_CD, A.LEV4_CD, A.LEV5_CD, A.PRDT_NM, A.MAKR_NM
-		<isLessEqual property="cTp" compareValue="2">
-			<include refid="Common.paging.limit"/>		
-		</isLessEqual>
+		<if test='cTp lte "2"'>
+			<include refid="pagingLimit"/>		
+		</if>
 	</select>	
 	<select id="getCategList1" parameterType="hashMap" resultType="hashMap">
 		/*ShopSearchDao.getCategList1*/
@@ -940,17 +954,17 @@
         	A.LEV5_CD,
         	A.LEV5_NM
 		FROM (
-					<include refid="ShopSearch.body2"/>
+					<include refid="body2"/>
 						,(		  SELECT C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
 								  FROM   (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
 			, PROMO_PRDUCT P
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.keyWordWhere"/>
-			<include refid="ShopSearch.brandWhere"/>
+			<include refid="where"/>
+			<include refid="keyWordWhere"/>
+			<include refid="brandWhere"/>
 			AND PM.PRDT_CD = P.PRDT_CD
 			AND P.PROMO_ID = #{sValue}
 			AND PM.CATEG_CD = CATEG.LEV5_CD	
@@ -962,24 +976,24 @@
 	
 	<select id="getCategSearchCnt" parameterType="hashMap" resultType="Integer">
 		/*ShopSearchDao.getCategSearchCnt*/
-		<include refid="Common.count.pre"/>
-		<include refid="ShopSearch.cntBody"/>
+		<include refid="countPre"/>
+		<include refid="cntBody"/>
 		,(		  SELECT A.LEV5_CD
 				  FROM   (
-								<include refid="ShopSearch.categBody"/>
-								<include refid="ShopSearch.categDepthWhere"/>
+								<include refid="categBody"/>
+								<include refid="categDepthWhere"/>
 				  				)AS A
 		)AS CATEG
 		, PROMO_PRDUCT P
-		<include refid="ShopSearch.where"/>
-		<include refid="ShopSearch.keyWordWhere"/>
-		<include refid="ShopSearch.brandWhere"/>
+		<include refid="where"/>
+		<include refid="keyWordWhere"/>
+		<include refid="brandWhere"/>
 		AND PM.PRDT_CD = P.PRDT_CD
 		AND P.PROMO_ID = #{sValue}
 		AND PM.CATEG_CD = CATEG.LEV5_CD
 		AND PM.PRDT_TP = #{PRDT_TP}
       GROUP BY PM.PRDT_CD 
-		<include refid="Common.count.suf"/>
+		<include refid="countSuf"/>
 	</select>	
 	
 	<select id="getCategList4" parameterType="hashMap" resultType="hashMap">
@@ -1001,31 +1015,31 @@
         	A.LEV5_CD,
         	A.LEV5_NM 
 		FROM (
-					<include refid="ShopSearch.body2"/>
+					<include refid="body2"/>
 						,(		  SELECT C.LEV3_CD,C.LEV3_NM,C.LEV4_CD,C.LEV4_NM,C.LEV5_CD,C.LEV5_NM
 								  FROM   (
-												<include refid="ShopSearch.categBody"/>
-												<include refid="ShopSearch.categDepthWhere"/>
+												<include refid="categBody"/>
+												<include refid="categDepthWhere"/>
 								  				)AS C
 						)AS CATEG
-			<include refid="ShopSearch.where"/>
-			<include refid="ShopSearch.keyWordWhere"/>
-			<include refid="ShopSearch.brandWhere"/>
+			<include refid="where"/>
+			<include refid="keyWordWhere"/>
+			<include refid="brandWhere"/>
 			AND PM.CATEG_CD = CATEG.LEV5_CD	
 			AND PM.PRDT_TP = #{PRDT_TP}
          ORDER BY CATEG.LEV3_CD, CATEG.LEV4_CD, CATEG.LEV5_CD, PM.MAKR_NM, PM.PRDT_CD, PD.PRDT_DTL_CD			
 		)AS A
 		GROUP BY A.LEV3_CD, A.LEV4_CD, A.LEV5_CD, A.MAKR_NM, A.PRDT_CD, A.STORE_ID, A.CATEG_CD, A.PRDT_NM, A.PRDT_IMG, A.STNDRD 		
-		<isLessEqual property="cTp" compareValue="2">
-			<include refid="Common.paging.limit"/>		
-		</isLessEqual>
+		<if test='cTp lte "2"'>
+			<include refid="pagingLimit"/>		
+		</if>
 	</select>	 
 
 	<!-- 상품 상세 정보 -->
 	<select id="prdtInfo" parameterType="hashMap" resultType="hashMap">
 		/* ShopSearchDao.prdtInfo */
-		<include refid="ShopSearch.prductBody"/>
-		<include refid="ShopSearch.prductWhere"/>
+		<include refid="prductBody"/>
+		<include refid="prductWhere"/>
 	</select>
 	
 	<select id="getCombo" parameterType="hashMap" resultType="hashMap">
@@ -1170,8 +1184,8 @@
 
 	<select id="stndrdList" parameterType="hashMap" resultType="hashMap">
 		/* ShopSearchDao.stndrdList */
-		<include refid="ShopSearch.stndrdBody"/>
-		<include refid="ShopSearch.stndrdWhere"/>
+		<include refid="stndrdBody"/>
+		<include refid="stndrdWhere"/>
 			ORDER BY PD.STNDRD
 	</select>
 	
@@ -1210,8 +1224,8 @@
 	
 	<select id="categInfo" parameterType="hashMap" resultType="hashMap">
 		/* ShopSearchDao.categInfo */
-		<include refid="ShopSearch.categBody"/>
-		<include refid="ShopSearch.categWhere"/>
+		<include refid="categBody"/>
+		<include refid="categWhere"/>
 		   ORDER BY T1.CATEG_CD, T2.CATEG_CD, T3.CATEG_CD, T4.CATEG_CD, T5.CATEG_CD
 	</select>
 		
